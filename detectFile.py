@@ -81,7 +81,7 @@ def emailNewFiles(newFiles):
   server.starttls()
   server.ehlo()
   server.login(FROM_EMAIL,keyring.get_password("system","EMAIL_TO_SEND"))
-  msg = MIMEText(F"New files available! -{newFiles}")
+  msg = MIMEText(F"New files available! - {newFiles}")
   msg["Subject"] = "You've got new files!"
   server.sendmail(FROM_EMAIL,TO_EMAIL,msg.as_string())
   server.quit()
