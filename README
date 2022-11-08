@@ -3,7 +3,7 @@
 
 This program will detect changes in a directory and email them to the specified email.
 
-
+The following diagram shows the basic paths of the script as an activity model.
 
 ## Features
 
