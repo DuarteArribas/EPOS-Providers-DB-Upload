@@ -9,7 +9,7 @@ IN_FOLDER = "in"
 
 
 def getFiles(dir):
-  """Get files from a directory
+  """Get files from a directory.
 
   Parameters
   ----------
@@ -24,7 +24,23 @@ def getFiles(dir):
   return [f for f in os.listdir(dir) if isfile(join(dir,f))]
 
 
-def check(con,cur,files):
+def getNewFiles(con,cur,files):
+  """Check if the given files already exist in the database. If not, consider them new.
+
+  Parameters
+  ----------
+  con   : Connection
+      A connection object
+  cur   : Cursor
+      A cursor object
+  files : lst
+      A list of files to check against the database 
+
+  Returns
+  -------
+  lst
+      A list of new files
+  """
   filesNotInDB = []
   res          = cur.execute("SELECT filename FROM previousFiles")
   filesInDb    = res.fetchall()
