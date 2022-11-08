@@ -13,8 +13,8 @@ IN_FOLDER  = "in"
 FROM_EMAIL = ""
 TO_EMAIL   = ""
 
-def getFileHashes(dir):
-  """Get files from a directory.
+def getFilenamesAndHashes(dir):
+  """Get filenames and hashes from a directory.
 
   Parameters
   ----------
@@ -23,12 +23,12 @@ def getFileHashes(dir):
 
   Returns
   -------
-  lst
-      List of file hashes in the directory
+  tuple
+      (List of filenames in the directory,List of file hashes in the directory)
   """
-  filenameList = []
-  hashList     = []
   hashing      = hashlib.sha256()
+  hashList     = []
+  filenameList = []
   for f in os.listdir(dir):
     if(isfile(join(dir,f))):
       with open(join(dir,f),"r"):
@@ -43,12 +43,14 @@ def getNewFiles(con,cur,filenames,fileHashes):
 
   Parameters
   ----------
-  con   : Connection
+  con        : Connection
       A connection object
-  cur   : Cursor
+  cur        : Cursor
       A cursor object
-  files : lst
-      A list of files to check against the database 
+  filenames  : lst
+      List of filenames in the directory
+  fileHashes : lst
+      List of file hashes in the directory
 
   Returns
   -------
@@ -66,7 +68,7 @@ def getNewFiles(con,cur,filenames,fileHashes):
   return filesNotInDB
   
 def emailNewFiles(newFiles):
-  """Emails new files to the specified email
+  """Emails new files to the specified email.
 
   Parameters
   ----------
@@ -88,8 +90,9 @@ def main():
   # Open database connection
   con = sqlite3.connect(DATABASE)
   cur = con.cursor()
+  # Get filenames and hashes from the specified directory
+  files    = getFilenamesAndHashes(IN_FOLDER)
   # If there are new files, email them
-  files = getFileHashes(IN_FOLDER)
   newFiles = getNewFiles(con,cur,files[0],files[1])
   if(newFiles):
     emailNewFiles(newFiles)

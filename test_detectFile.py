@@ -1,11 +1,11 @@
-from detectFile import getFileHashes
+from detectFile import getFilenamesAndHashes
 from detectFile import getNewFiles
 import unittest
 import sqlite3
 
 class TestDetectFile(unittest.TestCase):
   def test_get_files(self):
-    self.assertEqual(getFileHashes("inTest/1"),[])
+    self.assertEqual(getFilenamesAndHashes("inTest/1"),[])
     
   def test_check(self):
     con = sqlite3.connect("db/detectFiles.db")
