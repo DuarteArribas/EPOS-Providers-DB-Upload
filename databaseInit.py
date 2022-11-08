@@ -8,4 +8,4 @@ con = sqlite3.connect(DATABASE)
 cur = con.cursor()
 
 # Create table
-cur.execute("CREATE TABLE previousFiles(id,filename)")
+cur.execute("CREATE TABLE previousFiles(filename VARCHAR PRIMARY KEY)")

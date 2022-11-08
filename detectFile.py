@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from os import listdir
 from os.path import isfile, join
 
@@ -22,6 +23,18 @@ def getFiles(dir):
   """
   return [f for f in os.listdir(dir) if isfile(join(dir,f))]
 
+
+def check(con,cur,files):
+  filesNotInDB = []
+  res          = cur.execute("SELECT filename FROM previousFiles")
+  filesInDb    = res.fetchall()
+  for f in files:
+    if f not in [filesInDbNormalized[0] for filesInDbNormalized in filesInDb]:
+      cur.execute("INSERT INTO previousFiles VALUES(?)",(f,))
+      con.commit()
+      filesNotInDB.append(f)
+  return filesNotInDB
+  
 def main():
   # Open database connection
   con = sqlite3.connect(DATABASE)
