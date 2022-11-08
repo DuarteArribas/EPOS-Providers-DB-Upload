@@ -13,6 +13,7 @@ IN_FOLDER  = "in"
 FROM_EMAIL = ""
 TO_EMAIL   = ""
 
+#Functions
 def getFilenamesAndHashes(dir):
   """Get filenames and hashes from a directory.
 
@@ -103,7 +104,8 @@ def emailNewFiles(newFiles):
   msg["Subject"] = "You've got new files!"
   server.sendmail(FROM_EMAIL,TO_EMAIL,msg.as_string())
   server.quit()
-  
+
+# Main function
 def main():
   # Open database connection
   con = sqlite3.connect(DATABASE)
