@@ -26,17 +26,35 @@ def getFilenamesAndHashes(dir):
   tuple
       (List of filenames in the directory,List of file hashes in the directory)
   """
-  hashing      = hashlib.sha256()
   hashList     = []
   filenameList = []
   for f in os.listdir(dir):
     if(isfile(join(dir,f))):
-      with open(join(dir,f),"r"):
-        hashing.update(f.encode('utf-8'))
-      hashList.append(hashing.hexdigest())
-      filenameList.append(f)
+      with open(join(dir,f),"r") as file:
+        hashing = hashlib.sha256()
+        hashing.update((f + file.read()).encode('utf-8'))
+        hashList.append(hashing.hexdigest())
+        filenameList.append(f)
   return (filenameList,hashList)
 
+def removeFromDatabaseIfDeleted(con,cur,fileHashes):
+  """Remove file hashesfrom the database that were deleted.
+
+  Parameters
+  ----------
+  con        : Connection
+      A connection object
+  cur        : Cursor
+      A cursor object
+  fileHashes : lst
+      List of file hashes in the directory
+  """
+  res        = cur.execute("SELECT fileHash FROM previousFiles")
+  hashesInDb = res.fetchall()
+  for dbHash in [hashesInDbNormalized[0] for hashesInDbNormalized in hashesInDb]:
+    if dbHash not in fileHashes:
+      cur.execute("DELETE FROM previousFiles WHERE fileHash = ?",(dbHash,))
+      con.commit()
 
 def getNewFiles(con,cur,filenames,fileHashes):
   """Check if the given files already exist in the database. If not, consider them new.
@@ -92,6 +110,8 @@ def main():
   cur = con.cursor()
   # Get filenames and hashes from the specified directory
   files    = getFilenamesAndHashes(IN_FOLDER)
+  # Remove from the database files that were deleted
+  removeFromDatabaseIfDeleted(con,cur,files[1])
   # If there are new files, email them
   newFiles = getNewFiles(con,cur,files[0],files[1])
   if(newFiles):
