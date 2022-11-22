@@ -1,16 +1,24 @@
 import sqlite3
 import checksumdir
+import keyring
+import smtplib
+from email.mime.text import MIMEText
+from os import listdir
+from datetime import datetime
+from validate import validateProviderDir
 
 # Global variables
 DATABASE      = "db/detectFiles.db"
 PROVIDERS_DIR = "in/providers_sftp/"
 PROVIDER_DIR  = {
-  "INGV" : f"{PROVIDERS_DIR}/providers_ingv",
-  "ROB"  : f"{PROVIDERS_DIR}/providers_rob",
-  "SGO"  : f"{PROVIDERS_DIR}/providers_sgo",
-  "UGA"  : f"{PROVIDERS_DIR}/providers_uga",
-  "WUT"  : f"{PROVIDERS_DIR}/providers_wut"
+  "INGV" : f"{PROVIDERS_DIR}/providers_ingv/uploads",
+  "ROB"  : f"{PROVIDERS_DIR}/providers_rob/uploads",
+  "SGO"  : f"{PROVIDERS_DIR}/providers_sgo/uploads",
+  "UGA"  : f"{PROVIDERS_DIR}/providers_uga/uploads",
+  "WUT"  : f"{PROVIDERS_DIR}/providers_wut/uploads"
 }
+FROM_EMAIL = ""
+TO_EMAIL   = ""
 
 #Functions
 def getHashOfDir(dir):
@@ -54,13 +62,73 @@ def getListOfFilesChanged(con,newHashes):
       con.commit()
   return hashesChanged
 
+def sendEmail(subject,body):
+  """Emails new files to the specified email.
+
+  Parameters
+  ----------
+  newFiles : str
+      the contents of the new files
+  """
+  server = smtplib.SMTP("smtp-mail.outlook.com",587)
+  server.connect("smtp-mail.outlook.com",587)
+  server.ehlo()
+  server.starttls()
+  server.ehlo()
+  server.login(FROM_EMAIL,keyring.get_password("system","EMAIL_TO_SEND"))
+  msg = MIMEText(body)
+  msg["Subject"] = subject
+  server.sendmail(FROM_EMAIL,TO_EMAIL,msg.as_string())
+  server.quit()
+
 # Main function
 def main():
   # Open database connection
   con = sqlite3.connect(DATABASE)
-  # Check which hashes changed
+  # Check which hashes have changed
   hashesChanged = getListOfFilesChanged(con,[getHashOfDir(providerDir) for provider,providerDir in PROVIDER_DIR.items()])
-  print(hashesChanged)
+  # Validate dirs whose hashes have changed. If valid move them.
+  for provider,providerDir in PROVIDER_DIR.items():
+    if provider == "INGV" and hashesChanged[0]:
+      if validateProviderDir(providerDir):
+        pass
+      else:
+        sendEmail(
+          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+        )
+    if provider == "ROB" and hashesChanged[0]:
+      if validateProviderDir(providerDir):
+        pass
+      else:
+        sendEmail(
+          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+        )
+    if provider == "SGO" and hashesChanged[0]:
+      if validateProviderDir(providerDir):
+        pass
+      else:
+        sendEmail(
+          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+        )
+    if provider == "UGA" and hashesChanged[0]:
+      if validateProviderDir(providerDir):
+        pass
+      else:
+        sendEmail(
+          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+        )
+    if provider == "WUT" and hashesChanged[0]:
+      if validateProviderDir(providerDir):
+        pass
+      else:
+        sendEmail(
+          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+        )
   
 if __name__ == '__main__':
   main()
