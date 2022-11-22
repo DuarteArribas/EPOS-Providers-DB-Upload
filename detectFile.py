@@ -2,89 +2,36 @@ import sqlite3
 import os
 import smtplib
 import keyring
-import hashlib
+import checksumdir
 from email.mime.text import MIMEText
 from os import listdir
 from os.path import isfile, join
 
 # Global variables
 DATABASE   = "db/detectFiles.db"
-IN_FOLDER  = "in"
-FROM_EMAIL = ""
-TO_EMAIL   = ""
+IN_FOLDER  = "in/providers_sftp/"
+PROVIDERS  = {
+  "INGV" : f"{IN_FOLDER}/providers_ingv",
+  "ROB"  : f"{IN_FOLDER}/providers_rob",
+  "SGO"  : f"{IN_FOLDER}/providers_sgo",
+  "UGA"  : f"{IN_FOLDER}/providers_uga",
+  "WUT"  : f"{IN_FOLDER}/providers_wut"
+}
 
 #Functions
-def getFilenamesAndHashes(dir):
-  """Get filenames and hashes from a directory.
+def getHashOfDir(dir):
+  return checksumdir.dirhash(dir)
 
-  Parameters
-  ----------
-  dir : str
-      The directory to get the files from
-
-  Returns
-  -------
-  tuple
-      (List of filenames in the directory,List of file hashes in the directory)
-  """
-  hashList     = []
-  filenameList = []
-  for f in os.listdir(dir):
-    if(isfile(join(dir,f))):
-      with open(join(dir,f),"r") as file:
-        hashing = hashlib.sha256()
-        hashing.update((f + file.read()).encode('utf-8'))
-        hashList.append(hashing.hexdigest())
-        filenameList.append(f)
-  return (filenameList,hashList)
-
-def removeFromDatabaseIfDeleted(con,cur,fileHashes):
-  """Remove file hashesfrom the database that were deleted.
-
-  Parameters
-  ----------
-  con        : Connection
-      A connection object
-  cur        : Cursor
-      A cursor object
-  fileHashes : lst
-      List of file hashes in the directory
-  """
-  res        = cur.execute("SELECT fileHash FROM previousFiles")
-  hashesInDb = res.fetchall()
-  for dbHash in [hashesInDbNormalized[0] for hashesInDbNormalized in hashesInDb]:
-    if dbHash not in fileHashes:
-      cur.execute("DELETE FROM previousFiles WHERE fileHash = ?",(dbHash,))
+def checkForNewFiles(con,cur,newHashes):
+  hashesChanged = [False,False,False,False,False]
+  for i in range(len(list(PROVIDERS.keys()))):
+    res      = cur.execute(f"SELECT fileHash FROM previousFiles WHERE fileName LIKE '{list(PROVIDERS.keys())[i]}'")
+    fileHash = res.fetchall()
+    if newHashes[i] != fileHash[0][0]:
+      hashesChanged[i] = True
+      cur.execute(f"UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE '{list(PROVIDERS.keys())[i]}'",(newHashes[i],))
       con.commit()
-
-def getNewFiles(con,cur,filenames,fileHashes):
-  """Check if the given files already exist in the database. If not, consider them new.
-
-  Parameters
-  ----------
-  con        : Connection
-      A connection object
-  cur        : Cursor
-      A cursor object
-  filenames  : lst
-      List of filenames in the directory
-  fileHashes : lst
-      List of file hashes in the directory
-
-  Returns
-  -------
-  lst
-      A list of new files
-  """
-  filesNotInDB  = []
-  res           = cur.execute("SELECT fileHash FROM previousFiles")
-  hashesInDb    = res.fetchall()
-  for i in range(len(filenames)):
-    if fileHashes[i] not in [hashesInDbNormalized[0] for hashesInDbNormalized in hashesInDb]:
-      cur.execute("INSERT INTO previousFiles VALUES(?)",(fileHashes[i],))
-      con.commit()
-      filesNotInDB.append(filenames[i])
-  return filesNotInDB
+  return hashesChanged
   
 def emailNewFiles(newFiles):
   """Emails new files to the specified email.
@@ -110,6 +57,9 @@ def main():
   # Open database connection
   con = sqlite3.connect(DATABASE)
   cur = con.cursor()
+  
+  
+  
   # Get filenames and hashes from the specified directory
   files    = getFilenamesAndHashes(IN_FOLDER)
   # Remove from the database files that were deleted
