@@ -90,44 +90,49 @@ def main():
   # Validate dirs whose hashes have changed. If valid move them.
   for provider,providerDir in PROVIDER_DIR.items():
     if provider == "INGV" and hashesChanged[0]:
-      if validateProviderDir(providerDir):
+      validate,validationError = validateProviderDir(providerDir)
+      if validate:
         pass
       else:
         sendEmail(
-          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
         )
     if provider == "ROB" and hashesChanged[0]:
-      if validateProviderDir(providerDir):
+      validate,validationError = validateProviderDir(providerDir)
+      if validate:
         pass
       else:
         sendEmail(
-          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
         )
     if provider == "SGO" and hashesChanged[0]:
-      if validateProviderDir(providerDir):
+      validate,validationError = validateProviderDir(providerDir)
+      if validate:
         pass
       else:
         sendEmail(
-          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
         )
     if provider == "UGA" and hashesChanged[0]:
-      if validateProviderDir(providerDir):
+      validate,validationError = validateProviderDir(providerDir)
+      if validate:
         pass
       else:
         sendEmail(
-          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
         )
     if provider == "WUT" and hashesChanged[0]:
-      if validateProviderDir(providerDir):
+      validate,validationError = validateProviderDir(providerDir)
+      if validate:
         pass
       else:
         sendEmail(
-          f"Validation failure (requires attention) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"Validation concluded that some files in the directory {providerDir} were invalid!"
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
         )
   
 if __name__ == '__main__':
