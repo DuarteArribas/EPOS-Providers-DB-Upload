@@ -17,12 +17,19 @@ def validateProviderDir(providerDir):
   """
   isValidCoor = True
   isValidTS   = True
+  errors = ""
   dirsInProviderDir = os.listdir(providerDir)
   if "Coor" in dirsInProviderDir:
-    isValidCoor = validateCoor(f"{providerDir}/Coor")
+    errTemp = ""
+    isValidCoor,errTemp = validateCoor(f"{providerDir}/Coor")
+    if not isValidCoor:
+      errors += errTemp
   if "TS" in dirsInProviderDir:
-    isValidTS = validateTS(f"{providerDir}/TS")
-  return isValidCoor and isValidTS
+    errTemp = ""
+    isValidTS,errTemp = validateTS(f"{providerDir}/TS")
+    if not isValidTS:
+      errors += " and " + errTemp
+  return isValidCoor and isValidTS,errors
   
 def validateCoor(coorDir):
   """Check if the coordinates dir is valid. Checks if all files are snx files.
@@ -99,6 +106,8 @@ def validateMetadataLine(line):
   elif header == "SamplingPeriod":
     if value not in ["daily","weekly"]:
       return False,f"Wrong SamplingPeriod - '{value}'"
+  else:
+    return False,f"Wrong metadata paremeter - '{header}' of value '{value}'"
   return True,"No problem"
   
 def isFloat(num):
@@ -128,7 +137,7 @@ def validateTS(tsDir):
   bool
     True if the time series dir is valid and False otherwise
   """
-  allFilesAreTs = all([file.split(".")[-1] == "pos" for file in tsFiles])
+  allFilesAreTs = all([file.split(".")[-1] == "pos" for file in os.listdir(tsDir)])
   if not allFilesAreTs:
     return False,"Not all files are pos"
   for file in os.listdir(tsDir):

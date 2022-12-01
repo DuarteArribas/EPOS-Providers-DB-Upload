@@ -17,7 +17,7 @@ PROVIDER_DIR  = {
   "UGA"  : f"{PROVIDERS_DIR}/providers_uga/uploads",
   "WUT"  : f"{PROVIDERS_DIR}/providers_wut/uploads"
 }
-FROM_EMAIL = ""
+FROM_EMAIL = "discoveredtheundoubtablesource@outlook.com"
 TO_EMAIL   = ""
 
 #Functions
