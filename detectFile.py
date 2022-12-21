@@ -122,51 +122,46 @@ def main():
       if validate:
         moveToPublic(providerDir,PUBLIC_DIR["INGV"])
       else:
-        #sendEmail(
-        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-        #  f"{validationError}"
-        #)
-        pass
-    if provider == "ROB" and hashesChanged[0]:
+        sendEmail(
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
+        )
+    if provider == "ROB" and hashesChanged[1]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
-        print("arroz2")
+        moveToPublic(providerDir,PUBLIC_DIR["ROB"])
       else:
-        #sendEmail(
-        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-        #  f"{validationError}"
-        #)
-        pass
-    if provider == "SGO" and hashesChanged[0]:
+        sendEmail(
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
+        )
+    if provider == "SGO" and hashesChanged[2]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
-        print("arroz3")
+        moveToPublic(providerDir,PUBLIC_DIR["SGO"])
       else:
-        #sendEmail(
-        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-        #  f"{validationError}"
-        #)
-        pass
-    if provider == "UGA" and hashesChanged[0]:
+        sendEmail(
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
+        )
+    if provider == "UGA" and hashesChanged[3]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
-        print("arroz4")
+        moveToPublic(providerDir,PUBLIC_DIR["UGA"])
       else:
-        #sendEmail(
-        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-        #  f"{validationError}"
-        #)
-        pass
-    if provider == "WUT" and hashesChanged[0]:
+        sendEmail(
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
+        )
+    if provider == "WUT" and hashesChanged[4]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
-        print("arroz5")
+        moveToPublic(providerDir,PUBLIC_DIR["WUT"])
       else:
-        #sendEmail(
-        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-        #  f"{validationError}"
-        #)
-        pass
+        sendEmail(
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
+        )
   
 if __name__ == '__main__':
   main()
