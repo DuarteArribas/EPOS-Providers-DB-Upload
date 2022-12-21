@@ -64,7 +64,7 @@ def validateSnx(snxFile):
     return True,"No problem"
 
 def validateMetadataLine(line,file):
-  line = " ".join(line.split())
+  line     = " ".join(line.split())
   header   = line.split(" ")[0]
   value    = " ".join(line.split(" ")[1:])
   if header == "ReferenceFrame":
@@ -88,9 +88,9 @@ def validateMetadataLine(line,file):
   elif header == "CutOffAngle":
     if not value.isdigit():
       return False,f"Wrong CutOffAngle format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-  elif header == "OTLModel":
+  elif header == "OTLmodel":
     if value not in ["FES2004","GOT4.10c","FES2014b"]:
-      return False,f"Wrong OTLModel - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+      return False,f"Wrong OTLmodel - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
   elif header == "AntennaModel" or header == "Antennamodel":
     if value not in ["epn_14_1958.atx","igs08_wwww.atx","epn_14.atx"]:
       return False,f"Wrong AntennaModel - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
@@ -151,7 +151,7 @@ def validatePos(posFile):
     lines = f.readlines()
     lines = [line.strip() for line in lines]
     for line in lines[lines.index("Start Field Description") + 1:lines.index("End Field Description")]:
-      validate,validationError = validateMetadataLine(line)
+      validate,validationError = validateMetadataLine(line,posFile)
       if not validate:
         return validate,validationError
     return True,"No problem"
