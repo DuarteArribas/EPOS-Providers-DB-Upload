@@ -101,7 +101,7 @@ def validateMetadataLine(line,file):
     if not validateDate(value):
       return False,f"Wrong CreationDate format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
   elif header == "ReleaseNumber":
-    if not value.isdigit():
+    if not isFloat(value):
       return False,f"Wrong ReleaseNumber format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
   elif header == "SamplingPeriod":
     if value not in ["daily","weekly"]:
