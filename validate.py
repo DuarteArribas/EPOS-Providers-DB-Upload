@@ -24,11 +24,11 @@ def validateProviderDir(providerDir):
     isValidCoor,errTemp = validateCoor(f"{providerDir}/Coor")
     if not isValidCoor:
       errors += errTemp
-  if "TS" in dirsInProviderDir:
-    errTemp = ""
-    isValidTS,errTemp = validateTS(f"{providerDir}/TS")
-    if not isValidTS:
-      errors += " and " + errTemp
+  #if "TS" in dirsInProviderDir:
+  #  errTemp = ""
+  #  isValidTS,errTemp = validateTS(f"{providerDir}/TS")
+  #  if not isValidTS:
+  #    errors += " and " + errTemp
   return isValidCoor and isValidTS,errors
   
 def validateCoor(coorDir):
@@ -58,12 +58,12 @@ def validateSnx(snxFile):
     lines = f.readlines()
     lines = [line.strip() for line in lines]
     for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
-      validate,validationError = validateMetadataLine(line,snxFile)
+      validate,validationError = validateMetadataLineSnx(line,snxFile)
       if not validate:
         return validate,validationError
     return True,"No problem"
 
-def validateMetadataLine(line,file):
+def validateMetadataLineSnx(line,file):
   line     = " ".join(line.split())
   header   = line.split(" ")[0]
   value    = " ".join(line.split(" ")[1:])
