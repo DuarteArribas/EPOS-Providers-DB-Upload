@@ -68,7 +68,7 @@ def validateMetadataLine(line,file):
   header   = line.split(" ")[0]
   value    = " ".join(line.split(" ")[1:])
   if header == "ReferenceFrame":
-    if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU"]:
+    if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
       return False,f"Wrong ReferenceFrame - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
   elif header == "EpochOfFrame":
     if not validateDate(value):
@@ -92,7 +92,7 @@ def validateMetadataLine(line,file):
     if value not in ["FES2004","GOT4.10c","FES2014b"]:
       return False,f"Wrong OTLmodel - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
   elif header == "AntennaModel" or header == "Antennamodel":
-    if value not in ["epn_14_1958.atx","igs08_wwww.atx","epn_14.atx"]:
+    if value not in ["epn_14_1958.atx","igs08_wwww.atx","epn_14.atx","epn_20.atx","igs20.atx"]:
       return False,f"Wrong AntennaModel - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
   elif header == "DOI":
     if not value:

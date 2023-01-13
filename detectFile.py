@@ -29,7 +29,7 @@ PUBLIC_DIR    = {
   "WUT"  : f"{OUT_DIR}/WUT-EUREF"
 }
 FROM_EMAIL = "discoveredtheundoubtablesource@outlook.com"
-TO_EMAIL   = ""
+TO_EMAIL   = "duarte.a.arribas@gmail.com"
 
 #Functions
 def getHashOfDir(dir):
@@ -122,46 +122,51 @@ def main():
       if validate:
         moveToPublic(providerDir,PUBLIC_DIR["INGV"])
       else:
-        sendEmail(
-          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"{validationError}"
-        )
+        #sendEmail(
+        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+        #  f"{validationError}"
+        #)
+        pass
     if provider == "ROB" and hashesChanged[1]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
         moveToPublic(providerDir,PUBLIC_DIR["ROB"])
       else:
-        sendEmail(
-          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"{validationError}"
-        )
+        #sendEmail(
+        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+        #  f"{validationError}"
+        #)
+        pass
     if provider == "SGO" and hashesChanged[2]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
         moveToPublic(providerDir,PUBLIC_DIR["SGO"])
       else:
-        sendEmail(
-          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"{validationError}"
-        )
+        #sendEmail(
+        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+        #  f"{validationError}"
+        #)
+        pass
     if provider == "UGA" and hashesChanged[3]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
         moveToPublic(providerDir,PUBLIC_DIR["UGA"])
       else:
-        sendEmail(
-          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"{validationError}"
-        )
+        #sendEmail(
+        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+        #  f"{validationError}"
+        #)
+        pass
     if provider == "WUT" and hashesChanged[4]:
       validate,validationError = validateProviderDir(providerDir)
       if validate:
         moveToPublic(providerDir,PUBLIC_DIR["WUT"])
       else:
-        sendEmail(
-          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"{validationError}"
-        )
+        #sendEmail(
+        #  f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+        #  f"{validationError}"
+        #)
+        pass
   
 if __name__ == '__main__':
   main()
