@@ -2,6 +2,7 @@ import configparser
 
 class Config:
   """A config tool, which reads from the given configuration file."""
+  
   # == Methods ==
   def __init__(self,configFile):
     """Set the default configuration of the config reading tool.

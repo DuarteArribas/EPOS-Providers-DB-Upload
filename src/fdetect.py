@@ -1,5 +1,19 @@
+import checksumdir
+
 class FileDetect:
+  """Detect file changes since the last time."""
+  
+  # == Methods ==
   def __init__(self,con,providersDir):
+    """Get default parameters.
+
+    Parameters
+    ----------
+    con          : Connection
+      A connection object to the local database
+    providersDir : str
+      The default directory for the providers
+    """
     self.con         = con
     self.providerDir = {
       "INGV" : f"{providersDir}/providers_ingv/uploads",
@@ -9,29 +23,24 @@ class FileDetect:
       "WUT"  : f"{providersDir}/providers_wut/uploads"
     }
   
-  def getListOfFilesChanged(self,newHashes):
+  def getListOfFilesChanged(self):
     """Get the list of files changed.
-
-    Parameters
-    ----------
-    con : Connection
-      An connection to a database
-    newHashes: list
-      A list of the hashes of the 5 providers
 
     Returns
     -------
     list
       A list containing a boolean for each provider, indicating if their hash was changed (True) or not (False)
     """
-    cur = self.con.cursor()
-    hashesChanged = [False,False,False,False,False]
-    for i in range(len(list(self.providerDir.keys()))):
-      res      = cur.execute(f"SELECT fileHash FROM previousFiles WHERE fileName LIKE '{list(self.providerDir.keys())[i]}'")
-      fileHash = res.fetchall()
-      if self._getHashOfDir[i] != fileHash[0][0]:
+    cur            = self.con.cursor()
+    providerList   = list(self.providerDir.keys())
+    providerHashes = [self._getHashOfDir(providerDir) for provider,providerDir in self.providerDir.items()]
+    hashesChanged  = [False,False,False,False,False]
+    for i in range(len(providerList)):
+      res          = cur.execute(f"SELECT fileHash FROM previousFiles WHERE fileName LIKE '{providerList[i]}'")
+      previousHash = res.fetchall()
+      if providerHashes[i] != previousHash[0][0]:
         hashesChanged[i] = True
-        cur.execute(f"UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE '{list(self.providerDir.keys())[i]}'",(self._getHashOfDir[i],))
+        cur.execute(f"UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE '{providerList[i]}'",(providerHashes[i],))
         self.con.commit()
     return hashesChanged
   

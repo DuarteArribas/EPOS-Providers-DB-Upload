@@ -1,5 +1,5 @@
 import sqlite3
-import checksumdir
+
 import keyring
 import smtplib
 import glob
@@ -9,7 +9,12 @@ from email.mime.text import MIMEText
 from os import listdir
 from datetime import datetime
 from validate import validateProviderDir
+
+
+
+
 from src.utils.config import *
+from src.fdetect      import *
 
 # Global variables
 CONFIG_FILE   = "config/appconf.cfg"
@@ -73,13 +78,20 @@ def main():
   cfg = Config(CONFIG_FILE)
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("DATABASE_FILE"))
+  # Get list of the hashes changed of each provider
+  fd  = FileDetect(con,cfg.getAppConfig("PROVIDERS_DIR"))
+  hashesChanged = fd.getListOfFilesChanged()
   
+  
+  
+  
+  print(hashesChanged)
   
   
   
   
   ## Check which hashes have changed
-  #hashesChanged = getListOfFilesChanged(con,[getHashOfDir(providerDir) for provider,providerDir in PROVIDER_DIR.items()])
+  #
   ## Validate dirs whose hashes have changed. If valid move them.
   #for provider,providerDir in PROVIDER_DIR.items():
   #  if provider == "INGV" and hashesChanged[0]:
