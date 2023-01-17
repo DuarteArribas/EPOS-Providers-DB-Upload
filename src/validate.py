@@ -1,5 +1,4 @@
 import os
-from os import listdir
 import datetime
 
 class Validator:
@@ -49,7 +48,7 @@ class Validator:
     Parameters
     ----------
     coorDir : str
-      The coordinates file to validate.
+      The coordinates dir to validate.
 
     Returns
     -------
@@ -64,7 +63,7 @@ class Validator:
       validate,validationError = self._validateSnx(os.path.join(coorDir,file))
       if not validate:
         return validate,validationError
-    return True,"No problem"
+    return True,"No problem."
 
   def _validateSnx(self,snxFile):
     """Validate a specific snx file.
@@ -87,9 +86,9 @@ class Validator:
         validate,validationError = self._validateMetadataLineSnx(line,snxFile)
         if not validate:
           return validate,validationError
-      return True,"No problem"
+      return True,"No problem."
 
-  def validateMetadataLineSnx(line,file):
+  def validateMetadataLineSnx(self,line,file):
     """Validate a specific metadata line from an snx file.
 
     Parameters
@@ -105,14 +104,14 @@ class Validator:
       True if the snx metadata line is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    line     = " ".join(line.split())
-    header   = line.split(" ")[0]
-    value    = " ".join(line.split(" ")[1:])
+    line   = " ".join(line.split())
+    header = line.split(" ")[0]
+    value  = " ".join(line.split(" ")[1:])
     if header == "ReferenceFrame":
       if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
         return False,f"Wrong ReferenceFrame - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "EpochOfFrame":
-      if not validateDate(value):
+      if not self._validateDate(value):
         return False,f"Wrong EpochOfFrame format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "CovarianceMatrix":
       if value not in ["full","block-diagonal","diagonal"]:
@@ -124,7 +123,7 @@ class Validator:
       if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
         return False,f"Wrong Software - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "SINEX_version":
-      if not isFloat(value):
+      if not self._isFloat(value):
         return False,f"Wrong SINEX_version format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "CutOffAngle":
       if not value.isdigit():
@@ -139,55 +138,92 @@ class Validator:
       if not value:
         return False,f"Wrong DOI format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "CreationDate":
-      if not validateDate(value):
+      if not self._validateDate(value):
         return False,f"Wrong CreationDate format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "ReleaseNumber":
-      if not isFloat(value):
+      if not self._isFloat(value):
         return False,f"Wrong ReleaseNumber format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "SamplingPeriod":
       if value not in ["daily","weekly"]:
         return False,f"Wrong SamplingPeriod - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     else:
       return False,f"Wrong metadata paremeter - '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    return True,"No problem"
+    return True,"No problem."
     
-  def isFloat(num):
+  def _isFloat(self,num):
+    """Check if a string is a float.
+
+    Parameters
+    ----------
+    num : str
+      The string to check
+
+    Returns
+    -------
+    bool
+      True if the string is a float or False if not
+    """
     try:
       float(num)
       return True
     except ValueError:
       return False
 
-  def validateDate(date):
+  def _validateDate(self,date):
+    """Validate a data according to the format `dd/mm/yyyy hh:mm:ss`.
+
+    Parameters
+    ----------
+    date : str
+      The date to validate
+
+    Returns
+    -------
+    bool
+      True if the date is according to the format or False otherwise
+    """
     try:
       datetime.datetime.strptime(date,"%d/%m/%Y %H:%M:%S")
       return True
     except ValueError:
       return False  
     
-  def validateTS(tsDir):
-    """Check if the time series dir is valid. Checks if all files are pos files.
+  def validateTS(self,tsDir):
+    """Check if the time series dir is valid. Checks if all files are pos files and validate each pos file.
 
     Parameters
     ----------
-    tsFiles : list
-      All files from the time series dir
+    tsDir : str
+      The time series dir to validate.
 
     Returns
     -------
-    bool
+    bool,str
       True if the time series dir is valid and False otherwise
+      Any errors that occurred formatted as a string
     """
     allFilesAreTs = all([file.split(".")[-1] == "pos" for file in os.listdir(tsDir)])
     if not allFilesAreTs:
-      return False,"Not all files are pos"
+      return False,"Not all files are pos."
     for file in os.listdir(tsDir):
-      validate,validationError = validatePos(os.path.join(tsDir,file))
+      validate,validationError = self._validatePos(os.path.join(tsDir,file))
       if not validate:
         return validate,validationError
-    return True,"No problem"
+    return True,"No problem."
 
-  def validatePos(posFile):
+  def _validatePos(self,posFile):
+    """TODO: Fix
+
+    Parameters
+    ----------
+    posFile : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     with open(posFile,"r") as f:
       lines = f.readlines()
       lines = [line.strip() for line in lines]
