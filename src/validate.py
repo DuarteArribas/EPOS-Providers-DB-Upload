@@ -88,7 +88,7 @@ class Validator:
           return validate,validationError
       return True,"No problem."
 
-  def validateMetadataLineSnx(self,line,file):
+  def _validateMetadataLineSnx(self,line,file):
     """Validate a specific metadata line from an snx file.
 
     Parameters
