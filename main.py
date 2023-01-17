@@ -1,26 +1,11 @@
 import sqlite3
-
-import keyring
-import smtplib
-import glob
-import os
-import shutil
-from email.mime.text import MIMEText
-from os import listdir
-from datetime import datetime
-from validate import validateProviderDir
-
-
-
-
 from src.utils.config import *
-from src.fdetect      import *
+from src.fileHandler  import *
 
 # Global variables
 CONFIG_FILE = "config/appconf.cfg"
 
-DATABASE      = "db/detectFiles.db"
-PROVIDERS_DIR = "in/providers_sftp/"
+
 OUT_DIR       = "out/public/"
 
 PUBLIC_DIR    = {
@@ -36,41 +21,7 @@ TO_EMAIL   = "duarte.a.arribas@gmail.com"
 #Functions
 
 
-def sendEmail(subject,body):
-  """Emails new files to the specified email.
 
-  Parameters
-  ----------
-  newFiles : str
-      the contents of the new files
-  """
-  server = smtplib.SMTP("smtp.gmail.com",587)
-  server.connect("smtp.gmail.com",587)
-  server.ehlo()
-  server.starttls()
-  server.ehlo()
-  server.login(FROM_EMAIL,keyring.get_password("system","EMAIL_TO_SEND"))
-  msg = MIMEText(body)
-  msg["Subject"] = subject
-  server.sendmail(FROM_EMAIL,TO_EMAIL,msg.as_string())
-  server.quit()
-
-def moveToPublic(providerDir,publicDir):
-  files    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
-  version  = ""
-  coorOrTs = ""
-  for file in files:
-    with open(file,"r") as f:
-      lines = f.readlines()
-      lines = [line.strip() for line in lines]
-      for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
-        if line.split(" ")[0] == "ReleaseNumber":
-          version = "".join(line.split(" ")[1:])
-          break
-    coorOrTs = "TS" if "TS" in file else "Coor" 
-    if not os.path.exists(f"{publicDir}/{version}/{coorOrTs}"):
-      os.makedirs(f"{publicDir}/{version}/{coorOrTs}")
-    shutil.move(file,f"{publicDir}/{version}/{coorOrTs}")
 
 # Main function
 def main():
@@ -79,7 +30,7 @@ def main():
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("DATABASE_FILE"))
   # Get list of the hashes changed of each provider
-  fd  = FileDetect(con,cfg.getAppConfig("PROVIDERS_DIR"))
+  fd  = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"))
   hashesChanged = fd.getListOfFilesChanged()
   
   
