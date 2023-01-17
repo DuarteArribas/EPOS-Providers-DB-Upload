@@ -93,6 +93,15 @@ class FileHandler:
     server.quit()
 
   def moveToPublic(self,providerDir,publicDir):
+    """TODO: FIX
+
+    Parameters
+    ----------
+    providerDir : _type_
+        _description_
+    publicDir : _type_
+        _description_
+    """
     files    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
     version  = ""
     coorOrTs = ""

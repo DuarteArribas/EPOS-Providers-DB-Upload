@@ -1,100 +1,55 @@
 import sqlite3
 from src.utils.config import *
 from src.fileHandler  import *
+from src.validate     import *
 
 # Global variables
 CONFIG_FILE = "config/appconf.cfg"
 
-
-OUT_DIR       = "out/public/"
-
-PUBLIC_DIR    = {
-  "INGV" : f"{OUT_DIR}/INGV",
-  "ROB"  : f"{OUT_DIR}/ROB-EUREF",
-  "SGO"  : f"{OUT_DIR}/SGO-EPND",
-  "UGA"  : f"{OUT_DIR}/UGA-CNRS",
-  "WUT"  : f"{OUT_DIR}/WUT-EUREF"
-}
-FROM_EMAIL = "duarte.arribas@segal.ubi.pt"
-TO_EMAIL   = "duarte.a.arribas@gmail.com"
-
 #Functions
-
-
-
-
+def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged):
+  for i in range(5):
+    if hashesChanged[i]:
+      provider    = list(providerDirs.keys())[i]
+      providerDir = list(providerDirs.items())[i][1]
+      publicDir   = list(publicDirs.items())[i][1]
+      validator   = Validator(providerDir)
+      validate,validationError = validator.validateProviderDir()
+      if validate:
+        fileHandler.moveToPublic(providerDir,publicDirs[publicDir])
+      else:
+        fileHandler.sendEmail(
+          f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+          f"{validationError}"
+        )
+        
 # Main function
 def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
+  # In and Out folders
+  providerDirs = {
+    "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",
+    "ROB"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_rob/uploads",
+    "SGO"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_sgo/uploads",
+    "UGA"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_uga/uploads",
+    "WUT"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_wut/uploads"
+  }
+
+  publicDir = {
+    "INGV" : f"{cfg.getAppConfig('PUBLIC_DIR')}/INGV",
+    "ROB"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/ROB-EUREF",
+    "SGO"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/SGO-EPND",
+    "UGA"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/UGA-CNRS",
+    "WUT"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/WUT-EUREF"
+  }
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("DATABASE_FILE"))
   # Get list of the hashes changed of each provider
-  fd  = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"))
-  hashesChanged = fd.getListOfFilesChanged()
-  
-  
-  
-  
-  print(hashesChanged)
-  
-  
-  
-  
-  ## Check which hashes have changed
-  #
-  ## Validate dirs whose hashes have changed. If valid move them.
-  #for provider,providerDir in PROVIDER_DIR.items():
-  #  if provider == "INGV" and hashesChanged[0]:
-  #    validate,validationError = validateProviderDir(providerDir)
-  #    if validate:
-  #      moveToPublic(providerDir,PUBLIC_DIR["INGV"])
-  #    else:
-  #      sendEmail(
-  #        f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-  #        f"{validationError}"
-  #      )
-  #      pass
-  #  if provider == "ROB" and hashesChanged[1]:
-  #    validate,validationError = validateProviderDir(providerDir)
-  #    if validate:
-  #      moveToPublic(providerDir,PUBLIC_DIR["ROB"])
-  #    else:
-  #      sendEmail(
-  #        f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-  #        f"{validationError}"
-  #      )
-  #      pass
-  #  if provider == "SGO" and hashesChanged[2]:
-  #    validate,validationError = validateProviderDir(providerDir)
-  #    if validate:
-  #      moveToPublic(providerDir,PUBLIC_DIR["SGO"])
-  #    else:
-  #      sendEmail(
-  #        f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-  #        f"{validationError}"
-  #      )
-  #      pass
-  #  if provider == "UGA" and hashesChanged[3]:
-  #    validate,validationError = validateProviderDir(providerDir)
-  #    if validate:
-  #      moveToPublic(providerDir,PUBLIC_DIR["UGA"])
-  #    else:
-  #      sendEmail(
-  #        f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-  #        f"{validationError}"
-  #      )
-  #      pass
-  #  if provider == "WUT" and hashesChanged[4]:
-  #    validate,validationError = validateProviderDir(providerDir)
-  #    if validate:
-  #      moveToPublic(providerDir,PUBLIC_DIR["WUT"])
-  #    else:
-  #      sendEmail(
-  #        f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-  #        f"{validationError}"
-  #      )
-  #      pass
+  fileHandler   = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"),cfg.getAppConfig("FROM_EMAIL"),cfg.getAppConfig("TO_EMAIL"))
+  hashesChanged = fileHandler.getListOfFilesChanged()
+  # aaaa
+  handleProviders(fileHandler,providerDirs,publicDir,hashesChanged)
   
 if __name__ == '__main__':
   main()
