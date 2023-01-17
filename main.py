@@ -16,7 +16,7 @@ def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged):
       validator   = Validator(providerDir)
       validate,validationError = validator.validateProviderDir()
       if validate:
-        fileHandler.moveToPublic(providerDir,publicDirs[publicDir])
+        fileHandler.moveToPublic(providerDir,publicDir)
       else:
         fileHandler.sendEmail(
           f"Validation failure (requires attention in {provider}) | {datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
@@ -48,7 +48,7 @@ def main():
   # Get list of the hashes changed of each provider
   fileHandler   = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"),cfg.getAppConfig("FROM_EMAIL"),cfg.getAppConfig("TO_EMAIL"))
   hashesChanged = fileHandler.getListOfFilesChanged()
-  # aaaa
+  # Move the files to the corresponding public folder or email the providers if an error occurred
   handleProviders(fileHandler,providerDirs,publicDir,hashesChanged)
   
 if __name__ == '__main__':
