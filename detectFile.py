@@ -28,7 +28,7 @@ PUBLIC_DIR    = {
   "UGA"  : f"{OUT_DIR}/UGA-CNRS",
   "WUT"  : f"{OUT_DIR}/WUT-EUREF"
 }
-FROM_EMAIL = "discoveredtheundoubtablesource@outlook.com"
+FROM_EMAIL = "duarte.arribas@segal.ubi.pt"
 TO_EMAIL   = "duarte.a.arribas@gmail.com"
 
 #Functions
@@ -81,8 +81,8 @@ def sendEmail(subject,body):
   newFiles : str
       the contents of the new files
   """
-  server = smtplib.SMTP("smtp-mail.outlook.com",587)
-  server.connect("smtp-mail.outlook.com",587)
+  server = smtplib.SMTP("smtp.gmail.com",587)
+  server.connect("smtp.gmail.com",587)
   server.ehlo()
   server.starttls()
   server.ehlo()
