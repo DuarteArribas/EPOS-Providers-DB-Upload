@@ -17,7 +17,7 @@ from src.utils.config import *
 from src.fdetect      import *
 
 # Global variables
-CONFIG_FILE   = "config/appconf.cfg"
+CONFIG_FILE = "config/appconf.cfg"
 
 DATABASE      = "db/detectFiles.db"
 PROVIDERS_DIR = "in/providers_sftp/"
