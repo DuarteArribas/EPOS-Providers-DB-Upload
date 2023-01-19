@@ -16,8 +16,7 @@ def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged):
       validator   = Validator(providerDir)
       validate,validationError = validator.validateProviderDir()
       if validate:
-        pass
-        #fileHandler.moveToPublic(providerDir,publicDir)
+        fileHandler.moveToPublic(providerDir,publicDir)
       else:
         fileHandler.sendEmail(
           f"Validation failure (requires attention in {provider}) | {datetime.datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
