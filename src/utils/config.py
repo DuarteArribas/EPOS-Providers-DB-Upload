@@ -30,3 +30,16 @@ class Config:
       The corresponding configuration
     """
     return self.config.get("APP",key)
+  
+  def getEmailConfig(self,key):
+    """Get a config from the EMAIL section on the config file.
+    Parameters
+    ----------
+    key : str
+      The key corresponding to the wanted configuration
+    Returns
+    ----------
+    str
+      The corresponding configuration
+    """
+    return self.config.get("EMAIL",key)
