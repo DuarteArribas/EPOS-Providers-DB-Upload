@@ -1,7 +1,6 @@
 from email.mime.text import MIMEText
 import checksumdir
 import smtplib
-import keyring
 import shutil
 import glob
 import os
@@ -10,7 +9,7 @@ class FileHandler:
   """Handle provider files."""
   
   # == Methods ==
-  def __init__(self,con,providersDir,fromEmail,toEmail):
+  def __init__(self,con,providersDir,fromEmail,toEmail,pwdPath):
     """Get default parameters.
 
     Parameters
@@ -23,6 +22,8 @@ class FileHandler:
       The email address to send the email from
     toEmail      : str
       The email address to send the email to
+    pwdPath      : str
+      The file containing the password of the from email
     """
     self.con         = con
     self.providerDir = {
@@ -34,6 +35,7 @@ class FileHandler:
     }
     self.fromEmail   = fromEmail
     self.toEmail     = toEmail
+    self.pwdPath     = pwdPath
   
   def getListOfFilesChanged(self):
     """Get the list of files changed.
@@ -85,13 +87,26 @@ class FileHandler:
     server.connect("smtp.gmail.com",587)
     server.ehlo()
     server.starttls()
-    server.ehlo()
-    server.login(self.fromEmail,keyring.get_password("system","EMAIL_TO_SEND"))
+    server.ehlo()    
+    server.login(self.fromEmail,self._getPwdFromFile())
     msg = MIMEText(body)
     msg["Subject"] = subject
     server.sendmail(self.fromEmail,self.toEmail,msg.as_string())
     server.quit()
+  
+  def _getPwdFromFile(self):
+    """Read the password from a file.
 
+    Returns
+    -------
+    str
+      The read password from the file
+    """
+    with open(self.pwdPath,"r") as pPath:
+      lines = pPath.readlines()
+      pwd   = lines[0]
+      return pwd
+      
   def moveToPublic(self,providerDir,publicDir):
     """TODO: FIX
 

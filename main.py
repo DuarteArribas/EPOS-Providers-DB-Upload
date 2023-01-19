@@ -47,7 +47,7 @@ def main():
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("DATABASE_FILE"))
   # Get list of the hashes changed of each provider
-  fileHandler   = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"),cfg.getAppConfig("FROM_EMAIL"),cfg.getAppConfig("TO_EMAIL"))
+  fileHandler   = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"),cfg.getEmailConfig("FROM_EMAIL"),cfg.getEmailConfig("TO_EMAIL"))
   hashesChanged = fileHandler.getListOfFilesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
   handleProviders(fileHandler,providerDirs,publicDir,hashesChanged)
