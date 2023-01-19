@@ -16,7 +16,7 @@ class Validator:
     self.providerDir = providerDir
 
   def validateProviderDir(self):
-    """Check if the provider dir is valid. Checks if its coordinates, time series and velocities dir (if it has them) are valid.
+    """Check if the provider dir is valid. Checks if its coordinates and time series dirs (if it has them) are valid.
 
     Returns
     -------
@@ -35,11 +35,11 @@ class Validator:
       if not isValidCoor:
         errors += errTemp + "\n"
     # Validate TS
-    #if "TS" in dirsInProviderDir:
-    #  errTemp = ""
-    #  isValidTS,errTemp = validateTS(f"{providerDir}/TS")
-    #  if not isValidTS:
-    #    errors += " and " + errTemp
+    if "TS" in dirsInProviderDir:
+      errTemp = ""
+      isValidTS,errTemp = self._validateTS(f"{self.providerDir}/TS")
+      if not isValidTS:
+        errors += errTemp + "\n"
     return isValidCoor and isValidTS,errors
     
   def _validateCoor(self,coorDir):
@@ -188,7 +188,7 @@ class Validator:
     except ValueError:
       return False  
     
-  def validateTS(self,tsDir):
+  def _validateTS(self,tsDir):
     """Check if the time series dir is valid. Checks if all files are pos files and validate each pos file.
 
     Parameters
