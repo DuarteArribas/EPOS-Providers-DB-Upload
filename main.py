@@ -36,7 +36,6 @@ def main():
     "UGA"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_uga/uploads",
     "WUT"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_wut/uploads"
   }
-
   publicDir = {
     "INGV" : f"{cfg.getAppConfig('PUBLIC_DIR')}/INGV",
     "ROB"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/ROB-EUREF",
@@ -47,7 +46,7 @@ def main():
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("DATABASE_FILE"))
   # Get list of the hashes changed of each provider
-  fileHandler   = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"),cfg.getEmailConfig("FROM_EMAIL"),cfg.getEmailConfig("TO_EMAIL"))
+  fileHandler   = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"),cfg.getEmailConfig("FROM_EMAIL"),cfg.getEmailConfig("TO_EMAIL"),cfg.getEmailConfig("FROM_EMAIL_PWD_FILE"))
   hashesChanged = fileHandler.getListOfFilesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
   handleProviders(fileHandler,providerDirs,publicDir,hashesChanged)
