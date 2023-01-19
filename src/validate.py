@@ -76,7 +76,7 @@ class Validator:
     Returns
     -------
     bool,str
-      True if the snx file dir is valid and False otherwise
+      True if the snx file is valid and False otherwise
       Any errors that occurred formatted as a string
     """
     with open(snxFile,"r") as f:
@@ -89,7 +89,7 @@ class Validator:
       return True,"No problem."
 
   def _validateMetadataLineSnx(self,line,file):
-    """Validate a specific metadata line from an snx file.
+    """Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5)
 
     Parameters
     ----------
@@ -202,33 +202,78 @@ class Validator:
       True if the time series dir is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    allFilesAreTs = all([file.split(".")[-1] == "pos" for file in os.listdir(tsDir)])
-    if not allFilesAreTs:
-      return False,"Not all files are pos."
+    allFilesArePbo = all([file.split(".")[-1] == "pos" for file in os.listdir(tsDir)])
+    if not allFilesArePbo:
+      return False,"Not all files are PBO."
     for file in os.listdir(tsDir):
-      validate,validationError = self._validatePos(os.path.join(tsDir,file))
+      validate,validationError = self._validatePbo(os.path.join(tsDir,file))
       if not validate:
         return validate,validationError
     return True,"No problem."
 
-  def _validatePos(self,posFile):
-    """TODO: Fix
+  def _validatePbo(self,pboFile):
+    """Validate a specific pbo file.
 
     Parameters
     ----------
-    posFile : _type_
-        _description_
+    pboFile : str
+      The pbo file to validate
 
     Returns
     -------
-    _type_
-        _description_
+    bool,str
+      True if the pbo file is valid and False otherwise
+      Any errors that occurred formatted as a string
     """
-    with open(posFile,"r") as f:
+    with open(pboFile,"r") as f:
       lines = f.readlines()
       lines = [line.strip() for line in lines]
-      for line in lines[lines.index("Start Field Description") + 1:lines.index("End Field Description")]:
-        validate,validationError = validateMetadataLine(line,posFile)
+      for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
+        validate,validationError = self._validateMetadataLinePbo(line,pboFile)
         if not validate:
           return validate,validationError
       return True,"No problem"
+  
+  def _validateMetadataLinePbo(self,line,file):
+    """Validate a specific metadata line from a pbo file (according to 20220906UploadGuidelines_v2.5)
+
+    Parameters
+    ----------
+    line : str
+      The specific pbo metadata line to validate
+    file : str
+      The file to which the metadata line belongs to
+
+    Returns
+    -------
+    bool,str
+      True if the pbo metadata line is valid and False otherwise
+      Any errors that occurred formatted as a string
+    """
+    line   = " ".join(line.split())
+    header = line.split(" ")[0]
+    value  = " ".join(line.split(" ")[1:])
+    if header == "ReferenceFrame":
+      if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
+        return False,f"Wrong ReferenceFrame - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    elif header == "AnalysisCentre" or header == "CombinationCentre":
+      if value not in ["UGA","INGV","WUT-EUREF","BFHK","ROB-EUREF"]:
+        return False,f"Wrong AnalysisCentre/CombinationCentre - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    elif header == "Software":
+      if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
+        return False,f"Wrong Software - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    elif header == "Method_url":
+      if not value:
+        return False,f"Wrong Method url format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    elif header == "DOI":
+      if not value:
+        return False,f"Wrong DOI format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    elif header == "ReleaseNumber":
+      if not self._isFloat(value):
+        return False,f"Wrong ReleaseNumber format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    elif header == "SamplingPeriod":
+      if value not in ["daily","weekly"]:
+        return False,f"Wrong SamplingPeriod - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    else:
+      return False,f"Wrong metadata paremeter - '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+    return True,"No problem."
