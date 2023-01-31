@@ -162,7 +162,7 @@ class Validator:
       
   def _validateSnxFilenameDayOfYear(self,snxFile,snxFilename):
     numOfDaysInYear = 366 if self._isLeapYear(datetime.now().year) else 365
-    validation = snxFilename[15:18] in [str(i) for i in range(1,numOfDaysInYear + 1)]
+    validation = snxFilename[15:18] in [str(i).zfill(3) for i in range(1,numOfDaysInYear + 1)]
     if not validation:
       return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx day of the year {snxFilename[15:18]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
     return validation,"No problem"
