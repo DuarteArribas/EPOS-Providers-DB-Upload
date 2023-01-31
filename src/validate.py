@@ -4,6 +4,9 @@ import datetime
 class Validator:
   """Validate provider files before insertion to database."""
   
+  # == Class variables ==
+  FILENAME_CONVENTION_ERROR_MSG = "\n\n Please Make sure that the filename conforms to the long filename specification of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."
+  
   # == Methods ==
   def __init__(self,providerDir):
     """Get default parameters.
@@ -79,6 +82,9 @@ class Validator:
       True if the snx file is valid and False otherwise
       Any errors that occurred formatted as a string
     """
+    validate,validationError = self._validateSnxLongFilename(snxFile)
+    if not validate:
+      return validate,validationError
     with open(snxFile,"r") as f:
       lines = f.readlines()
       lines = [line.strip() for line in lines]
@@ -87,7 +93,125 @@ class Validator:
         if not validate:
           return validate,validationError
       return True,"No problem."
-
+  
+  def _validateSnxLongFilename(self,snxFile):
+    snxFilename    = snxFile.split("/")[-1]
+    if len(snxFilename) != 41:
+      return False,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Incorrect length {len(snxFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    isValidAbbr,errorMsg              = self._validateSnxFilenameAbbr(snxFile,snxFilename)
+    if not isValidAbbr:
+      return isValidAbbr,errorMsg
+    isValidVersion,errorMsg           = self._validateSnxFilenameVersion(snxFile,snxFilename)
+    if not isValidVersion:
+      return isValidVersion,errorMsg
+    isValidConstant,errorMsg          = self._validateSnxFilenameConstant(snxFile,snxFilename)
+    if not isValidConstant:
+      return isValidConstant,errorMsg
+    isValidYear,errorMsg              = self._validateSnxFilenameYear(snxFile,snxFilename)
+    if not isValidYear:
+      return isValidYear,errorMsg
+    isValidDay,errorMsg               = self._validateSnxFilenameDayOfYear(snxFile,snxFilename)
+    if not isValidDay:
+      return isValidDay,errorMsg
+    isValidConstant2,errorMsg         = self._validateSnxFilenameConstant2(snxFile,snxFilename)
+    if not isValidConstant2:
+      return isValidConstant2,errorMsg
+    isValidSamplePeriod,errorMsg      = self._validateSnxFilenameSamplePeriod(snxFile,snxFilename)
+    if not isValidSamplePeriod:
+      return isValidSamplePeriod,errorMsg
+    isValidConstant3,errorMsg         = self._validateSnxFilenameConstant3(snxFile,snxFilename)
+    if not isValidConstant3:
+      return isValidConstant3,errorMsg
+    isValidSamplePeriod2,errorMsg     = self._validateSnxFilenameSamplePeriod2(snxFile,snxFilename)
+    if not isValidSamplePeriod2:
+      return isValidSamplePeriod2,errorMsg
+    isValidConstant4,errorMsg         = self._validateSnxFilenameConstant4(snxFile,snxFilename)
+    if not isValidConstant4:
+      return isValidConstant4,errorMsg
+    isValidExtension,errorMsg         = self._validateSnxFilenameExtension(snxFile,snxFilename)
+    if not isValidExtension:
+      return isValidExtension,errorMsg
+    isValidCompressExtension,errorMsg = self._validateSnxFilenameCompressExtension(snxFile,snxFilename)
+    if not isValidCompressExtension:
+      return isValidCompressExtension,errorMsg
+    return True,"No problem"
+  
+  def _validateSnxFilenameAbbr(self,snxFile,snxFilename):
+    validation = snxFilename[:3] in ["EPO","ING","UGA","EUR","EPN"]
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong abbreviation {snxFilename[:3]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameVersion(self,snxFile,snxFilename):
+    validation = snxFilename[3:4] in [str(i) for i in range(10)]
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong version {snxFilename[3:4]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameConstant(self,snxFile,snxFilename):
+    validation = snxFilename[4:11] == "OPSSNX_"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant {snxFilename[4:11]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+      
+  def _validateSnxFilenameYear(self,snxFile,snxFilename):
+    validation = snxFilename[11:15] in [str(i) for i in range(1994,datetime.now().year + 1)]
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file year {snxFilename[11:15]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+      
+  def _validateSnxFilenameDayOfYear(self,snxFile,snxFilename):
+    numOfDaysInYear = 366 if self._isLeapYear(datetime.now().year) else 365
+    validation = snxFilename[15:18] in [str(i) for i in range(1,numOfDaysInYear + 1)]
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx day of the year {snxFilename[15:18]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _isLeapYear(self,year):
+    return year % 4 == 0 and year % 100 != 0 or year % 400 == 0
+  
+  def _validateSnxFilenameConstant2(self,snxFile,snxFilename):
+    validation = snxFilename[18:23] == "0000_"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 2 - {snxFilename[4:11]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameSamplePeriod(self,snxFile,snxFilename):
+    validation = snxFilename[23:25] == "01" or snxFilename[23:25] == "07"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file sample period - {snxFilename[23:25]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameConstant3(self,snxFile,snxFilename):
+    validation = snxFilename[25:27] == "D_"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 3 - {snxFilename[25:27]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameSamplePeriod2(self,snxFile,snxFilename):
+    validation = snxFilename[27:29] == "01" or snxFilename[27:29] == "07"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file sample period 2 - {snxFilename[27:29]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameConstant4(self,snxFile,snxFilename):
+    validation = snxFilename[29:34] == "D_SOL"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 4 - {snxFilename[29:34]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameExtension(self,snxFile,snxFilename):
+    validation = snxFilename[34] == "." and snxFilename[35:38].lower() == "snx"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file extension - {snxFilename[34:38]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
+  def _validateSnxFilenameCompressExtension(self,snxFile,snxFilename):
+    validation = snxFilename[38] == "." and snxFilename[39:41].lower() == "gz"
+    if not validation:
+      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file compress extension - {snxFilename[38:41]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    return validation,"No problem"
+  
   def _validateMetadataLineSnx(self,line,file):
     """Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5)
 
