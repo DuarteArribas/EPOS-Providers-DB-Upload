@@ -1,5 +1,6 @@
 import os
 import datetime
+import requests
 
 class Validator:
   """Validate provider files before insertion to database."""
@@ -387,8 +388,8 @@ class Validator:
       if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
         return False,f"Wrong Software - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
     elif header == "Method_url":
-      if not value:
-        return False,f"Wrong Method url format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+      if requests.get(value).status_code != 200:
+        return False,f"Url '{value}' in file '{file.split('/')[-1]}', with path: '{file}' does not exist."
     elif header == "DOI":
       if not value:
         return False,f"Wrong DOI format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
