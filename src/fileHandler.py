@@ -2,6 +2,7 @@ from email.mime.text import MIMEText
 import checksumdir
 import smtplib
 import shutil
+import gzip
 import glob
 import os
 
@@ -122,7 +123,7 @@ class FileHandler:
     coorOrTs = ""
     for file in files:
       coorOrTs = file.split("/")[-2] == "TS"
-      with open(file,"r") as f:
+      with gzip.open(file,"r") as f:
         lines = f.readlines()
         lines = [line.strip() for line in lines]
         if coorOrTs == "Coor":

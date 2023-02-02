@@ -1,4 +1,5 @@
 import os
+import gzip
 import datetime
 import requests
 
@@ -60,7 +61,7 @@ class Validator:
       True if the coordinates dir is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    allFilesAreSnx = all([file.split(".")[-1] == "snx" for file in os.listdir(coorDir)])
+    allFilesAreSnx = all([file.split(".")[-2] == "snx" for file in os.listdir(coorDir)])
     if not allFilesAreSnx:
       return False,"Not all files are snx."
     for file in os.listdir(coorDir):
@@ -86,7 +87,7 @@ class Validator:
     validate,validationError = self._validateSnxLongFilename(snxFile)
     if not validate:
       return validate,validationError
-    with open(snxFile,"r") as f:
+    with gzip.open(snxFile,"r") as f:
       lines = f.readlines()
       lines = [line.strip() for line in lines]
       for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
@@ -327,7 +328,7 @@ class Validator:
       True if the time series dir is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    allFilesArePbo = all([file.split(".")[-1] == "pos" for file in os.listdir(tsDir)])
+    allFilesArePbo = all([file.split(".")[-2] == "pos" for file in os.listdir(tsDir)])
     if not allFilesArePbo:
       return False,"Not all files are PBO."
     for file in os.listdir(tsDir):
@@ -350,7 +351,7 @@ class Validator:
       True if the pbo file is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    with open(pboFile,"r") as f:
+    with gzip.open(pboFile,"r") as f:
       lines = f.readlines()
       lines = [line.strip() for line in lines]
       for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
