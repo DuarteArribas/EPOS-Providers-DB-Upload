@@ -9,19 +9,20 @@ CONFIG_FILE = "config/appconf.cfg"
 #Functions
 def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged):
   for i in range(5):
-    if hashesChanged[i]:
-      provider    = list(providerDirs.keys())[i]
-      providerDir = list(providerDirs.items())[i][1]
-      publicDir   = list(publicDirs.items())[i][1]
-      validator   = Validator(providerDir)
-      validate,validationError = validator.validateProviderDir()
-      if validate:
-        fileHandler.moveToPublic(providerDir,publicDir)
-      else:
-        fileHandler.sendEmail(
-          f"Validation failure (requires attention in {provider}) | {datetime.datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-          f"{validationError}"
-        )
+    if not hashesChanged[i]:
+      continue
+    provider    = list(providerDirs.keys())[i]
+    providerDir = list(providerDirs.items())[i][1]
+    publicDir   = list(publicDirs.items())[i][1]
+    validator   = Validator(providerDir)
+    validate,validationError = validator.validateProviderDir()
+    if validate:
+      fileHandler.moveToPublic(providerDir,publicDir)
+    else:
+      fileHandler.sendEmail(
+        f"Validation failure (requires attention in {provider}) | {datetime.datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
+        f"{validationError}"
+      )
         
 # Main function
 def main():

@@ -24,6 +24,5 @@ def main():
     con.rollback()
     print("Database already exists. Did nothing...",file=sys.stderr)
 
-
 if __name__ == '__main__':
   main()
