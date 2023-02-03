@@ -1,4 +1,5 @@
 import psycopg2
+import sys
 
 class DBConnection:
   """A database connection."""
@@ -30,11 +31,15 @@ class DBConnection:
   
   def connect(self):
     """Connect to the database."""
-    self.conn = psycopg2.connect(
-      host     = self.host,
-      port     = self.port,
-      database = self.databaseName,
-      user     = self.username,
-      password = self.password
-    )
-    self.cursor = self.conn.cursor()
+    try:
+      self.conn = psycopg2.connect(
+        host     = self.host,
+        port     = self.port,
+        database = self.databaseName,
+        user     = self.username,
+        password = self.password
+      )
+      self.cursor = self.conn.cursor()
+    except:
+      print("Error: Could not connect to database",file=sys.stderr)
+      sys.exit(-1)
