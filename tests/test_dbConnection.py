@@ -6,5 +6,9 @@ class TestDBConnection(unittest.TestCase):
     pgConnection = DBConnection("localhost","12345","arroz","arroz","arroz")
     pgConnection.connect()
     
+  def test_connection_success(self):
+    pgConnection = DBConnection("localhost","5432","postgres","postgres","arroz123")
+    pgConnection.connect()
+    
 if __name__ == '__main__':
   unittest.main()

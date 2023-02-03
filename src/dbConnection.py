@@ -40,6 +40,5 @@ class DBConnection:
         password = self.password
       )
       self.cursor = self.conn.cursor()
-    except:
-      print("Error: Could not connect to database",file=sys.stderr)
-      sys.exit(-1)
+    except Exception as err:
+      print("Error: Could not connect to database: \n" + str(err),file=sys.stderr)
