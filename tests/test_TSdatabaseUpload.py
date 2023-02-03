@@ -4,10 +4,10 @@ from src.databaseUpload import *
 
 class TestTDDatabaseUpload(unittest.TestCase):
   def test_upload_station(self):
-    pgConnection = DBConnection("localhost","5432","postgres","postgres","arroz123")
+    pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
     pgConnection.connect()
     tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor)
-    tsUpload.uploadSolution(1,2,3,4,5,6,7,8,9,1,2)
+    tsUpload.uploadSolution('ARROZANDMASSA','massa','1111-12-11','a','b','c','d','a','b','c','d')
     
     
 if __name__ == '__main__':

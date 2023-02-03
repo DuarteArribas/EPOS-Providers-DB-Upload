@@ -39,6 +39,7 @@ class DBConnection:
         user     = self.username,
         password = self.password
       )
+      self.conn.autocommit = False
       self.cursor = self.conn.cursor()
     except Exception as err:
       print("Error: Could not connect to database: \n" + str(err),file=sys.stderr)

@@ -1,4 +1,5 @@
 import psycopg2
+import sys
 
 class TSDatabaseUpload:
   """Upload TS solutions to the database."""
@@ -22,6 +23,7 @@ class TSDatabaseUpload:
     processing_parameters_url,
     sampling_period
   ):
+    self.cursor.execute("BEGIN TRANSACTION")
     try:
       self.cursor.execute(
         f"""
@@ -39,21 +41,21 @@ class TSDatabaseUpload:
           sampling_period
         )
         VALUES(
-          {solution_type},
-          {ac_acronym},
-          {creation_date},
-          {software},
-          {doi},
-          {url},
-          {ac_name},
-          {version},
-          {reference_frame},
-          {processing_parameters_url},
-          {sampling_period} 
+          '{solution_type}',
+          '{ac_acronym}',
+          '{creation_date}',
+          '{software}',
+          '{doi}',
+          '{url}',
+          '{ac_name}',
+          '{version}',
+          '{reference_frame}',
+          '{processing_parameters_url}',
+          '{sampling_period}'
         )
         """
       )
-      self.cursor.commit()
+      self.cursor.execute("COMMIT TRANSACTION")
     except Exception as err:
       print("Error: Could not connect to database: \n" + str(err),file=sys.stderr)
-      self.cursor.rollback()
+      self.cursor.execute("ROLLBACK TRANSACTION")
