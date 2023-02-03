@@ -23,15 +23,15 @@ clean:
 	@$(PYTHON) $(DATABASE_INIT_MAIN_FILE)
 
 test:
-	$(PYTHON) -m unittest $(testDir)/test_$(tf).py > /dev/null
+	$(PYTHON) -m unittest $(TEST_DIR)/test_$(tf).py > /dev/null
 
 testPrint:
-	$(PYTHON) -m unittest $(testDir)/test_$(tf).py
+	$(PYTHON) -m unittest $(TEST_DIR)/test_$(tf).py
 
 testAll:
-	$(PYTHON) -m unittest $(testDir)/test_* > /dev/null
+	$(PYTHON) -m unittest $(TEST_DIR)/test_* > /dev/null
 
 testAllPrint:
-	$(PYTHON) -m unittest $(testDir)/test_*
+	$(PYTHON) -m unittest $(TEST_DIR)/test_*
 
 .PHONY: runValidate runUpload setup clean test testPrint testAll testAllPrint
