@@ -7,7 +7,7 @@ class Validator:
   """Validate provider files before insertion to database."""
   
   # == Class variables ==
-  FILENAME_CONVENTION_ERROR_MSG = "\n\n Please Make sure that the filename conforms to the long filename specification of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."
+  FILENAME_CONVENTION_ERROR_MSG = "\n\n Please make sure that the filename conforms to the long filename specification of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."
   
   # == Methods ==
   def __init__(self,providerDir):
