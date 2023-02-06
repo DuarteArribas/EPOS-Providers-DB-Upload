@@ -1,15 +1,48 @@
 import psycopg2
 import sys
+from src.utils.constants import *
+from src.utils.logs      import *
 
 class TSDatabaseUpload:
   """Upload TS solutions to the database."""
   
   # == Methods ==
-  def __init__(self,conn,cursor):
+  def __init__(self,conn,cursor,logger):
     self.conn   = conn
     self.cursor = cursor
-    
-  def uploadSolution(
+    self.logger = logger
+  
+  def uploadAllTS(self,publicDir):
+    allTSFiles = self._getListOfTSFiles(publicDir)
+    for tsFile in allTSFiles:
+      self._saveSolutionToFile(tsFile)
+      # TODO: Save the rest
+    try:
+      self._uploadTSOptimized()
+    except:
+      for tsFile in allTSFiles:
+        self._uploadTS(tsFile)
+  
+  def _uploadTSOptimized(self):
+    try:
+      self.cursor.execute("BEGIN TRANSACTION")
+      self._uploadSolutionOptimized()
+      # TODO: Upload more
+      self.cursor.execute("COMMIT TRANSACTION")
+    except Exception as err:
+      self.cursor.execute("ROLLBACK TRANSACTION")
+      raise Exception(err)
+  
+  def _uploadTS(self,file):
+    try:
+      self.cursor.execute("BEGIN TRANSACTION")
+      self._uploadSolution()
+      # TODO: Upload more
+      self.cursor.execute("COMMIT TRANSACTION")
+    except:
+      self.cursor.execute("ROLLBACK TRANSACTION")
+  
+  def _uploadSolution(
     self,
     solution_type,
     ac_acronym,
@@ -21,9 +54,9 @@ class TSDatabaseUpload:
     version,
     reference_frame,
     processing_parameters_url,
-    sampling_period
+    sampling_period,
+    filename
   ):
-    self.cursor.execute("BEGIN TRANSACTION")
     try:
       self.cursor.execute(
         f"""
@@ -55,16 +88,14 @@ class TSDatabaseUpload:
         )
         """
       )
-      self.cursor.execute("COMMIT TRANSACTION")
     except Exception as err:
-      print("Error: Could not connect to database: \n" + str(err),file=sys.stderr)
-      self.cursor.execute("ROLLBACK TRANSACTION")
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadError.format(file = filename,uploadType = "solution",errMsg = str(err)))
+      raise Exception(err)
   
-  def uploadSolutionOptimized(
+  def _uploadSolutionOptimized(
     self,
     solutionFile
   ):
-    self.cursor.execute("BEGIN TRANSACTION")
     try:
       with open(solutionFile,"r") as csvFile:
         self.cursor.copy_expert(
@@ -87,7 +118,6 @@ class TSDatabaseUpload:
           """,
           csvFile
         )
-      self.cursor.execute("COMMIT TRANSACTION")
     except Exception as err:
-      print("Error: Could not connect to database: \n" + str(err),file=sys.stderr)
-      self.cursor.execute("ROLLBACK TRANSACTION")
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadAllError.format(uploadType = "solution",errMsg = str(err)))
+      raise Exception(err)
