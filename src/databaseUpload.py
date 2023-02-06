@@ -15,14 +15,17 @@ class TSDatabaseUpload:
   def uploadAllTS(self,publicDir):
     allTSFiles = self._getListOfTSFiles(publicDir)
     for tsFile in allTSFiles:
-      self._saveSolutionToFile(tsFile)
-      # TODO: Save the rest
+      self._saveInformationToFile(tsFile)
     try:
       self._uploadTSOptimized()
     except:
       for tsFile in allTSFiles:
         self._uploadTS(tsFile)
   
+  def _saveInformationToFile(tsFile):
+    self._saveSolutionToFile(tsFile)
+    # TODO: Save the rest
+    
   def _uploadTSOptimized(self):
     try:
       self.cursor.execute("BEGIN TRANSACTION")
@@ -31,6 +34,36 @@ class TSDatabaseUpload:
       self.cursor.execute("COMMIT TRANSACTION")
     except Exception as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
+      raise Exception(err)
+  
+  def _uploadSolutionOptimized(
+    self,
+    solutionFile
+  ):
+    try:
+      with open(solutionFile,"r") as csvFile:
+        self.cursor.copy_expert(
+          f"""
+          COPY solution(
+            solution_type,
+            ac_acronym,
+            creation_date,
+            software,
+            doi,
+            url,
+            ac_name,
+            version,
+            reference_frame,
+            processing_parameters_url,
+            sampling_period
+          )
+          FROM STDIN
+          WITH (FORMAT CSV,HEADER TRUE);
+          """,
+          csvFile
+        )
+    except Exception as err:
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadAllError.format(uploadType = "solution",errMsg = str(err)))
       raise Exception(err)
   
   def _uploadTS(self,file):
@@ -90,34 +123,4 @@ class TSDatabaseUpload:
       )
     except Exception as err:
       self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadError.format(file = filename,uploadType = "solution",errMsg = str(err)))
-      raise Exception(err)
-  
-  def _uploadSolutionOptimized(
-    self,
-    solutionFile
-  ):
-    try:
-      with open(solutionFile,"r") as csvFile:
-        self.cursor.copy_expert(
-          f"""
-          COPY solution(
-            solution_type,
-            ac_acronym,
-            creation_date,
-            software,
-            doi,
-            url,
-            ac_name,
-            version,
-            reference_frame,
-            processing_parameters_url,
-            sampling_period
-          )
-          FROM STDIN
-          WITH (FORMAT CSV,HEADER TRUE);
-          """,
-          csvFile
-        )
-    except Exception as err:
-      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadAllError.format(uploadType = "solution",errMsg = str(err)))
       raise Exception(err)
