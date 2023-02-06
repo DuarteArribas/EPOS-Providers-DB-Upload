@@ -22,7 +22,7 @@ class TSDatabaseUpload:
       for tsFile in allTSFiles:
         self._uploadTS(tsFile)
   
-  def _saveInformationToFile(tsFile):
+  def _saveInformationToFile(self,tsFile):
     self._saveSolutionToFile(tsFile)
     # TODO: Save the rest
     
