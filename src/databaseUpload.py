@@ -1,5 +1,7 @@
 import psycopg2
+import glob
 import sys
+import os
 from src.utils.constants import *
 from src.utils.logs      import *
 
@@ -21,6 +23,9 @@ class TSDatabaseUpload:
     except:
       for tsFile in allTSFiles:
         self._uploadTS(tsFile)
+  
+  def _getListOfTSFiles(self,publicDir):
+    return [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
   
   def _saveInformationToFile(self,tsFile):
     self._saveSolutionToFile(tsFile)
