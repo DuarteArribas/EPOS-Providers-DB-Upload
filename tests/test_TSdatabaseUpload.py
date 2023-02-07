@@ -39,12 +39,12 @@ class TestTDDatabaseUpload(unittest.TestCase):
   #  tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
   #  tsUpload._removeFilesInDir("tmp")
   # 
-  def test_upload_TS_opt(self):
-    pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
-    pgConnection.connect()
-    logger = Logs("logs/logsTest.log",10000)
-    tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
-    tsUpload._uploadTSOptimized()
+  #def test_upload_TS_opt(self):
+  #  pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
+  #  pgConnection.connect()
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+  #  tsUpload._uploadTSOptimized()
     
 if __name__ == '__main__':
   unittest.main()

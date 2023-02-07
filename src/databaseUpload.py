@@ -20,6 +20,8 @@ class TSDatabaseUpload:
     self.cursor = cursor
     self.logger = logger
     self.tmpDir = tmp + "/" if tmp[-1] != "/" else tmp
+    if not os.path.exists(self.tmpDir):
+      os.makedirs(self.tmpDir)
   
   def uploadAllTS(self,publicDir):
     allTSFiles = self._getListOfTSFiles(publicDir)
