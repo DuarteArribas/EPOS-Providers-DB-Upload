@@ -25,13 +25,6 @@ class TestTDDatabaseUpload(unittest.TestCase):
   #  tsUpload = TSDatabaseUpload("dummy","dummy2","dummy3","dummy4")
   #  self.assertEqual([file.split("/")[-1] for file in tsUpload._getListOfTSFiles("outTest/public")].sort(),["a.pos","b.vel","aab.pos","pp.vel","1.pos","a2.pos","a3.vel","b2.vel","p9.vel","arroz.pos.gz"].sort())
   #
-  #def test_upload_solution(self):
-  #  pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
-  #  pgConnection.connect()
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
-  #  tsUpload._uploadSolution('WTF','massa','1111-12-11','a','b','c','d','a','b','c',"arroz")
-  #
   #def test_remove_from_dir(self):
   #  pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
   #  pgConnection.connect()
@@ -45,6 +38,21 @@ class TestTDDatabaseUpload(unittest.TestCase):
   #  logger = Logs("logs/logsTest.log",10000)
   #  tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
   #  tsUpload._uploadTSOptimized()
-    
+  #def test_upload_solution(self):
+  #  pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
+  #  pgConnection.connect()
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+  #  pgConnection.cursor.execute("BEGIN TRANSACTION")
+  #  tsUpload._uploadSolution(tsUpload._getSolutionParameters("outTest/public/INGV/5/TS/arroz.pos.gz"),"outTest/public/INGV/5/TS/arroz.pos.gz")
+  #  pgConnection.cursor.execute("COMMIT TRANSACTION")
+  #def test_upload_TS(self):
+  #  pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
+  #  pgConnection.connect()
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+  #  tsUpload._uploadTS("outTest/public/INGV/5/TS/arroz.pos.gz")
+  pass
+  
 if __name__ == '__main__':
   unittest.main()
