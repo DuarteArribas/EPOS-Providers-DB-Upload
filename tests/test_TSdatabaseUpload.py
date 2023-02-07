@@ -52,7 +52,12 @@ class TestTDDatabaseUpload(unittest.TestCase):
   #  logger = Logs("logs/logsTest.log",10000)
   #  tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
   #  tsUpload._uploadTS("outTest/public/INGV/5/TS/arroz.pos.gz")
-  pass
+  def test_upload_all_TS(self):
+    pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123")
+    pgConnection.connect()
+    logger = Logs("logs/logsTest.log",10000)
+    tsUpload     = TSDatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+    tsUpload.uploadAllTS("outTest/public")
   
 if __name__ == '__main__':
   unittest.main()
