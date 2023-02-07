@@ -1,0 +1,47 @@
+PBO Station Position Time Series. Reference Frame : IGb14
+Format Version: 1.1.0
+4-character ID: WARN
+Station name  : Rostock-Warnemuende, Germany
+First Epoch   : 20030212 120000
+Last Epoch    : 20220730 120000
+Release Date  : 20221107 000000
+XYZ Reference position :  	3658785.83132 	784470.84333   5147870.56597 (IGb14)
+NEU Reference position :  	54.1697880425	12.1014241863   50.7296266202 (IGb14/WGS84)
+%Begin EPOS metadata
+9-character ID: WARN00DEU
+ReferenceFrame: IGb14
+AnalysisCentre: ROB-EUREF
+Software      : CATREF
+Method-url    : https://gnssproducts.epos.ubi.pt/EPN.pdf 
+DOI           : 10.24414/ROB-EUREF-C2220
+ReleaseNumber : 2220.0
+SamplingPeriod: daily
+CreationDate  : 2022-10-13 00:00:00
+%End EPOS metadata
+Start Field Description
+YYYYMMDD  	Year, month, day for the given position epoch
+HHMMSS    	Hour, minute, second for the given position epoch
+JJJJJ.JJJJJ   Modified Julian day for the given position epoch
+X         	X coordinate, Specified Reference Frame, meters
+Y         	Y coordinate, Specified Reference Frame, meters
+Z         	Z coordinate, Specified Reference Frame, meters
+Sx        	Standard deviation of the X position, meters
+Sy        	Standard deviation of the Y position, meters
+Sz        	Standard deviation of the Z position, meters
+Rxy       	Correlation of the X and Y position
+Rxz       	Correlation of the X and Z position
+Ryz       	Correlation of the Y and Z position
+Nlat      	North latitude, WGS-84 ellipsoid, decimal degrees
+Elong     	East longitude, WGS-84 ellipsoid, decimal degrees
+Height (Up)   Height relative to WGS-84 ellipsoid, m
+dN        	Difference in North component from NEU reference position, meters
+dE        	Difference in East component from NEU reference position, meters
+du        	Difference in vertical component from NEU reference position, meters
+Sn        	Standard deviation of dN, meters
+Se        	Standard deviation of dE, meters
+Su        	Standard deviation of dU, meters
+Rne       	Correlation of dN and dE
+Rnu       	Correlation of dN and dU
+Reu       	Correlation of dE and dU
+Soln      	corresponding to products generated with rapid or final orbit products, in supplemental processing, campaign data processing or reprocessing
+End Field Description

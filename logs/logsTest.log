@@ -1,0 +1,2 @@
+2023-02-07 17:52:36.773554 (ERROR)    | Could not upload all files to the database (problem in 'solution'): '[Errno 2] No such file or directory: 'tmp/solutionTmp.csv''.
+2023-02-07 17:54:03.969931 (ERROR)    | Could not upload all files to the database (problem in 'solution'): '[Errno 2] No such file or directory: 'tmp/solutionTmp.csv''.
