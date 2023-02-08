@@ -8,7 +8,7 @@ from src.utils.constants import *
 from src.utils.logs      import *
 
 class TSDatabaseUpload:
-  """Upload TS solutions to the database."""
+  """Upload time series to the database."""
   
   # == Class variables ==
   ANALYSIS_CENTRE = {"INGV":"ING","UGA-CNRS":"UGA","WUT-EUREF":"EUR","ROB-EUREF":"ROB","SGO-EPND":"SGO"}
@@ -16,6 +16,19 @@ class TSDatabaseUpload:
   
   # == Methods ==
   def __init__(self,conn,cursor,logger,tmp):
+    """Initialize needed variables for a time series database upload.
+
+    Parameters
+    ----------
+    conn   : Connection
+      A connection object to the database
+    cursor : Cursor
+      A cursor object to the database
+    logger : Logs
+      A logging object to which logs can be written
+    tmp    : str
+      A directory to which temporary files used for bulk database insertion (optimization) will be saved to
+    """
     self.conn   = conn
     self.cursor = cursor
     self.logger = logger
@@ -24,6 +37,15 @@ class TSDatabaseUpload:
       os.makedirs(self.tmpDir)
   
   def uploadAllTS(self,publicDir):
+    """Upload all found time series files to the database. First, get the files to upload and save their information to temporary files.
+    Then, try to bulk insert those files into the db (optimization). If it can't, upload them one by one.
+    
+
+    Parameters
+    ----------
+    publicDir : str
+      The public directory to search the time series files
+    """
     allTSFiles = self._getListOfTSFiles(publicDir)
     for tsFile in allTSFiles:
       self._saveInformationToFile(tsFile)
@@ -34,13 +56,39 @@ class TSDatabaseUpload:
         self._uploadTS(tsFile)
   
   def _getListOfTSFiles(self,publicDir):
+    """Get the list of time series files (pos or vel) found in the given directory.
+
+    Parameters
+    ----------
+    publicDir : str
+      The public directory to search the time series files
+
+    Returns
+    -------
+    list[str]
+      The list of time series files in the given directory
+    """
     return [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
   
   def _saveInformationToFile(self,tsFile):
+    """Save the information (needed to upload a time series file) of a time series file to a file.
+
+    Parameters
+    ----------
+    tsFile : str
+      The file that contains the needed information
+    """
     self._saveSolutionToFile(tsFile)
     # TODO: Save the rest
   
   def _saveSolutionToFile(self,tsFile):
+    """Save the information of the solution of a time series file to a file.
+
+    Parameters
+    ----------
+    tsFile : str
+      The file that contains the solution
+    """
     solutionParameters = self._getSolutionParameters(tsFile)
     with open(os.path.join(self.tmpDir,TSDatabaseUpload.SOLUTION_TMP),"a") as tmp:
       tmp.write(
@@ -57,6 +105,18 @@ class TSDatabaseUpload:
       )
     
   def _getSolutionParameters(self,tsFile):
+    """Get the solution information of a time series file.
+
+    Parameters
+    ----------
+    tsFile : str
+      The file that contains the solution
+
+    Returns
+    -------
+    dict
+      A dictionary containing the needed parameters. The keys match the database column names and the values are the respective values.
+    """
     with gzip.open(tsFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       solutionParameters = {"solution_type":"TS"}
@@ -82,6 +142,13 @@ class TSDatabaseUpload:
       return solutionParameters
     
   def _uploadTSOptimized(self):
+    """Bulk insert the time series files information to the database based on the saved information.
+
+    Raises
+    ------
+    Exception
+      If an error occurred when inserting
+    """
     try:
       self.cursor.execute("BEGIN TRANSACTION")
       self._uploadSolutionOptimized()
@@ -94,11 +161,19 @@ class TSDatabaseUpload:
       raise Exception(err)
   
   def _removeFilesInDir(self,dir):
+    """Remove files in a dir.
+
+    Parameters
+    ----------
+    dir : str
+      The dir from which the files will be removed.
+    """
     files = glob.glob(f"{dir}/*")
     for f in files:
       os.remove(f)
   
   def _uploadSolutionOptimized(self):
+    """Bulk insert the time series files solutions to the database based on the saved information."""
     try:
       with open(os.path.join(self.tmpDir,TSDatabaseUpload.SOLUTION_TMP),"r") as csvFile:
         self.cursor.copy_expert(
@@ -125,6 +200,13 @@ class TSDatabaseUpload:
       raise Exception(err)
   
   def _uploadTS(self,file):
+    """Insert a time series file to the database.
+
+    Parameters
+    ----------
+    file : str
+      The time series file to insert
+    """
     try:
       self.cursor.execute("BEGIN TRANSACTION")
       self._uploadSolution(self._getSolutionParameters(file),file)
@@ -134,6 +216,15 @@ class TSDatabaseUpload:
       self.cursor.execute("ROLLBACK TRANSACTION")
   
   def _uploadSolution(self,solutionParameters,filename):
+    """Insert a solution of a time series file to the database
+    
+    Parameters
+    ----------
+    solutionParameters : dict
+      The solution information
+    filename           : str
+      The name of the time series file being inserted
+    """
     try:
       self.cursor.execute(
         f"""
