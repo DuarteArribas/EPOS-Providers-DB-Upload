@@ -48,8 +48,10 @@ class TSDatabaseUpload:
     """
     self.logger.writeNewRunLog("Uploading time series files to the database")
     allTSFiles = self._getListOfTSFiles(publicDir)
+    self.logger.writeRoutineLog(saveFiles,Logs.ROUTINE_STATUS.START)
     for tsFile in allTSFiles:
       self._saveInformationToFile(tsFile)
+    self.logger.writeRoutineLog(saveFiles,Logs.ROUTINE_STATUS.END)
     try:
       self._uploadTSOptimized()
     except:
@@ -71,7 +73,7 @@ class TSDatabaseUpload:
     """
     self.logger.writeRoutineLog(getTSFiles,Logs.ROUTINE_STATUS.START)
     files = [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
-    self.logger.writeRegularLog(Logs.SEVERITY.INFO,filesFound.format(files = files) if files else filesNotFound)
+    self.logger.writeRegularLog(Logs.SEVERITY.INFO,filesFound.format(files = " | ".join(files)) if files else filesNotFound)
     self.logger.writeRoutineLog(getTSFiles,Logs.ROUTINE_STATUS.END)
     return [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
   
@@ -83,10 +85,8 @@ class TSDatabaseUpload:
     tsFile : str
       The file that contains the needed information
     """
-    self.logger.writeRoutineLog(saveFiles,Logs.ROUTINE_STATUS.START)
     self._saveSolutionToFile(tsFile)
     # TODO: Save the rest
-    self.logger.writeRoutineLog(saveFiles,Logs.ROUTINE_STATUS.END)
   
   def _saveSolutionToFile(self,tsFile):
     """Save the information of the solution of a time series file to a file.
@@ -164,6 +164,7 @@ class TSDatabaseUpload:
       self.cursor.execute("COMMIT TRANSACTION")
       self.logger.writeRegularLog(Logs.SEVERITY.INFO,tmpFileDelete)
       self._removeFilesInDir(self.tmpDir)
+      self.logger.writeRegularLog(Logs.SEVERITY.INFO,uploadBulkSuccess)
     except Exception as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       self.logger.writeRegularLog(Logs.SEVERITY.INFO,tmpFileDelete)
@@ -229,6 +230,7 @@ class TSDatabaseUpload:
       self._uploadSolution(self._getSolutionParameters(file),file)
       # TODO: Upload more
       self.cursor.execute("COMMIT TRANSACTION")
+      self.logger.writeRegularLog(Logs.SEVERITY.INFO,uploadSuccess.format(file = file))
     except:
       self.cursor.execute("ROLLBACK TRANSACTION")
     finally:
