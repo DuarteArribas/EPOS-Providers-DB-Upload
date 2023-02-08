@@ -1,11 +1,13 @@
 import psycopg2
 import sys
+from src.utils.constants import *
+from src.utils.logs      import *
 
 class DBConnection:
   """A database connection."""
   
   # == Methods ==
-  def __init__(self,host,port,databaseName,username,password):
+  def __init__(self,host,port,databaseName,username,password,logger):
     """Init needed database parameters.
 
     Parameters
@@ -20,12 +22,15 @@ class DBConnection:
       The username of the user connecting to the database
     password     : str
       The password of the user
+    logger       : Logs
+      A logging object to which logs can be written
     """
     self.host         = host
     self.port         = port
     self.databaseName = databaseName
     self.username     = username
     self.password     = password
+    self.logger       = logger
     self.conn         = None
     self.cursor       = None
   
@@ -42,4 +47,5 @@ class DBConnection:
       self.conn.autocommit = False
       self.cursor = self.conn.cursor()
     except Exception as err:
-      print("Error: Could not connect to database: \n" + str(err),file=sys.stderr)
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbConnectionError.format(errMsg = str(err).replace("\n","---")))
+      sys.exit(-1)
