@@ -46,6 +46,7 @@ class TSDatabaseUpload:
     publicDir : str
       The public directory to search the time series files
     """
+    self.logger.writeNewRunLog("Uploading time series files to the database")
     allTSFiles = self._getListOfTSFiles(publicDir)
     for tsFile in allTSFiles:
       self._saveInformationToFile(tsFile)
@@ -68,6 +69,10 @@ class TSDatabaseUpload:
     list[str]
       The list of time series files in the given directory
     """
+    self.logger.writeRoutineLog(getTSFiles,Logs.ROUTINE_STATUS.START)
+    files = [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
+    self.logger.writeRegularLog(Logs.SEVERITY.INFO,filesFound.format(files = files) if files else filesNotFound)
+    self.logger.writeRoutineLog(getTSFiles,Logs.ROUTINE_STATUS.END)
     return [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
   
   def _saveInformationToFile(self,tsFile):
@@ -78,8 +83,10 @@ class TSDatabaseUpload:
     tsFile : str
       The file that contains the needed information
     """
+    self.logger.writeRoutineLog(saveFiles,Logs.ROUTINE_STATUS.START)
     self._saveSolutionToFile(tsFile)
     # TODO: Save the rest
+    self.logger.writeRoutineLog(saveFiles,Logs.ROUTINE_STATUS.END)
   
   def _saveSolutionToFile(self,tsFile):
     """Save the information of the solution of a time series file to a file.
@@ -149,16 +156,22 @@ class TSDatabaseUpload:
     Exception
       If an error occurred when inserting
     """
+    self.logger.writeRoutineLog(uploadTSOpt,Logs.ROUTINE_STATUS.START)
     try:
       self.cursor.execute("BEGIN TRANSACTION")
       self._uploadSolutionOptimized()
       # TODO: Upload more
       self.cursor.execute("COMMIT TRANSACTION")
+      self.logger.writeRegularLog(Logs.SEVERITY.INFO,tmpFileDelete)
       self._removeFilesInDir(self.tmpDir)
     except Exception as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
+      self.logger.writeRegularLog(Logs.SEVERITY.INFO,tmpFileDelete)
       self._removeFilesInDir(self.tmpDir)
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbBulkUploadError)
       raise Exception(err)
+    finally:
+      self.logger.writeRoutineLog(uploadTSOpt,Logs.ROUTINE_STATUS.END)
   
   def _removeFilesInDir(self,dir):
     """Remove files in a dir.
@@ -174,6 +187,7 @@ class TSDatabaseUpload:
   
   def _uploadSolutionOptimized(self):
     """Bulk insert the time series files solutions to the database based on the saved information."""
+    self.logger.writeSubroutineLog(uploadSolutionOpt,Logs.ROUTINE_STATUS.START)
     try:
       with open(os.path.join(self.tmpDir,TSDatabaseUpload.SOLUTION_TMP),"r") as csvFile:
         self.cursor.copy_expert(
@@ -196,8 +210,10 @@ class TSDatabaseUpload:
           csvFile
         )
     except Exception as err:
-      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadAllError.format(uploadType = "solution",errMsg = str(err)))
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadAllError.format(uploadType = "solutions",errMsg = str(err).replace("\n","---")))
       raise Exception(err)
+    finally:
+      self.logger.writeSubroutineLog(uploadSolutionOpt,Logs.ROUTINE_STATUS.END)
   
   def _uploadTS(self,file):
     """Insert a time series file to the database.
@@ -207,6 +223,7 @@ class TSDatabaseUpload:
     file : str
       The time series file to insert
     """
+    self.logger.writeRoutineLog(uploadTS,Logs.ROUTINE_STATUS.START)
     try:
       self.cursor.execute("BEGIN TRANSACTION")
       self._uploadSolution(self._getSolutionParameters(file),file)
@@ -214,6 +231,8 @@ class TSDatabaseUpload:
       self.cursor.execute("COMMIT TRANSACTION")
     except:
       self.cursor.execute("ROLLBACK TRANSACTION")
+    finally:
+      self.logger.writeRoutineLog(uploadTS,Logs.ROUTINE_STATUS.END)
   
   def _uploadSolution(self,solutionParameters,filename):
     """Insert a solution of a time series file to the database
@@ -225,6 +244,7 @@ class TSDatabaseUpload:
     filename           : str
       The name of the time series file being inserted
     """
+    self.logger.writeSubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.START)
     try:
       self.cursor.execute(
         f"""
@@ -255,5 +275,7 @@ class TSDatabaseUpload:
         """
       )
     except Exception as err:
-      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadError.format(file = filename,uploadType = "solution",errMsg = str(err)))
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadError.format(file = filename,uploadType = "solution",errMsg = str(err).replace("\n","---")))
       raise Exception(err)
+    finally:
+      self.logger.writeSubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.END)
