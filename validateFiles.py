@@ -6,7 +6,7 @@ from src.validate     import *
 # Global variables
 CONFIG_FILE = "config/appconf.cfg"
 
-#Functions
+# Functions
 def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged):
   for i in range(5):
     if not hashesChanged[i]:
@@ -44,7 +44,7 @@ def main():
     "WUT"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/WUT-EUREF"
   }
   # Get a connection to the local database
-  con = sqlite3.connect(cfg.getAppConfig("DATABASE_FILE"))
+  con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
   # Get list of the hashes changed of each provider
   fileHandler   = FileHandler(con,cfg.getAppConfig("PROVIDERS_DIR"),cfg.getEmailConfig("FROM_EMAIL"),cfg.getEmailConfig("TO_EMAIL"),cfg.getEmailConfig("FROM_EMAIL_PWD_FILE"))
   hashesChanged = fileHandler.getListOfFilesChanged()
