@@ -8,7 +8,7 @@ def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
   # Get a connection to the local database and cursor
-  con = sqlite3.connect(cfg.getAppConfig("DATABASE_FILE"))
+  con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
   cur = con.cursor()
   # Create table
   try:
@@ -22,7 +22,7 @@ def main():
     print("Database created successfully!")
   except sqlite3.OperationalError:
     con.rollback()
-    print("Database already exists. Did nothing...",file=sys.stderr)
+    print("Database already exists. Did nothing...",file = sys.stderr)
 
 if __name__ == '__main__':
   main()
