@@ -318,6 +318,66 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxFilenameCompressExtension4(self):
     a = Validator("dummy","dummy2")
     a._validateSnxFilenameCompressExtension("arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.pos.gz")
+  
+  def test_validateSnxFilename(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/XXXvOPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilename1(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/INGvOPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilename2(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ING1OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilename3(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ING2OPSSNX_1999ddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilename4(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ING3OPSSNX_19993450000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilename5(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ING4OPSSNX_19993450000_01D_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilename6(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ING5OPSSNX_19993450000_01D_07D_SOL.pos.gz")
+  
+  def test_validateSnxFilename7(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ROB5OPSSNX_19993450000_01D_07D_SOL.SNX.gz")
+  
+  def test_validateSnxFilename8(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ING5OPSSNX_19993450000_01D_07D_SOL.SNX")
+  
+  def test_validateSnxFilename9(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz/ING")
+  
+  def test_validateSnxFilename10(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    self.assertRaises(ValidationError,a._validateSnxLongFilename,"arroz")
+  
+  def test_validateSnxFilename11(self):
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg)
+    a._validateSnxLongFilename("arroz/ING5OPSSNX_19993450000_01D_07D_SOL.SNX.gz")
     
 if __name__ == '__main__':
   unittest.main()

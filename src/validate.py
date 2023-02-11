@@ -106,45 +106,19 @@ class Validator:
   def _validateSnxLongFilename(self,snxFile):
     snxFilename = snxFile.split("/")[-1]
     if len(snxFilename) != 41:
-      return False,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Incorrect length {len(snxFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
-    allowedAC = self.cfg.getValidationConfig("COOR_ACS").split("|")
-    isValidAbbr,errorMsg              = self._validateSnxFilenameAbbr(snxFile,snxFilename)
-    if not isValidAbbr:
-      return isValidAbbr,errorMsg
-    isValidVersion,errorMsg           = self._validateSnxFilenameVersion(snxFile,snxFilename)
-    if not isValidVersion:
-      return isValidVersion,errorMsg
-    isValidConstant,errorMsg          = self._validateSnxFilenameConstant(snxFile,snxFilename)
-    if not isValidConstant:
-      return isValidConstant,errorMsg
-    isValidYear,errorMsg              = self._validateSnxFilenameYear(snxFile,snxFilename)
-    if not isValidYear:
-      return isValidYear,errorMsg
-    isValidDay,errorMsg               = self._validateSnxFilenameDayOfYear(snxFile,snxFilename)
-    if not isValidDay:
-      return isValidDay,errorMsg
-    isValidConstant2,errorMsg         = self._validateSnxFilenameConstant2(snxFile,snxFilename)
-    if not isValidConstant2:
-      return isValidConstant2,errorMsg
-    isValidSamplePeriod,errorMsg      = self._validateSnxFilenameSamplePeriod(snxFile,snxFilename)
-    if not isValidSamplePeriod:
-      return isValidSamplePeriod,errorMsg
-    isValidConstant3,errorMsg         = self._validateSnxFilenameConstant3(snxFile,snxFilename)
-    if not isValidConstant3:
-      return isValidConstant3,errorMsg
-    isValidSamplePeriod2,errorMsg     = self._validateSnxFilenameSamplePeriod2(snxFile,snxFilename)
-    if not isValidSamplePeriod2:
-      return isValidSamplePeriod2,errorMsg
-    isValidConstant4,errorMsg         = self._validateSnxFilenameConstant4(snxFile,snxFilename)
-    if not isValidConstant4:
-      return isValidConstant4,errorMsg
-    isValidExtension,errorMsg         = self._validateSnxFilenameExtension(snxFile,snxFilename)
-    if not isValidExtension:
-      return isValidExtension,errorMsg
-    isValidCompressExtension,errorMsg = self._validateSnxFilenameCompressExtension(snxFile,snxFilename)
-    if not isValidCompressExtension:
-      return isValidCompressExtension,errorMsg
-    return True,"No problem"
+      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Incorrect length {len(snxFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
+    self._validateSnxFilenameAbbr(snxFile,snxFilename,self.cfg.getValidationConfig("COOR_ACS").split("|"))
+    self._validateSnxFilenameVersion(snxFile,snxFilename)
+    self._validateSnxFilenameConstant(snxFile,snxFilename)
+    self._validateSnxFilenameYear(snxFile,snxFilename)
+    self._validateSnxFilenameDayOfYear(snxFile,snxFilename)
+    self._validateSnxFilenameConstant2(snxFile,snxFilename)
+    self._validateSnxFilenameSamplePeriod(snxFile,snxFilename)
+    self._validateSnxFilenameConstant3(snxFile,snxFilename)
+    self._validateSnxFilenameSamplePeriod2(snxFile,snxFilename)
+    self._validateSnxFilenameConstant4(snxFile,snxFilename)
+    self._validateSnxFilenameExtension(snxFile,snxFilename)
+    self._validateSnxFilenameCompressExtension(snxFile,snxFilename)
   
   def _validateSnxFilenameAbbr(self,snxFile,snxFilename,allowedAC):
     if not snxFilename[:3] in allowedAC:
