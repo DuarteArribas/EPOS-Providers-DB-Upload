@@ -118,6 +118,66 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxFilenameYear12(self):
     a = Validator("dummy","dummy2")
     a._validateSnxFilenameYear("arroz","UGA1OPSSNX_2023ddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_isLeapYear(self):
+    a = Validator("dummy","dummy2")
+    self.assertTrue(a._isLeapYear(2000))
+  
+  def test_isLeapYear1(self):
+    a = Validator("dummy","dummy2")
+    self.assertFalse(a._isLeapYear(2001))
+  
+  def test_isLeapYear2(self):
+    a = Validator("dummy","dummy2")
+    self.assertFalse(a._isLeapYear(2002))
+  
+  def test_isLeapYear3(self):
+    a = Validator("dummy","dummy2")
+    self.assertFalse(a._isLeapYear(2003))
+  
+  def test_isLeapYear4(self):
+    a = Validator("dummy","dummy2")
+    self.assertTrue(a._isLeapYear(2004))
+  
+  def test_validateSnxFilenameDayOfYear(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameDayOfYear,"arroz","UGA1OPSSNX_20003670000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear2(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameDayOfYear,"arroz","UGA1OPSSNX_20000000000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear3(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameDayOfYear,"arroz","UGA1OPSSNX_2000aaa000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear4(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameDayOfYear,"arroz","UGA1OPSSNX_2000-12000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear5(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameDayOfYear,"arroz","UGA1OPSSNX_2000999000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear6(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameDayOfYear,"arroz","UGA1OPSSNX_1999366000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear7(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameDayOfYear("arroz","UGA1OPSSNX_2000366000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear8(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameDayOfYear("arroz","UGA1OPSSNX_1999365000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear9(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameDayOfYear("arroz","UGA1OPSSNX_1999001000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameDayOfYear10(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameDayOfYear("arroz","UGA1OPSSNX_2000001000_ppD_ppD_SOL.SNX.gz")
     
 if __name__ == '__main__':
   unittest.main()
