@@ -61,7 +61,8 @@ class Validator:
       True if the coordinates dir is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    allFilesAreSnx = all([file.split(".")[-2] == "snx" for file in os.listdir(coorDir)])
+    coorFiles = os.listdir(coorDir)
+    allFilesAreSnx = all([self._getNExtension(file,2) == "snx" for file in coorFiles])
     if not allFilesAreSnx:
       return False,"Not all files are snx."
     for file in os.listdir(coorDir):
@@ -69,6 +70,9 @@ class Validator:
       if not validate:
         return validate,validationError
     return True,"No problem."
+  
+  def _getNExtension(self,filename,n):
+    return filename.split(".")[-n].lower()
 
   def _validateSnx(self,snxFile):
     """Validate a specific snx file.
