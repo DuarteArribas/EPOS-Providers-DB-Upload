@@ -155,10 +155,8 @@ class Validator:
       raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong version {snxFilename[3:4]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
   
   def _validateSnxFilenameConstant(self,snxFile,snxFilename):
-    validation = snxFilename[4:11] == "OPSSNX_"
-    if not validation:
-      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant {snxFilename[4:11]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
-    return validation,"No problem"
+    if not snxFilename[4:11] == "OPSSNX_":
+      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant {snxFilename[4:11]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
       
   def _validateSnxFilenameYear(self,snxFile,snxFilename):
     validation = snxFilename[11:15] in [str(i) for i in range(1994,datetime.now().year + 1)]

@@ -54,6 +54,22 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxFilenameVersion5(self):
     a = Validator("dummy","dummy2")
     a._validateSnxFilenameVersion("arroz","XXX0OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameConstant(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameConstant,"arroz","UGA1OPASNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameConstant1(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameConstant,"arroz","UGA10PSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameConstant2(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameConstant,"arroz","UGA1OPSRAP_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameConstant3(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameConstant("arroz","UGA1OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
     
 if __name__ == '__main__':
   unittest.main()
