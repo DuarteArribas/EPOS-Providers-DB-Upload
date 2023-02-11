@@ -2,6 +2,7 @@ import os
 import gzip
 import datetime
 import requests
+from validationError import *
 
 class Validator:
   """Validate provider files before insertion to database."""
@@ -10,7 +11,7 @@ class Validator:
   FILENAME_CONVENTION_ERROR_MSG = "\n\n Please make sure that the filename conforms to the long filename specification of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."
   
   # == Methods ==
-  def __init__(self,providerDir):
+  def __init__(self,providerDir,cfg):
     """Get default parameters.
 
     Parameters
@@ -19,6 +20,7 @@ class Validator:
       The default directory for the provider
     """
     self.providerDir = providerDir
+    self.cfg         = cfg
 
   def validateProviderDir(self):
     """Check if the provider dir is valid. Checks if its coordinates and time series dirs (if it has them) are valid.
@@ -64,7 +66,7 @@ class Validator:
     coorFiles = os.listdir(coorDir)
     allFilesAreSnx = all([self._getNExtension(file,2) == "snx" for file in coorFiles])
     if not allFilesAreSnx:
-      return False,"Not all files are snx."
+      raise ValidationError("Not all files are snx.")
     for file in coorFiles:
       validate,validationError = self._validateSnx(os.path.join(coorDir,file))
       if not validate:
@@ -101,7 +103,7 @@ class Validator:
       return True,"No problem."
   
   def _validateSnxLongFilename(self,snxFile):
-    snxFilename    = snxFile.split("/")[-1]
+    snxFilename = snxFile.split("/")[-1]
     if len(snxFilename) != 41:
       return False,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Incorrect length {len(snxFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
     isValidAbbr,errorMsg              = self._validateSnxFilenameAbbr(snxFile,snxFilename)

@@ -20,10 +20,12 @@ class Config:
 
   def getAppConfig(self,key):
     """Get a config from the APP section on the config file.
+    
     Parameters
     ----------
     key : str
       The key corresponding to the wanted configuration
+      
     Returns
     ----------
     str
@@ -33,10 +35,12 @@ class Config:
   
   def getLogsConfig(self,key):
     """Get a config from the LOGS section on the config file.
+    
     Parameters
     ----------
     key : str
       The key corresponding to the wanted configuration
+      
     Returns
     ----------
     str
@@ -46,13 +50,30 @@ class Config:
   
   def getEmailConfig(self,key):
     """Get a config from the EMAIL section on the config file.
+    
     Parameters
     ----------
     key : str
       The key corresponding to the wanted configuration
+      
     Returns
     ----------
     str
       The corresponding configuration
     """
     return self.config.get("EMAIL",key)
+  
+  def getValidationConfig(self,key):
+    """Get a config from the VALIDATION section on the config file.
+    
+    Parameters
+    ----------
+    key : str
+      The key corresponding to the wanted configuration
+      
+    Returns
+    ----------
+    str
+      The corresponding configuration
+    """
+    return self.config.get("VALIDATION",key)

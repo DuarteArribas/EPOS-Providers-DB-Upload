@@ -7,14 +7,14 @@ from src.validate     import *
 CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
-def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged):
+def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg):
   for i in range(5):
     if not hashesChanged[i]:
       continue
     provider    = list(providerDirs.keys())[i]
     providerDir = list(providerDirs.items())[i][1]
     publicDir   = list(publicDirs.items())[i][1]
-    validator   = Validator(providerDir)
+    validator   = Validator(providerDir,cfg)
     validate,validationError = validator.validateProviderDir()
     if validate:
       fileHandler.moveToPublic(providerDir,publicDir)
@@ -55,7 +55,7 @@ def main():
   )
   hashesChanged = fileHandler.getListOfFilesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
-  handleProviders(fileHandler,providerDirs,publicDir,hashesChanged)
+  handleProviders(fileHandler,providerDirs,publicDir,hashesChanged,cfg)
   
 if __name__ == '__main__':
   main()
