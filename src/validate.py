@@ -191,16 +191,12 @@ class Validator:
       raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 4 - {snxFilename[29:34]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
   
   def _validateSnxFilenameExtension(self,snxFile,snxFilename):
-    validation = snxFilename[34] == "." and snxFilename[35:38].lower() == "snx"
-    if not validation:
-      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file extension - {snxFilename[34:38]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
-    return validation,"No problem"
+    if not (snxFilename[34] == "." and snxFilename[35:38].lower() == "snx"):
+      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file extension - {snxFilename[34:38]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
   
   def _validateSnxFilenameCompressExtension(self,snxFile,snxFilename):
-    validation = snxFilename[38] == "." and snxFilename[39:41].lower() == "gz"
-    if not validation:
-      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file compress extension - {snxFilename[38:41]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
-    return validation,"No problem"
+    if not (snxFilename[38] == "." and snxFilename[39:41].lower() == "gz"):
+      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file compress extension - {snxFilename[38:41]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
   
   def _validateMetadataLineSnx(self,line,file):
     """Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5)

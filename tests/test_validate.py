@@ -286,6 +286,38 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxFilename4Constant5(self):
     a = Validator("dummy","dummy2")
     a._validateSnxFilenameConstant4("arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameExtension(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameExtension,"arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.pos.gz")
+  
+  def test_validateSnxFilenameExtension2(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameExtension,"arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.vel.gz")
+  
+  def test_validateSnxFilenameExtension3(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameExtension,"arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.sxn.gz")
+  
+  def test_validateSnxFilenameExtension4(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameExtension("arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.snx.gz")
+  
+  def test_validateSnxFilenameCompressExtension(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameCompressExtension,"arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.pos...")
+  
+  def test_validateSnxFilenameCompressExtension2(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameCompressExtension,"arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.pos.pz")
+  
+  def test_validateSnxFilenameCompressExtension3(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameCompressExtension,"arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.pos.lz")
+  
+  def test_validateSnxFilenameCompressExtension4(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameCompressExtension("arroz","UGA1OPASNX_yyyydddOOOO_00D_00D_S0L.pos.gz")
     
 if __name__ == '__main__':
   unittest.main()
