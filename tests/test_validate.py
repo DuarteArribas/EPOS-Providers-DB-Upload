@@ -194,6 +194,34 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxFilename2Constant3(self):
     a = Validator("dummy","dummy2")
     a._validateSnxFilenameConstant2("arroz","UGA1OPASNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameSamplePeriod(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameSamplePeriod,"arroz","UGA1OPASNX_yyyydddOOOO_00D_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameSamplePeriod2(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameSamplePeriod,"arroz","UGA1OPASNX_yyyydddOOOO_05D_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameSamplePeriod3(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameSamplePeriod,"arroz","UGA1OPASNX_yyyydddOOOO_06D_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameSamplePeriod4(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameSamplePeriod,"arroz","UGA1OPASNX_yyyydddOOOO_08D_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameSamplePeriod5(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameSamplePeriod,"arroz","UGA1OPASNX_yyyydddOOOO_09D_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameSamplePeriod6(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameSamplePeriod("arroz","UGA1OPASNX_yyyydddOOOO_01D_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameSamplePeriod7(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameSamplePeriod("arroz","UGA1OPASNX_yyyydddOOOO_07D_ppD_SOL.SNX.gz")
     
 if __name__ == '__main__':
   unittest.main()

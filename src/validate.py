@@ -175,10 +175,8 @@ class Validator:
       raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 2 - {snxFilename[4:11]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
   
   def _validateSnxFilenameSamplePeriod(self,snxFile,snxFilename):
-    validation = snxFilename[23:25] == "01" or snxFilename[23:25] == "07"
-    if not validation:
-      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file sample period - {snxFilename[23:25]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
-    return validation,"No problem"
+    if not (snxFilename[23:25] == "01" or snxFilename[23:25] == "07"):
+      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file sample period - {snxFilename[23:25]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
   
   def _validateSnxFilenameConstant3(self,snxFile,snxFilename):
     validation = snxFilename[25:27] == "D_"
