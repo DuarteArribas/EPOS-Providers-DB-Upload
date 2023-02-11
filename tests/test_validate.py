@@ -30,6 +30,30 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxFilenameAbbr4(self):
     a = Validator("dummy","dummy2")
     a._validateSnxFilenameAbbr("arroz","EURvOPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz",["ING","UGA","EUR"])
+  
+  def test_validateSnxFilenameVersion(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameVersion,"arroz","XXXaOPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameVersion1(self):
+    a = Validator("dummy","dummy2")
+    self.assertRaises(ValidationError,a._validateSnxFilenameVersion,"arroz","XXX-1OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameVersion2(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameVersion("arroz","XXX1OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameVersion3(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameVersion("arroz","XXX5OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameVersion4(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameVersion("arroz","XXX9OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
+  
+  def test_validateSnxFilenameVersion5(self):
+    a = Validator("dummy","dummy2")
+    a._validateSnxFilenameVersion("arroz","XXX0OPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz")
     
 if __name__ == '__main__':
   unittest.main()
