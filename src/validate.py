@@ -65,7 +65,7 @@ class Validator:
     allFilesAreSnx = all([self._getNExtension(file,2) == "snx" for file in coorFiles])
     if not allFilesAreSnx:
       return False,"Not all files are snx."
-    for file in os.listdir(coorDir):
+    for file in coorFiles:
       validate,validationError = self._validateSnx(os.path.join(coorDir,file))
       if not validate:
         return validate,validationError
