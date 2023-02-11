@@ -1,10 +1,10 @@
-from email.mime.text import MIMEText
 import checksumdir
 import smtplib
 import shutil
 import gzip
 import glob
 import os
+from email.mime.text import MIMEText
 
 class FileHandler:
   """Handle provider files."""

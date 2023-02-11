@@ -1,0 +1,16 @@
+
+Uploading files to the database
+2023-02-09 15:27:22.875273 (INFO)     | === Time series files upload (START) ===
+2023-02-09 15:27:22.875920 (INFO)     | == Get TS files. (START) ==
+2023-02-09 15:27:23.027141 (INFO)     | Files found: 'outTest/public/INGV/2/TS/a.pos.gz | outTest/public/INGV/2/TS/b.vel.gz | outTest/public/INGV/4/TS/aab.pos.gz | outTest/public/INGV/5/TS/arroz.pos.gz | outTest/public/INGV/5/TS/pp.vel.gz | outTest/public/ROB-EUREF/4/TS/1.pos.gz | outTest/public/ROB-EUREF/4/TS/a2.pos.gz | outTest/public/ROB-EUREF/4/TS/a3.vel.gz | outTest/public/WUT-EUREF/6/TS/b2.vel.gz | outTest/public/WUT-EUREF/6/TS/p9.vel.gz'..
+2023-02-09 15:27:23.027384 (INFO)     | == Get TS files. (END) ==
+2023-02-09 15:27:23.176641 (INFO)     | == Saving information to temporary files. (START) ==
+2023-02-09 15:27:23.235455 (INFO)     | Successfully saved all ts information to temporary files..
+2023-02-09 15:27:23.235675 (INFO)     | == Saving information to temporary files. (END) ==
+2023-02-09 15:27:23.235908 (INFO)     | == Optimized TS insertion. (START) ==
+2023-02-09 15:27:23.236836 (INFO)     | = Optimized solution insertion. (START) =
+2023-02-09 15:27:23.241804 (INFO)     | = Optimized solution insertion. (END) =
+2023-02-09 15:27:23.243099 (INFO)     | Deleting temporary files..
+2023-02-09 15:27:23.245869 (INFO)     | Successfully bulk uploaded all files to the database..
+2023-02-09 15:27:23.246053 (INFO)     | == Optimized TS insertion. (END) ==
+2023-02-09 15:27:23.246228 (INFO)     | === Time series files upload (END) ===

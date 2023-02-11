@@ -48,7 +48,7 @@ class Validator:
     return isValidCoor and isValidTS,errors
     
   def _validateCoor(self,coorDir):
-    """Check if the coordinates dir is valid. Checks if all files are snx files and validate each snx file.
+    """Check if the coordinates dir is valid. Check if all files are snx files and validate each snx file.
 
     Parameters
     ----------
