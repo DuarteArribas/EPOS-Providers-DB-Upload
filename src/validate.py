@@ -2,7 +2,8 @@ import os
 import gzip
 import datetime
 import requests
-from validationError import *
+from src.utils.config    import *
+from src.validationError import *
 
 class Validator:
   """Validate provider files before insertion to database."""
@@ -106,6 +107,7 @@ class Validator:
     snxFilename = snxFile.split("/")[-1]
     if len(snxFilename) != 41:
       return False,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Incorrect length {len(snxFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
+    allowedAC = self.cfg.getValidationConfig("COOR_ACS").split("|")
     isValidAbbr,errorMsg              = self._validateSnxFilenameAbbr(snxFile,snxFilename)
     if not isValidAbbr:
       return isValidAbbr,errorMsg
@@ -144,11 +146,10 @@ class Validator:
       return isValidCompressExtension,errorMsg
     return True,"No problem"
   
-  def _validateSnxFilenameAbbr(self,snxFile,snxFilename):
-    validation = snxFilename[:3] in ["EPO","ING","UGA","EUR","EPN"]
+  def _validateSnxFilenameAbbr(self,snxFile,snxFilename,allowedAC):
+    validation = snxFilename[:3] in allowedAC
     if not validation:
-      return validation,f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong abbreviation {snxFilename[:3]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}"
-    return validation,"No problem"
+      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong abbreviation {snxFilename[:3]}. {Validator.FILENAME_CONVENTION_ERROR_MSG}")
   
   def _validateSnxFilenameVersion(self,snxFile,snxFilename):
     validation = snxFilename[3:4] in [str(i) for i in range(10)]
