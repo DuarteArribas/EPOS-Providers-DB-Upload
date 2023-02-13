@@ -187,101 +187,59 @@ class Validator:
     """
     match line.split():
       case ["ReferenceFrame",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
+          raise ValidationError(f"Wrong ReferenceFrame values '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["EpochOfFrame",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong EpochOfFrame format - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if not self._validateDate(value):
+          raise ValidationError(f"Wrong EpochOfFrame format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CovarianceMatrix",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong CovarianceMatrix - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if value not in ["full","block-diagonal","diagonal"]:
+          raise ValidationError(f"Wrong CovarianceMatrix value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["AnalysisCentre" | "CombinationCentre",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong AnalysisCentre/CombinationCentre - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if value not in self.cfg.getValidationConfig("COOR_ACS_FULL").split("|"):
+          raise ValidationError(f"Wrong AnalysisCentre/CombinationCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["Software",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
+          raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SINEX_version",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if not self._isFloat(value):
+          raise ValidationError(f"Wrong SINEX_version '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CutOffAngle",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if not value.isdigit():
+          raise ValidationError(f"Wrong CutOffAngle format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["OTLmodel",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if value not in ["FES2004","GOT4.10c","FES2014b"]:
+          raise ValidationError(f"Wrong OTLmodel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["AntennaModel" | "Antennamodel",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if value not in ["epn_14_1958.atx","igs08_wwww.atx","epn_14.atx","epn_20.atx","igs20.atx"]:
+          raise ValidationError(f"Wrong AntennaModel/Antennamodel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if not value:
+          raise ValidationError(f"Wrong DOI format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CreationDate",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if not self._validateDate(value):
+          raise ValidationError(f"Wrong CreationDate format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["ReleaseNumber",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if not value:
+          raise ValidationError(f"Wrong ReleaseNumber format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SamplingPeriod",*values]:
-        values = " ".join(values)
-        if not values:
-          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        value = " ".join(values)
+        if value not in ["daily","weekly"]:
+          raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case _:
-        pass
-    if header == "ReferenceFrame":
-      if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
-        return False,
-    elif header == "EpochOfFrame":
-      if not self._validateDate(value):
-        return False,
-    elif header == "CovarianceMatrix":
-      if value not in ["full","block-diagonal","diagonal"]:
-        return False,
-    elif header == "AnalysisCentre" or header == "CombinationCentre":
-      if value not in ["UGA","INGV","WUT-EUREF","BFHK","ROB-EUREF"]:
-        return False,
-    elif header == "Software":
-      if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
-        return False,f"Wrong Software - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "SINEX_version":
-      if not self._isFloat(value):
-        return False,f"Wrong SINEX_version format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "CutOffAngle":
-      if not value.isdigit():
-        return False,f"Wrong CutOffAngle format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "OTLmodel":
-      if value not in ["FES2004","GOT4.10c","FES2014b"]:
-        return False,f"Wrong OTLmodel - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "AntennaModel" or header == "Antennamodel":
-      if value not in ["epn_14_1958.atx","igs08_wwww.atx","epn_14.atx","epn_20.atx","igs20.atx"]:
-        return False,f"Wrong AntennaModel - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "DOI":
-      if not value:
-        return False,f"Wrong DOI format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "CreationDate":
-      if not self._validateDate(value):
-        return False,f"Wrong CreationDate format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "ReleaseNumber":
-      if not self._isFloat(value):
-        return False,f"Wrong ReleaseNumber format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "SamplingPeriod":
-      if value not in ["daily","weekly"]:
-        return False,f"Wrong SamplingPeriod - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    else:
-      return False,f"Wrong metadata paremeter - '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    return True,"No problem."
+        raise ValidationError(f"Wrong metadata paremeter - '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
     
   def _isFloat(self,num):
     """Check if a string is a float.
