@@ -94,11 +94,11 @@ class Validator:
     self._validateSnxLongFilename(snxFile)
     with gzip.open(snxFile,"r") as f:
       lines = [line.strip() for line in f.readlines()]
-      for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
-        validate,validationError = self._validateMetadataLineSnx(line,snxFile)
-        if not validate:
-          return validate,validationError
-      return True,"No problem."
+      metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
+      if len(metadataLines) != 13:
+        raise ValidationError(f"Wrong number of metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
+      for line in metadataLines:
+        self._validateMetadataLineSnx(line,snxFile)
   
   def _validateSnxLongFilename(self,snxFile):
     snxFilename = snxFile.split("/")[-1]
