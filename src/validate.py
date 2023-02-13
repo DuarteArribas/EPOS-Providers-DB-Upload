@@ -91,12 +91,8 @@ class Validator:
       True if the snx file is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    validate,validationError = self._validateSnxLongFilename(snxFile)
-    if not validate:
-      return validate,validationError
     with gzip.open(snxFile,"r") as f:
-      lines = f.readlines()
-      lines = [line.strip() for line in lines]
+      lines = [line.strip() for line in f.readlines()]
       for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
         validate,validationError = self._validateMetadataLineSnx(line,snxFile)
         if not validate:
@@ -188,21 +184,73 @@ class Validator:
       True if the snx metadata line is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    line   = " ".join(line.split())
-    header = line.split(" ")[0]
-    value  = " ".join(line.split(" ")[1:])
+    match line.split():
+      case ["ReferenceFrame",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["EpochOfFrame",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong EpochOfFrame format - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["CovarianceMatrix",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong CovarianceMatrix - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["AnalysisCentre" | "CombinationCentre",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong AnalysisCentre/CombinationCentre - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["Software",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["SINEX_version",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["CutOffAngle",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["OTLmodel",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["AntennaModel" | "Antennamodel",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["DOI",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["CreationDate",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["ReleaseNumber",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["SamplingPeriod",*values]:
+        values = " ".join(values)
+        if not values:
+          raise ValidationError(f"Wrong ReferenceFrame - '{values}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case _:
+        pass
     if header == "ReferenceFrame":
       if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
-        return False,f"Wrong ReferenceFrame - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+        return False,
     elif header == "EpochOfFrame":
       if not self._validateDate(value):
-        return False,f"Wrong EpochOfFrame format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+        return False,
     elif header == "CovarianceMatrix":
       if value not in ["full","block-diagonal","diagonal"]:
-        return False,f"Wrong CovarianceMatrix - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+        return False,
     elif header == "AnalysisCentre" or header == "CombinationCentre":
       if value not in ["UGA","INGV","WUT-EUREF","BFHK","ROB-EUREF"]:
-        return False,f"Wrong AnalysisCentre/CombinationCentre - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
+        return False,
     elif header == "Software":
       if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
         return False,f"Wrong Software - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
