@@ -91,6 +91,7 @@ class Validator:
       True if the snx file is valid and False otherwise
       Any errors that occurred formatted as a string
     """
+    self._validateSnxLongFilename(snxFile)
     with gzip.open(snxFile,"r") as f:
       lines = [line.strip() for line in f.readlines()]
       for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
