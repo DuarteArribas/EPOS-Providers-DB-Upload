@@ -69,10 +69,7 @@ class Validator:
     if not allFilesAreSnx:
       raise ValidationError("Not all files are snx.")
     for file in coorFiles:
-      validate,validationError = self._validateSnx(os.path.join(coorDir,file))
-      if not validate:
-        return validate,validationError
-    return True,"No problem."
+      self._validateSnx(os.path.join(coorDir,file))
   
   def _getNExtension(self,filename,n):
     return filename.split(".")[-n].lower()
