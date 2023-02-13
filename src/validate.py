@@ -238,8 +238,9 @@ class Validator:
         value = " ".join(values)
         if value not in ["daily","weekly"]:
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case _:
-        raise ValidationError(f"Wrong metadata paremeter - '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case [header,*values]:
+        value = " ".join(values)
+        raise ValidationError(f"Wrong metadata paremeter '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
     
   def _isFloat(self,num):
     """Check if a string is a float.
