@@ -224,7 +224,7 @@ class Validator:
           raise ValidationError(f"Wrong AntennaModel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
-        if not value or (value != "unknown" and not self._validateDoi(value)):
+        if value != "unknown" and not self._validateDoi(value):
           raise ValidationError(f"Wrong DOI value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CreationDate",*values]:
         value = " ".join(values)

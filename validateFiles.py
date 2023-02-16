@@ -33,8 +33,8 @@ def main():
   providerDirs = {
     "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",
     "ROB"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_rob/uploads",
-    "SGO"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_sgo/uploads",
-    "UGA"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_uga/uploads",
+    "SGO"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ltk/uploads",
+    "UGA"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_uga-cnrs/uploads",
     "WUT"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_wut/uploads"
   }
   publicDir = {
