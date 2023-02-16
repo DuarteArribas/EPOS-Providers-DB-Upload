@@ -195,10 +195,10 @@ class Validator:
         value = " ".join(values)
         if value not in ["full","block-diagonal","diagonal"]:
           raise ValidationError(f"Wrong CovarianceMatrix value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["AnalysisCentre" | "CombinationCentre",*values]:
+      case ["AnalysisCentre",*values]:
         value = " ".join(values)
         if value not in self.cfg.getValidationConfig("COOR_ACS_FULL").split("|"):
-          raise ValidationError(f"Wrong AnalysisCentre/CombinationCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["Software",*values]:
         value = " ".join(values)
         if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
@@ -215,10 +215,10 @@ class Validator:
         value = " ".join(values)
         if value not in ["FES2004","GOT4.10c","FES2014b"]:
           raise ValidationError(f"Wrong OTLmodel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["AntennaModel" | "Antennamodel",*values]:
+      case ["AntennaModel",*values]:
         value = " ".join(values)
         if value not in ["epn_14_1958.atx","igs08_wwww.atx","epn_14.atx","epn_20.atx","igs20.atx"]:
-          raise ValidationError(f"Wrong AntennaModel/Antennamodel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong AntennaModel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
         if not value:
@@ -233,7 +233,7 @@ class Validator:
           raise ValidationError(f"Wrong ReleaseNumber format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
-        if value not in ["daily","weekly"]:
+        if value.lower() not in ["daily","weekly"]:
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case [header,*values]:
         value = " ".join(values)
