@@ -224,7 +224,7 @@ class Validator:
           raise ValidationError(f"Wrong AntennaModel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
-        if value != "unknown" and not self._validateDoi(value):
+        if not value or (value != "unknown" and not self._validateDoi(value)):
           raise ValidationError(f"Wrong DOI value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CreationDate",*values]:
         value = " ".join(values)
@@ -289,7 +289,10 @@ class Validator:
       return False
     
   def _validateDoi(self,doiValue):
-    return doi.validate_doi(doiValue)
+    try:
+      return doi.validate_doi(doiValue)
+    except Exception:
+      return False
     
   def _validateTS(self,tsDir):
     """Check if the time series dir is valid. Checks if all files are pos files and validate each pos file.

@@ -577,33 +577,33 @@ class TestValidation(unittest.TestCase):
     a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
     a._validateMetadataLineSnx(" CreationDate       2023/02/11 12:11:33                                         ","arroz")
   
-  #def test_validateDOIMetadataLines(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
-  #  self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI                                                                     ","arroz")
-  #
-  #def test_validateDOIMetadataLines2(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
-  #  self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI             https://doi.org/10.1108/03684920910973253                                                        ","arroz")
-  #  
-  #def test_validateDOIMetadataLines3(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
-  #  a._validateMetadataLineSnx(" DOI                unknown                                                     ","arroz")
-  #
-  #def test_validateDOIMetadataLines4(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
-  #  a._validateMetadataLineSnx(" DOI                https://doi.org/10.1108/03684920910973252                                                     ","arroz")
+  def test_validateDOIMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI                                                                     ","arroz")
+  
+  def test_validateDOIMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI             10.24414/ROB-EUREF-C3220                                                    ","arroz")
+    
+  def test_validateDOIMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" DOI                unknown                                                     ","arroz")
+  
+  def test_validateDOIMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" DOI                10.24414/ROB-EUREF-C2220                                                     ","arroz")
     
 if __name__ == '__main__':
   unittest.main()
