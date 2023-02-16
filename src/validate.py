@@ -282,7 +282,7 @@ class Validator:
       True if the date is according to the format or False otherwise
     """
     try:
-      datetime.datetime.strptime(date,"%d/%m/%Y %H:%M:%S")
+      datetime.strptime(date,"%Y/%m/%d %H:%M:%S")
       return True
     except ValueError:
       return False  

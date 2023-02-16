@@ -477,6 +477,104 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
     a._validateMetadataLineSnx(" AnalysisCentre     INGV                                                   ","arroz")
+  
+  def test_validateEpochOfFrameMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," EpochOfFrame       15/06/2021 12:00:00                                         ","arroz")
+  
+  def test_validateEpochOfFrameMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," EpochOfFrame       15/2021/06 12:00:00                                         ","arroz")
+  
+  def test_validateEpochOfFrameMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," EpochOfFrame       2021/06/33 12:00:00                                         ","arroz")
+  
+  def test_validateEpochOfFrameMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," EpochOfFrame       2021/02/29 12:00:00                                         ","arroz")
+  
+  def test_validateEpochOfFrameMetadataLines5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" EpochOfFrame       2021/06/15 12:00:00                                         ","arroz")
+  
+  def test_validateEpochOfFrameMetadataLines6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" EpochOfFrame       2021/06/15 12:11:33                                         ","arroz")
+  
+  def test_validateEpochOfFrameMetadataLines7(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" EpochOfFrame       2024/02/29 12:11:33                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       15/06/2021 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       15/2021/06 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       2021/06/33 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       2021/02/29 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" CreationDate       2021/06/15 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" CreationDate       2021/06/15 12:11:33                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines7(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    a = Validator("dummy","dummy2",pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" CreationDate       2024/02/29 12:11:33                                         ","arroz")
     
     
 if __name__ == '__main__':
