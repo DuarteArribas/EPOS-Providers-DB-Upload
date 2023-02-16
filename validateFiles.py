@@ -1,4 +1,5 @@
 import sqlite3
+from src.dbConnection import *
 from src.utils.config import *
 from src.fileHandler  import *
 from src.validate     import *
@@ -45,6 +46,9 @@ def main():
   }
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
+  # Get a connection to the EPOS database
+  #pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123",logger)
+  #pgConnection.connect()
   # Get list of the hashes changed of each provider
   fileHandler = FileHandler(
     con,

@@ -12,7 +12,7 @@ class Validator:
   FILENAME_CONVENTION_ERROR_MSG = "\n\n Please make sure that the filename conforms to the long filename specification of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."
   
   # == Methods ==
-  def __init__(self,providerDir,cfg):
+  def __init__(self,providerDir,cfg,conn,cursor):
     """Get default parameters.
 
     Parameters
@@ -22,6 +22,8 @@ class Validator:
     """
     self.providerDir = providerDir
     self.cfg         = cfg
+    self.conn        = conn
+    self.cursor      = cursor
 
   def validateProviderDir(self):
     """Check if the provider dir is valid. Checks if its coordinates and time series dirs (if it has them) are valid.
@@ -185,7 +187,7 @@ class Validator:
     match line.split():
       case ["ReferenceFrame",*values]:
         value = " ".join(values)
-        if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
+        if value not in self._getAllowedReferenceFrameValues():
           raise ValidationError(f"Wrong ReferenceFrame values '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["EpochOfFrame",*values]:
         value = " ".join(values)
@@ -197,7 +199,7 @@ class Validator:
           raise ValidationError(f"Wrong CovarianceMatrix value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
-        if value not in self.cfg.getValidationConfig("COOR_ACS_FULL").split("|"):
+        if value not in self._getAllowedAnalysisCentreValues():
           raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["Software",*values]:
         value = " ".join(values)
@@ -205,7 +207,7 @@ class Validator:
           raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SINEX_version",*values]:
         value = " ".join(values)
-        if not self._isFloat(value):
+        if not value:
           raise ValidationError(f"Wrong SINEX_version '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CutOffAngle",*values]:
         value = " ".join(values)
@@ -238,7 +240,15 @@ class Validator:
       case [header,*values]:
         value = " ".join(values)
         raise ValidationError(f"Wrong metadata paremeter '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-    
+  
+  def _getAllowedReferenceFrameValues(self):
+    self.cursor.execute("SELECT name FROM reference_frame;")
+    return [item[0] for item in self.cursor.fetchall()]
+  
+  def _getAllowedAnalysisCentreValues(self):
+    self.cursor.execute("SELECT acronym FROM analysis_centers;")
+    return [item[0] for item in self.cursor.fetchall()]
+  
   def _isFloat(self,num):
     """Check if a string is a float.
 
