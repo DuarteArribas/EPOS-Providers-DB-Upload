@@ -1,4 +1,5 @@
 import os
+import doi
 import gzip
 import requests
 from datetime            import datetime
@@ -223,8 +224,8 @@ class Validator:
           raise ValidationError(f"Wrong AntennaModel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
-        if not value:
-          raise ValidationError(f"Wrong DOI format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        if value != "unknown" and not self._validateDoi(value):
+          raise ValidationError(f"Wrong DOI value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CreationDate",*values]:
         value = " ".join(values)
         if not self._validateDate(value):
@@ -282,10 +283,13 @@ class Validator:
       True if the date is according to the format or False otherwise
     """
     try:
-      datetime.strptime(date,"%Y/%m/%d %H:%M:%S")
-      return True
+      comparison = datetime.strptime(date,"%Y/%m/%d %H:%M:%S") < datetime.today()
+      return comparison
     except ValueError:
-      return False  
+      return False
+    
+  def _validateDoi(self,doiValue):
+    return doi.validate_doi(doiValue)
     
   def _validateTS(self,tsDir):
     """Check if the time series dir is valid. Checks if all files are pos files and validate each pos file.
