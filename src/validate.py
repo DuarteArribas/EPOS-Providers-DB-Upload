@@ -35,23 +35,13 @@ class Validator:
       True if the providers dir is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    isValidCoor       = True
-    isValidTS         = True
-    errors            = ""
     dirsInProviderDir = os.listdir(self.providerDir)
     # Validate Coors
     if "Coor" in dirsInProviderDir:
-      errTemp = ""
-      isValidCoor,errTemp = self._validateCoor(f"{self.providerDir}/Coor")
-      if not isValidCoor:
-        errors += errTemp + "\n"
+      self._validateCoor(f"{self.providerDir}/Coor")
     # Validate TS
     if "TS" in dirsInProviderDir:
-      errTemp = ""
-      isValidTS,errTemp = self._validateTS(f"{self.providerDir}/TS")
-      if not isValidTS:
-        errors += errTemp + "\n"
-    return isValidCoor and isValidTS,errors
+      self._validateTS(f"{self.providerDir}/TS")
     
   def _validateCoor(self,coorDir):
     """Check if the coordinates dir is valid. Check if all files are snx files and validate each snx file.
