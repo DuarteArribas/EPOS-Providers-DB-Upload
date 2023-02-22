@@ -328,7 +328,7 @@ class Validator:
       for line in metadataLines:
         self._validateMetadataLinePos(line,posFile)
   
-  def _validateMetadataLinePbo(self,line,file):
+  def _validateMetadataLinePos(self,line,file):
     """Validate a specific metadata line from a pbo file (according to 20220906UploadGuidelines_v2.5)
 
     Parameters
@@ -344,30 +344,39 @@ class Validator:
       True if the pbo metadata line is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    line   = " ".join(line.split())
-    header = line.split(" ")[0]
-    value  = " ".join(line.split(" ")[1:])
-    if header == "ReferenceFrame":
-      if value not in ["IGS08","IGS14","free-network","IGb08","INGV_EU","IGS20"]:
-        return False,f"Wrong ReferenceFrame - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "AnalysisCentre" or header == "CombinationCentre":
-      if value not in ["UGA","INGV","WUT-EUREF","BFHK","ROB-EUREF"]:
-        return False,f"Wrong AnalysisCentre/CombinationCentre - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "Software":
-      if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
-        return False,f"Wrong Software - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "Method_url":
-      if requests.get(value).status_code != 200:
-        return False,f"Url '{value}' in file '{file.split('/')[-1]}', with path: '{file}' does not exist."
-    elif header == "DOI":
-      if not value:
-        return False,f"Wrong DOI format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "ReleaseNumber":
-      if not self._isFloat(value):
-        return False,f"Wrong ReleaseNumber format - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    elif header == "SamplingPeriod":
-      if value not in ["daily","weekly"]:
-        return False,f"Wrong SamplingPeriod - '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    else:
-      return False,f"Wrong metadata paremeter - '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'."
-    return True,"No problem."
+    match line.split():
+      case ["ReferenceFrame",*values]:
+        value = " ".join(values)
+        if value not in self._getAllowedReferenceFrameValues():
+          raise ValidationError(f"Wrong ReferenceFrame values '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["AnalysisCentre",*values]:
+        value = " ".join(values)
+        if value not in self._getAllowedAnalysisCentreValues():
+          raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["Software",*values]:
+        value = " ".join(values)
+        if value not in self.cfg.getValidationConfig("SOFTWARE_VALUES").split("|"):
+          raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["Method-url",*values]:
+        value = " ".join(values)
+        if requests.get(value).status_code != 200::
+          raise ValidationError(f"Wrong method-url value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["DOI",*values]:
+        value = " ".join(values)
+        if value != "unknown" and not self._validateDoi(value):
+          raise ValidationError(f"Wrong DOI value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["CreationDate",*values]:
+        value = " ".join(values)
+        if not self._validateDate(value):
+          raise ValidationError(f"Wrong CreationDate format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["ReleaseNumber",*values]:
+        value = " ".join(values)
+        if not value:
+          raise ValidationError(f"Wrong ReleaseNumber format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case ["SamplingPeriod",*values]:
+        value = " ".join(values)
+        if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
+          raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+      case [header,*values]:
+        value = " ".join(values)
+        raise ValidationError(f"Wrong metadata paremeter '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
