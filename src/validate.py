@@ -401,3 +401,7 @@ class Validator:
       case [header,*values]:
         value = " ".join(values)
         raise ValidationError(f"Wrong metadata paremeter '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+
+  def _getAllowed9characterIDValues(self):
+    self.cursor.execute("SELECT name FROM reference_frame;")
+    return [item[0] for item in self.cursor.fetchall()]
