@@ -226,7 +226,7 @@ class Validator:
           raise ValidationError(f"Wrong ReleaseNumber format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
-        if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD").split("|"):
+        if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case [header,*values]:
         value = " ".join(values)
