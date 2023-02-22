@@ -186,7 +186,7 @@ class Validator:
           raise ValidationError(f"Wrong EpochOfFrame format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["CovarianceMatrix",*values]:
         value = " ".join(values)
-        if value not in ["full","block-diagonal","diagonal"]:
+        if value not in self.cfg.getValidationConfig("COV_MATRIX_VALUES").split("|"):
           raise ValidationError(f"Wrong CovarianceMatrix value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
@@ -194,7 +194,7 @@ class Validator:
           raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["Software",*values]:
         value = " ".join(values)
-        if value not in ["Bernese GNSS Software 5.2","GIPSY-OASIS","CATREF"]:
+        if value not in self.cfg.getValidationConfig("SOFTWARE_VALUES").split("|"):
           raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SINEX_version",*values]:
         value = " ".join(values)
@@ -206,11 +206,11 @@ class Validator:
           raise ValidationError(f"Wrong CutOffAngle format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["OTLmodel",*values]:
         value = " ".join(values)
-        if value not in ["FES2004","GOT4.10c","FES2014b"]:
+        if value not in self.cfg.getValidationConfig("OTLMODEL_VALUES").split("|"):
           raise ValidationError(f"Wrong OTLmodel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["AntennaModel",*values]:
         value = " ".join(values)
-        if value not in ["epn_14_1958.atx","igs08_wwww.atx","epn_14.atx","epn_20.atx","igs20.atx"]:
+        if value not in self.cfg.getValidationConfig("ANTENNAMODEL_VALUES").split("|"):
           raise ValidationError(f"Wrong AntennaModel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
@@ -226,7 +226,7 @@ class Validator:
           raise ValidationError(f"Wrong ReleaseNumber format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
-        if value.lower() not in ["daily","weekly"]:
+        if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case [header,*values]:
         value = " ".join(values)
