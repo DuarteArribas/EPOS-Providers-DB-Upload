@@ -298,14 +298,12 @@ class Validator:
       True if the time series dir is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    allFilesArePbo = all([file.split(".")[-2] == "pos" for file in os.listdir(tsDir)])
-    if not allFilesArePbo:
-      return False,"Not all files are PBO."
-    for file in os.listdir(tsDir):
-      validate,validationError = self._validatePbo(os.path.join(tsDir,file))
-      if not validate:
-        return validate,validationError
-    return True,"No problem."
+    tsFiles = os.listdir(tsDir)
+    allFilesArePos = all([self._getNExtension(file,2) == "pos" for file in tsFiles])
+    if not allFilesArePos:
+      raise ValidationError("Not all files are pos.")
+    for file in tsFiles:
+      self._validatePos(os.path.join(tsDir,file))
 
   def _validatePbo(self,pboFile):
     """Validate a specific pbo file.
