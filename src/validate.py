@@ -10,7 +10,8 @@ class Validator:
   """Validate provider files before insertion to database."""
   
   # == Class variables ==
-  FILENAME_CONVENTION_ERROR_MSG = "\n\n Please make sure that the filename conforms to the long filename specification of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."
+  FILENAME_CONVENTION_ERROR_MSG  = "\n\n Please make sure that the filename conforms to the long filename specification of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."
+  FILENAME_CONVENTION_ERROR_MSG2 = "\n\n Please make sure that the filename conforms to the long filename specification of {{XXXX}}{{00}}{{CCC}}.pos.gz, where XXXX00CCC is the Station Long Marker."
   
   # == Methods ==
   def __init__(self,providerDir,cfg,conn,cursor):
@@ -328,6 +329,22 @@ class Validator:
       for line in metadataLines:
         self._validateMetadataLinePos(line,posFile)
   
+  def _validatePosFilename(self,posFile):
+    posFilename = posFile.split("/")[-1]
+    if len(posFilename) != 16:
+      raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Incorrect length {len(posFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
+    #self._validatePosFilename9characterID(posFile,posFilename)
+    self._validatePosFilenameExtension(posFile,posFilename)
+    self._validatePosFilenameCompressExtension(posFile,posFilename)
+
+  def _validatePosFilenameExtension(self,posFile,posFilename):
+    if not (posFilename[9] == "." and posFilename[10:13].lower() == "pos"):
+      raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Wrong pos file extension - {posFilename[10:13]}. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
+  
+  def _validatePosFilenameCompressExtension(self,posFile,posFilename):
+    if not (posFilename[13] == "." and posFilename[14:16].lower() == "gz"):
+      raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Wrong pos file compress extension - {posFilename[14:16]}. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
+
   def _validateMetadataLinePos(self,line,file):
     """Validate a specific metadata line from a pbo file (according to 20220906UploadGuidelines_v2.5)
 
