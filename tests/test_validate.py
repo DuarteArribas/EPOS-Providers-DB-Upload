@@ -897,6 +897,14 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateMetadataLineSnx(" SamplingPeriod    weekly                                                ","arroz")
+    a._validateSnx("inTest/correctFile.snx")
+
+  def test_validateSnxFile2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateSnx,"inTest/wrongFile.snx")
 if __name__ == '__main__':
   unittest.main()
