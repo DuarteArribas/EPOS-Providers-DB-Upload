@@ -333,9 +333,20 @@ class Validator:
     posFilename = posFile.split("/")[-1]
     if len(posFilename) != 16:
       raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Incorrect length {len(posFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
-    #self._validatePosFilename9characterID(posFile,posFilename)
+    self._validatePosFilename9characterID(posFile,posFilename)
     self._validatePosFilenameExtension(posFile,posFilename)
     self._validatePosFilenameCompressExtension(posFile,posFilename)
+
+  def _validatePosFilename9characterID(self,posFile,posFilename):
+    with gzip.open(posFile,"r") as f:
+      lines = [line.strip() for line in f.readlines()]
+      metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+      for line in metadataLines:
+        match line.split(":"):
+          case ["9-character ID",*values]:
+            value = " ".join(values)
+            if value != posFilename[:9]:
+              raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Pos file long marker name - {posFilename[:9]} does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
 
   def _validatePosFilenameExtension(self,posFile,posFilename):
     if not (posFilename[9] == "." and posFilename[10:13].lower() == "pos"):
