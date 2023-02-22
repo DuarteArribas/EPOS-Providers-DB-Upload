@@ -305,7 +305,7 @@ class Validator:
     for file in tsFiles:
       self._validatePos(os.path.join(tsDir,file))
 
-  def _validatePbo(self,pboFile):
+  def _validatePos(self,posFile):
     """Validate a specific pbo file.
 
     Parameters
@@ -319,14 +319,14 @@ class Validator:
       True if the pbo file is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    with gzip.open(pboFile,"r") as f:
-      lines = f.readlines()
-      lines = [line.strip() for line in lines]
-      for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
-        validate,validationError = self._validateMetadataLinePbo(line,pboFile)
-        if not validate:
-          return validate,validationError
-      return True,"No problem"
+    self._validatePosFilename(posFile)
+    with gzip.open(posFile,"r") as f:
+      lines = [line.strip() for line in f.readlines()]
+      metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+      if len(metadataLines) != 9:
+        raise ValidationError(f"Wrong number of metadata parameters in file {posFile.split('/')[-1]} with path {posFile}.")
+      for line in metadataLines:
+        self._validateMetadataLinePos(line,posFile)
   
   def _validateMetadataLinePbo(self,line,file):
     """Validate a specific metadata line from a pbo file (according to 20220906UploadGuidelines_v2.5)
