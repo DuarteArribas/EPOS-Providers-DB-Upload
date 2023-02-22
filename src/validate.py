@@ -180,7 +180,7 @@ class Validator:
       case ["ReferenceFrame",*values]:
         value = " ".join(values)
         if value not in self._getAllowedReferenceFrameValues():
-          raise ValidationError(f"Wrong ReferenceFrame values '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong ReferenceFrame value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["EpochOfFrame",*values]:
         value = " ".join(values)
         if not self._validateDate(value):
@@ -361,11 +361,15 @@ class Validator:
       True if the pbo metadata line is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    match line.split():
+    match line.split(":"):
+      case ["9-character ID",*values]:
+        value = " ".join(values)
+        if value not in self._getAllowed9characterIDValues():
+          raise ValidationError(f"Wrong 9-character ID value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["ReferenceFrame",*values]:
         value = " ".join(values)
         if value not in self._getAllowedReferenceFrameValues():
-          raise ValidationError(f"Wrong ReferenceFrame values '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong ReferenceFrame value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
         if value not in self._getAllowedAnalysisCentreValues():
