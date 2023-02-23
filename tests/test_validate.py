@@ -785,7 +785,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Antennamodel       epn_16_1958.atx                                             ","arroz")
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AntennaModel       epn_16_1958.atx                                             ","arroz")
 
   def test_validateAntennaMetadataLines2(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -793,7 +793,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Antennamodel       fpn_16_1958.atx                                             ","arroz")
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AntennaModel       fpn_16_1958.atx                                             ","arroz")
 
   def test_validateAntennaMetadataLines3(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -801,7 +801,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Antennamodel                                                   ","arroz")
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AntennaModel                                                   ","arroz")
 
   def test_validateAntennaMetadataLines4(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -809,7 +809,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateMetadataLineSnx(" Antennamodel          epn_14_1958.atx                                ","arroz")
+    a._validateMetadataLineSnx(" AntennaModel          epn_14_1958.atx                                ","arroz")
 
   def test_validateAntennaMetadataLines5(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -817,7 +817,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateMetadataLineSnx(" Antennamodel          igs08_wwww.atx                                ","arroz")
+    a._validateMetadataLineSnx(" AntennaModel          igs08_wwww.atx                                ","arroz")
 
   def test_validateAntennaMetadataLines6(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -825,7 +825,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateMetadataLineSnx(" Antennamodel          epn_14.atx                                ","arroz")
+    a._validateMetadataLineSnx(" AntennaModel          epn_14.atx                                ","arroz")
 
   def test_validateAntennaMetadataLines7(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -833,7 +833,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateMetadataLineSnx(" Antennamodel          epn_20.atx                                ","arroz")
+    a._validateMetadataLineSnx(" AntennaModel          epn_20.atx                                ","arroz")
 
   def test_validateAntennaMetadataLines8(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -841,7 +841,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateMetadataLineSnx(" Antennamodel          igs20.atx                                ","arroz")
+    a._validateMetadataLineSnx(" AntennaModel          igs20.atx                                ","arroz")
 
   def test_validateSamplingPeriodMetadataLines(self):
     logger = Logs("logs/logsTest.log",10000)
