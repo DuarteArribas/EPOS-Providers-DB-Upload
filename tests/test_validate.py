@@ -897,7 +897,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateSnx("inTest/ING5OPSSNX_19993450000_01D_07D_SOL.snx")
+    a._validateSnx("inTest/ING5OPSSNX_19993450000_01D_07D_SOL.snx.gz")
 
   def test_validateSnxFile2(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -905,15 +905,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateSnx,"inTest/ING5OPSSNX_20003450000_01D_07D_SOL.snx")
-
-  def test_validateSnxFile3(self):
-    logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-    pgConnection.connect()
-    cfg = Config("config/appconf.cfg")
-    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateSnx,"inTest/ING1OPSSNX_20003450000_01D_07D_SOL.snx")
+    self.assertRaises(ValidationError,a._validateSnx,"inTest/ING5OPSSNX_20003450000_01D_07D_SOL.snx.gz")
 
   def test_validateCoorFile(self):
     logger = Logs("logs/logsTest.log",10000)

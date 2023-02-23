@@ -83,7 +83,7 @@ class Validator:
       Any errors that occurred formatted as a string
     """
     self._validateSnxLongFilename(snxFile)
-    with gzip.open(snxFile,"r") as f:
+    with gzip.open(snxFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       try:
         metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
