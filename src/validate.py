@@ -391,7 +391,7 @@ class Validator:
           raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
-        if requests.get(value).status_code != 200::
+        if requests.get(value).status_code != 200:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
