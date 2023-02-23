@@ -411,10 +411,10 @@ class Validator:
         value = " ".join(values)
         if not self._validateDate(value):
           raise ValidationError(f"Wrong CreationDate format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["ReleaseNumber",*values]:
+      case ["ReleaseVersion",*values]:
         value = " ".join(values)
         if not value:
-          raise ValidationError(f"Wrong ReleaseNumber format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
