@@ -85,7 +85,10 @@ class Validator:
     self._validateSnxLongFilename(snxFile)
     with gzip.open(snxFile,"r") as f:
       lines = [line.strip() for line in f.readlines()]
-      metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
+      try:
+        metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
+      except Exception as err:
+        raise ValidationError(f"No metadata block +FILE/COMMENT/-FILE/COMMENT in file {snxFile.split('/')[-1]} with path {snxFile}.")
       if len(metadataLines) != 13:
         raise ValidationError(f"Wrong number of metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
       for line in metadataLines:
@@ -323,7 +326,10 @@ class Validator:
     self._validatePosFilename(posFile)
     with gzip.open(posFile,"r") as f:
       lines = [line.strip() for line in f.readlines()]
-      metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+      try:
+        metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+      except Exception as err:
+        raise ValidationError(f"No metadata block %Begin EPOS metadata/%End EPOS metadata in file {posFile.split('/')[-1]} with path {posFile}.")
       if len(metadataLines) != 9:
         raise ValidationError(f"Wrong number of metadata parameters in file {posFile.split('/')[-1]} with path {posFile}.")
       for line in metadataLines:
