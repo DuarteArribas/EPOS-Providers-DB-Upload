@@ -83,16 +83,19 @@ class Validator:
       Any errors that occurred formatted as a string
     """
     self._validateSnxLongFilename(snxFile)
-    with gzip.open(snxFile,"rt") as f:
-      lines = [line.strip() for line in f.readlines()]
-      try:
-        metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
-      except Exception as err:
-        raise ValidationError(f"No metadata block +FILE/COMMENT/-FILE/COMMENT in file {snxFile.split('/')[-1]} with path {snxFile}.")
-      if len(metadataLines) != 13:
-        raise ValidationError(f"Wrong number of metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
-      for line in metadataLines:
-        self._validateMetadataLineSnx(line,snxFile)
+    try:
+      with gzip.open(snxFile,"rt") as f:
+        lines = [line.strip() for line in f.readlines()]
+        try:
+          metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
+        except Exception:
+          raise ValidationError(f"No metadata block +FILE/COMMENT/-FILE/COMMENT in file {snxFile.split('/')[-1]} with path {snxFile}.")
+        if len(metadataLines) != 13:
+          raise ValidationError(f"Wrong number of metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
+        for line in metadataLines:
+          self._validateMetadataLineSnx(line,snxFile)
+    except Exception:
+      raise ValidationError(f"File {snxFile.split('/')[-1]} with path {snxFile} is not a valid gzipped file.")
   
   def _validateSnxLongFilename(self,snxFile):
     snxFilename = snxFile.split("/")[-1]
@@ -324,16 +327,19 @@ class Validator:
       Any errors that occurred formatted as a string
     """
     self._validatePosFilename(posFile)
-    with gzip.open(posFile,"r") as f:
-      lines = [line.strip() for line in f.readlines()]
-      try:
-        metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
-      except Exception as err:
-        raise ValidationError(f"No metadata block %Begin EPOS metadata/%End EPOS metadata in file {posFile.split('/')[-1]} with path {posFile}.")
-      if len(metadataLines) != 9:
-        raise ValidationError(f"Wrong number of metadata parameters in file {posFile.split('/')[-1]} with path {posFile}.")
-      for line in metadataLines:
-        self._validateMetadataLinePos(line,posFile)
+    try:
+      with gzip.open(posFile,"r") as f:
+        lines = [line.strip() for line in f.readlines()]
+        try:
+          metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+        except Exception as err:
+          raise ValidationError(f"No metadata block %Begin EPOS metadata/%End EPOS metadata in file {posFile.split('/')[-1]} with path {posFile}.")
+        if len(metadataLines) != 9:
+          raise ValidationError(f"Wrong number of metadata parameters in file {posFile.split('/')[-1]} with path {posFile}.")
+        for line in metadataLines:
+          self._validateMetadataLinePos(line,posFile)
+    except Exception:
+      raise ValidationError(f"File {posFile.split('/')[-1]} with path {posFile} is not a valid gzipped file.")
   
   def _validatePosFilename(self,posFile):
     posFilename = posFile.split("/")[-1]
@@ -344,15 +350,18 @@ class Validator:
     self._validatePosFilenameCompressExtension(posFile,posFilename)
 
   def _validatePosFilename9characterID(self,posFile,posFilename):
-    with gzip.open(posFile,"r") as f:
-      lines = [line.strip() for line in f.readlines()]
-      metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
-      for line in metadataLines:
-        match line.split(":"):
-          case ["9-character ID",*values]:
-            value = " ".join(values)
-            if value != posFilename[:9]:
-              raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Pos file long marker name - {posFilename[:9]} does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
+    try:
+      with gzip.open(posFile,"r") as f:
+        lines = [line.strip() for line in f.readlines()]
+        metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+        for line in metadataLines:
+          match line.split(":"):
+            case ["9-character ID",*values]:
+              value = " ".join(values)
+              if value != posFilename[:9]:
+                raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Pos file long marker name - {posFilename[:9]} does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
+    except Exception:
+      raise ValidationError(f"File {posFile.split('/')[-1]} with path {posFile} is not a valid gzipped file.")
 
   def _validatePosFilenameExtension(self,posFile,posFilename):
     if not (posFilename[9] == "." and posFilename[10:13].lower() == "pos"):

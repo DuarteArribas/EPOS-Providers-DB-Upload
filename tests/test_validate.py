@@ -946,6 +946,22 @@ class TestValidation(unittest.TestCase):
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
     self.assertRaises(ValidationError,a._validateCoor,"inTest/wrongDir4")
+  
+  def test_validateCoorFile6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateCoor,"inTest/wrongDir5")
+  
+  def test_validateCoorFile7(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateCoor,"inTest/wrongDir6")
 
 if __name__ == '__main__':
   unittest.main()
