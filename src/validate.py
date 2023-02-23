@@ -94,7 +94,7 @@ class Validator:
           raise ValidationError(f"Wrong number of metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
         for line in metadataLines:
           self._validateMetadataLineSnx(line,snxFile)
-    except Exception:
+    except(OSError,ValueError):
       raise ValidationError(f"File {snxFile.split('/')[-1]} with path {snxFile} is not a valid gzipped file.")
   
   def _validateSnxLongFilename(self,snxFile):
@@ -306,7 +306,7 @@ class Validator:
       Any errors that occurred formatted as a string
     """
     tsFiles = os.listdir(tsDir)
-    allFilesArePos = all([self._getNExtension(file,2) == "pos" for file in tsFiles])
+    allFilesArePos = all([self._getNExtension(file,1) == "pos" for file in tsFiles])
     if not allFilesArePos:
       raise ValidationError("Not all files are pos.")
     for file in tsFiles:
@@ -328,7 +328,7 @@ class Validator:
     """
     self._validatePosFilename(posFile)
     try:
-      with gzip.open(posFile,"r") as f:
+      with open(posFile,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
         try:
           metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
@@ -338,20 +338,19 @@ class Validator:
           raise ValidationError(f"Wrong number of metadata parameters in file {posFile.split('/')[-1]} with path {posFile}.")
         for line in metadataLines:
           self._validateMetadataLinePos(line,posFile)
-    except Exception:
-      raise ValidationError(f"File {posFile.split('/')[-1]} with path {posFile} is not a valid gzipped file.")
+    except OSError:
+      raise ValidationError(f"Cannot read file {posFile.split('/')[-1]} with path {posFile}.")
   
   def _validatePosFilename(self,posFile):
     posFilename = posFile.split("/")[-1]
-    if len(posFilename) != 16:
+    if len(posFilename) != 13:
       raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Incorrect length {len(posFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
     self._validatePosFilename9characterID(posFile,posFilename)
     self._validatePosFilenameExtension(posFile,posFilename)
-    self._validatePosFilenameCompressExtension(posFile,posFilename)
 
   def _validatePosFilename9characterID(self,posFile,posFilename):
     try:
-      with gzip.open(posFile,"r") as f:
+      with open(posFile,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
         metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
         for line in metadataLines:
@@ -360,17 +359,13 @@ class Validator:
               value = " ".join(values)
               if value != posFilename[:9]:
                 raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Pos file long marker name - {posFilename[:9]} does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
-    except Exception:
-      raise ValidationError(f"File {posFile.split('/')[-1]} with path {posFile} is not a valid gzipped file.")
+    except OSError:
+      raise ValidationError(f"Cannot read file {posFile.split('/')[-1]} with path {posFile}.")
 
   def _validatePosFilenameExtension(self,posFile,posFilename):
     if not (posFilename[9] == "." and posFilename[10:13].lower() == "pos"):
       raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Wrong pos file extension - {posFilename[10:13]}. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
   
-  def _validatePosFilenameCompressExtension(self,posFile,posFilename):
-    if not (posFilename[13] == "." and posFilename[14:16].lower() == "gz"):
-      raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Wrong pos file compress extension - {posFilename[14:16]}. {Validator.FILENAME_CONVENTION_ERROR_MSG2}")
-
   def _validateMetadataLinePos(self,line,file):
     """Validate a specific metadata line from a pbo file (according to 20220906UploadGuidelines_v2.5)
 
