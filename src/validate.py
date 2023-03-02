@@ -89,9 +89,11 @@ class Validator:
         try:
           metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
         except Exception:
-          raise ValidationError(f"No metadata block +FILE/COMMENT/-FILE/COMMENT in file {snxFile.split('/')[-1]} with path {snxFile}.")
-        if len(metadataLines) != 13:
-          raise ValidationError(f"Wrong number of metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
+          raise ValidationError(f"No metadata block '+FILE/COMMENT'/'-FILE/COMMENT' in file {snxFile.split('/')[-1]} with path {snxFile}.")
+        mandatorySnxHeaders = self.cfg.getValidationConfig("MANDATORY_SNX_HEADERS").split("|")
+        countMatchingMandatoryHeaders = sum([header.split(" ")[0] in mandatorySnxHeaders for header in metadataLines])
+        if countMatchingMandatoryHeaders != len(mandatorySnxHeaders):
+          raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
         for line in metadataLines:
           self._validateMetadataLineSnx(line,snxFile)
     except(OSError,ValueError):
@@ -183,18 +185,6 @@ class Validator:
       Any errors that occurred formatted as a string
     """
     match line.split():
-      case ["ReferenceFrame",*values]:
-        value = " ".join(values)
-        if value not in self._getAllowedReferenceFrameValues():
-          raise ValidationError(f"Wrong ReferenceFrame value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["EpochOfFrame",*values]:
-        value = " ".join(values)
-        if not self._validateDate(value):
-          raise ValidationError(f"Wrong EpochOfFrame format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["CovarianceMatrix",*values]:
-        value = " ".join(values)
-        if value not in self.cfg.getValidationConfig("COV_MATRIX_VALUES").split("|"):
-          raise ValidationError(f"Wrong CovarianceMatrix value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
         if value not in self._getAllowedAnalysisCentreValues():
@@ -203,22 +193,10 @@ class Validator:
         value = " ".join(values)
         if value not in self.cfg.getValidationConfig("SOFTWARE_VALUES").split("|"):
           raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["SINEX_version",*values]:
+      case ["Method-url",*values]:
         value = " ".join(values)
-        if not value:
-          raise ValidationError(f"Wrong SINEX_version '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["CutOffAngle",*values]:
-        value = " ".join(values)
-        if not value.isdigit():
-          raise ValidationError(f"Wrong CutOffAngle format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["OTLmodel",*values]:
-        value = " ".join(values)
-        if value not in self.cfg.getValidationConfig("OTLMODEL_VALUES").split("|"):
-          raise ValidationError(f"Wrong OTLmodel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["AntennaModel",*values]:
-        value = " ".join(values)
-        if value not in self.cfg.getValidationConfig("ANTENNAMODEL_VALUES").split("|"):
-          raise ValidationError(f"Wrong AntennaModel value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        if requests.get(value).status_code != 200:
+          raise ValidationError(f"Wrong method-url value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
         if value != "unknown" and not self._validateDoi(value):
@@ -227,17 +205,14 @@ class Validator:
         value = " ".join(values)
         if not self._validateDate(value):
           raise ValidationError(f"Wrong CreationDate format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["ReleaseNumber",*values]:
+      case ["ReleaseVersion",*values]:
         value = " ".join(values)
         if not value:
-          raise ValidationError(f"Wrong ReleaseNumber format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case [header,*values]:
-        value = " ".join(values)
-        raise ValidationError(f"Wrong metadata paremeter '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
   
   def _getAllowedReferenceFrameValues(self):
     self.cursor.execute("SELECT name FROM reference_frame;")
