@@ -27,7 +27,7 @@ class Validator:
     self.conn        = conn
     self.cursor      = cursor
 
-  def _validateSnx(self,snxFile):
+  def validateSnx(self,snxFile):
     """Validate a specific snx file.
 
     Parameters
@@ -225,7 +225,7 @@ class Validator:
     except Exception:
       return False
 
-  def _validatePos(self,posFile):
+  def validatePos(self,posFile):
     """Validate a specific pbo file.
 
     Parameters

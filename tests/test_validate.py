@@ -3,15 +3,7 @@ from src.utils.config import *
 from src.dbConnection import *
 from src.validate     import *
 
-class TestValidation(unittest.TestCase):
-  def test_getExtension(self):
-    a = Validator("dummy","dummy2","dummy3","dummy4")
-    self.assertEqual(a._getNExtension("{XXX}{v}OPSSNX_{yyyy}{ddd}0000_{pp}D_{pp}D_SOL.SNX.gz",1),"gz")
-  
-  def test_getExtension2(self):
-    a = Validator("dummy","dummy2","dummy3","dummy4")
-    self.assertEqual(a._getNExtension("{XXX}{v}OPSSNX_{yyyy}{ddd}0000_{pp}D_{pp}D_SOL.SNX.gz",2),"snx")
-    
+class TestValidation(unittest.TestCase):    
   def test_validateSnxFilenameAbbr(self):
     a = Validator("dummy","dummy2","dummy3","dummy4")
     self.assertRaises(ValidationError,a._validateSnxFilenameAbbr,"arroz","XXXvOPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz",["ING","UGA","EUR"])
@@ -626,7 +618,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateSnx("inTest/ING5OPSSNX_19993450000_01D_07D_SOL.snx.gz")
+    a.validateSnx("inTest/ING5OPSSNX_19993450000_01D_07D_SOL.snx.gz")
 
   def test_validateSnxFile2(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -634,7 +626,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateSnx,"inTest/ING5OPSSNX_19993450000_02D_07D_SOL.snx.gz")
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_19993450000_02D_07D_SOL.snx.gz")
     
   def test_validateSnxFile3(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -642,7 +634,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateSnx,"inTest/ING5OPSSNX_20003450000_01D_07D_SOL.snx.gz")
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20003450000_01D_07D_SOL.snx.gz")
   
   def test_validateSnxFile4(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -650,7 +642,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateSnx,"inTest/ING5OPSSNX_20013450000_01D_07D_SOL.snx.gz")
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20013450000_01D_07D_SOL.snx.gz")
   
   def test_validateSnxFile5(self):
     logger = Logs("logs/logsTest.log",10000)
@@ -658,7 +650,7 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-    self.assertRaises(ValidationError,a._validateSnx,"inTest/ING5OPSSNX_20023450000_01D_07D_SOL.snx.gz")
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20023450000_01D_07D_SOL.snx.gz")
 
 if __name__ == '__main__':
   unittest.main()
