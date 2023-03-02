@@ -27,47 +27,6 @@ class Validator:
     self.conn        = conn
     self.cursor      = cursor
 
-  def validateProviderDir(self):
-    """Check if the provider dir is valid. Checks if its coordinates and time series dirs (if it has them) are valid.
-
-    Returns
-    -------
-    bool,str
-      True if the providers dir is valid and False otherwise
-      Any errors that occurred formatted as a string
-    """
-    dirsInProviderDir = os.listdir(self.providerDir)
-    # Validate Coors
-    if "Coor" in dirsInProviderDir:
-      self._validateCoor(f"{self.providerDir}/Coor")
-    # Validate TS
-    if "TS" in dirsInProviderDir:
-      self._validateTS(f"{self.providerDir}/TS")
-    
-  def _validateCoor(self,coorDir):
-    """Check if the coordinates dir is valid. Check if all files are snx files and validate each snx file.
-
-    Parameters
-    ----------
-    coorDir : str
-      The coordinates dir to validate.
-
-    Returns
-    -------
-    bool,str
-      True if the coordinates dir is valid and False otherwise
-      Any errors that occurred formatted as a string
-    """
-    coorFiles = os.listdir(coorDir)
-    allFilesAreSnx = all([self._getNExtension(file,2) == "snx" for file in coorFiles])
-    if not allFilesAreSnx:
-      raise ValidationError("Not all files are snx.")
-    for file in coorFiles:
-      self._validateSnx(os.path.join(coorDir,file))
-  
-  def _getNExtension(self,filename,n):
-    return filename.split(".")[-n].lower()
-
   def _validateSnx(self,snxFile):
     """Validate a specific snx file.
 
@@ -265,27 +224,6 @@ class Validator:
       return doi.validate_doi(doiValue)
     except Exception:
       return False
-    
-  def _validateTS(self,tsDir):
-    """Check if the time series dir is valid. Checks if all files are pos files and validate each pos file.
-
-    Parameters
-    ----------
-    tsDir : str
-      The time series dir to validate.
-
-    Returns
-    -------
-    bool,str
-      True if the time series dir is valid and False otherwise
-      Any errors that occurred formatted as a string
-    """
-    tsFiles = os.listdir(tsDir)
-    allFilesArePos = all([self._getNExtension(file,1) == "pos" for file in tsFiles])
-    if not allFilesArePos:
-      raise ValidationError("Not all files are pos.")
-    for file in tsFiles:
-      self._validatePos(os.path.join(tsDir,file))
 
   def _validatePos(self,posFile):
     """Validate a specific pbo file.
