@@ -10,11 +10,13 @@ class Validator:
   """Validate provider files before handling them."""
   
   # == Class variables ==
-  FILENAME_CONVENTION_ERROR_MSG_SNX  = """\n\n Please make sure that the filename conforms to the long filename specification 
+  DEFAULT_SNX_FILENAME_LENGTH = 41
+  
+  FILENAME_CONVENTION_ERROR_MSG_SNX     = """\n\n Please make sure that the filename conforms to the long filename specification 
   of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the 
   version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."""
   
-  FILENAME_CONVENTION_ERROR_MSG_POS  = """\n\n Please make sure that the filename conforms to the long filename specification 
+  FILENAME_CONVENTION_ERROR_MSG_POS     = """\n\n Please make sure that the filename conforms to the long filename specification 
   of {{XXXX}}{{00}}{{CCC}}.pos.gz, where XXXX00CCC is the Station Long Marker."""
   
   # == Methods ==
@@ -36,17 +38,16 @@ class Validator:
 
   def validateSnx(self,snxFile):
     """Validate a specific snx file.
-
+    
     Parameters
     ----------
     snxFile : str
       The snx file to validate
-
-    Returns
-    -------
-    bool,str
-      True if the snx file is valid and False otherwise
-      Any errors that occurred formatted as a string
+      
+    Raises
+    ------
+    ValidationError
+      If there was an error validating the snx file
     """
     self._validateSnxLongFilename(snxFile)
     try:
@@ -66,8 +67,8 @@ class Validator:
       raise ValidationError(f"File {snxFile.split('/')[-1]} with path {snxFile} is not a valid gzipped file.")
   
   def _validateSnxLongFilename(self,snxFile):
-    snxFilename = snxFile.split("/")[-1]
-    if len(snxFilename) != 41:
+    snxFilename = os.path.basename(snxFile)
+    if len(snxFilename) != Validator.DEFAULT_SNX_FILENAME_LENGTH:
       raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Incorrect length {len(snxFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
     self._validateSnxFilenameAbbr(snxFile,snxFilename,self.cfg.getValidationConfig("COOR_ACS").split("|"))
     self._validateSnxFilenameVersion(snxFile,snxFilename)
