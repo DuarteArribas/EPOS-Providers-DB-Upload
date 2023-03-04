@@ -11,7 +11,7 @@ class FileHandler:
   """Handle provider files."""
   
   # == Methods ==
-  def __init__(self,con,providersDir,fromEmail,toEmail,pwdPath):
+  def __init__(self,con,providersDir,fromEmail,pwdPath):
     """Get default parameters.
 
     Parameters
@@ -22,8 +22,6 @@ class FileHandler:
       The default directory for the providers
     fromEmail    : str
       The email address to send the email from
-    toEmail      : str
-      The email address to send the email to
     pwdPath      : str
       The file containing the password of the from email
     """
@@ -36,7 +34,6 @@ class FileHandler:
       "WUT"  : f"{providersDir}/providers_wut/uploads"
     }
     self.fromEmail   = fromEmail
-    self.toEmail     = toEmail
     self.pwdPath     = pwdPath
   
   def getListOfFilesChanged(self):
@@ -75,7 +72,7 @@ class FileHandler:
     """
     return checksumdir.dirhash(dir)
   
-  def sendEmail(self,subject,body):
+  def sendEmail(self,subject,body,toEmail):
     """Email errors to providers.
 
     Parameters
@@ -93,7 +90,7 @@ class FileHandler:
     server.login(self.fromEmail,self._getPwdFromFile())
     msg = MIMEText(body)
     msg["Subject"] = subject
-    server.sendmail(self.fromEmail,self.toEmail,msg.as_string())
+    server.sendmail(self.fromEmail,toEmail,msg.as_string())
     server.quit()
   
   def _getPwdFromFile(self):

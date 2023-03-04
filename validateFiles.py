@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from src.dbConnection import *
 from src.utils.config import *
 from src.fileHandler  import *
@@ -8,10 +9,11 @@ from src.validate     import *
 CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
-def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg,conn,cursor):
+def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg,conn,cursor,providerEmails):
   for i in range(5):
     if not hashesChanged[i]:
       continue
+    errors = []
     provider    = list(providerDirs.keys())[i]
     providerDir = list(providerDirs.items())[i][1]
     publicDir   = list(publicDirs.items())[i][1]
@@ -23,17 +25,17 @@ def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg,conn,c
           validator.validateSnx(file)
           fileHandler.moveSnxFileToPublic(file)
         except ValidationError as err:
-          fileHandler.sendEmail(
-            f"aaaaa",
-            f"bbbbb"
-          )
+          errors.append(err)
       elif file.split(".")[-1].lower() == "pos":
         pass
       else:
-        fileHandler.sendEmail(
-          f"aaaaa",
-          f"bbbbb"
-        )
+        errors.append(f"File '{os.path.basename(file)}' with path 'file' is neither a snx or pbo file!")
+    if len(errors) != 0:
+      fileHandler.sendEmail(
+        f"Error validating some {provider} files. Attention is required!",
+        "There were some errors while validating your files: \n\n" + "\n".join(errors) + "\n\n Please re-upload the problematic files or email us back for more information.",
+        providerEmails[provider]
+      )
       
 # Main function
 def main():
@@ -54,6 +56,14 @@ def main():
     "UGA"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/UGA-CNRS",
     "WUT"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/WUT-EUREF"
   }
+  # Provider emails
+  providerEmails = {
+    "INGV" : f"{cfg.getEmailConfig('INGV_EMAIL')}",
+    "ROB"  : f"{cfg.getEmailConfig('ROB_EMAIL')}",
+    "SGO"  : f"{cfg.getEmailConfig('SGO_EMAIL')}",
+    "UGA"  : f"{cfg.getEmailConfig('UDA_EMAIL')}",
+    "WUT"  : f"{cfg.getEmailConfig('WUT_EMAIL')}"
+  }
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
   # Get a connection to the EPOS database
@@ -69,7 +79,7 @@ def main():
   )
   hashesChanged = fileHandler.getListOfFilesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
-  handleProviders(fileHandler,providerDirs,publicDir,hashesChanged,cfg)
+  handleProviders(fileHandler,providerDirs,publicDir,hashesChanged,cfg,providerEmails)
   
 if __name__ == '__main__':
   main()
