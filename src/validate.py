@@ -56,15 +56,17 @@ class Validator:
         try:
           metadataLines = lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]
         except Exception:
-          raise ValidationError(f"No metadata block '+FILE/COMMENT'/'-FILE/COMMENT' in file {snxFile.split('/')[-1]} with path {snxFile}.")
+          raise ValidationError(f"No metadata block '+FILE/COMMENT'/'-FILE/COMMENT' in file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
         mandatorySnxHeaders = self.cfg.getValidationConfig("MANDATORY_SNX_HEADERS").split("|")
         countMatchingMandatoryHeaders = sum([header.split(" ")[0] in mandatorySnxHeaders for header in metadataLines])
         if countMatchingMandatoryHeaders != len(mandatorySnxHeaders):
-          raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file {snxFile.split('/')[-1]} with path {snxFile}.")
+          raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
         for line in metadataLines:
           self._validateMetadataLineSnx(line,snxFile)
     except(OSError,ValueError):
-      raise ValidationError(f"File {snxFile.split('/')[-1]} with path {snxFile} is not a valid gzipped file.")
+      raise ValidationError(f"File '{os.path.basename(snxFile)}' with path '{snxFile}' is not a valid gzipped file.")
+    except Exception:
+      raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
   
   def _validateSnxLongFilename(self,snxFile):
     """Validate an snx file's long filename according to 20220906UploadGuidelines_v2.5 guidelines.
@@ -81,7 +83,7 @@ class Validator:
     """
     snxFilename = os.path.basename(snxFile)
     if len(snxFilename) != Validator.DEFAULT_SNX_FILENAME_LENGTH:
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Incorrect length {len(snxFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Incorrect length '{len(snxFilename)}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
     self._validateSnxFilenameAbbr(snxFile,snxFilename,self.cfg.getValidationConfig("COOR_ACS").split("|"))
     self._validateSnxFilenameVersion(snxFile,snxFilename)
     self._validateSnxFilenameConstant(snxFile,snxFilename)
@@ -113,7 +115,7 @@ class Validator:
       If the abbreviation doesn't conform
     """
     if not snxFilename[:3] in allowedAC:
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong abbreviation {snxFilename[:3]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong abbreviation '{snxFilename[:3]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameVersion(self,snxFile,snxFilename):
     """Validate the snx filename's version (0-9).
@@ -131,7 +133,7 @@ class Validator:
       If the version is an incorrect value
     """
     if not snxFilename[3:4] in [str(i) for i in range(10)]:
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong version {snxFilename[3:4]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong version '{snxFilename[3:4]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameConstant(self,snxFile,snxFilename):
     """Validate the snx filename's constant (must be OPSSNX_).
@@ -149,7 +151,7 @@ class Validator:
       If the constant is an incorrect value
     """
     if not snxFilename[4:11] == "OPSSNX_":
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant {snxFilename[4:11]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file constant '{snxFilename[4:11]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
       
   def _validateSnxFilenameYear(self,snxFile,snxFilename):
     """Validate the snx filename's year (four digits).
@@ -167,7 +169,7 @@ class Validator:
       If the year is not a four digit value
     """
     if not snxFilename[11:15] in [str(i) for i in range(1994,datetime.now().year + 1)]:
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file year {snxFilename[11:15]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file year '{snxFilename[11:15]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
       
   def _validateSnxFilenameDayOfYear(self,snxFile,snxFilename):
     """Validate the snx filename's day of year (1-365/366).
@@ -186,7 +188,7 @@ class Validator:
     """
     numOfDaysInYear = 366 if self._isLeapYear(int(snxFilename[11:15])) else 365
     if not snxFilename[15:18] in [str(i).zfill(3) for i in range(1,numOfDaysInYear + 1)]:
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx day of the year {snxFilename[15:18]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx day of the year '{snxFilename[15:18]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _isLeapYear(self,year):
     return year % 4 == 0 and year % 100 != 0 or year % 400 == 0
@@ -207,7 +209,7 @@ class Validator:
       If the constant value is incorrect
     """
     if not snxFilename[18:23] == "0000_":
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 2 - {snxFilename[4:11]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file constant 2 - '{snxFilename[18:23]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameSamplePeriod(self,snxFile,snxFilename):
     """Validate the snx filename's sample period (01 or 07).
@@ -225,7 +227,7 @@ class Validator:
       If the sample period is incorrect
     """
     if not (snxFilename[23:25] == "01" or snxFilename[23:25] == "07"):
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file sample period - {snxFilename[23:25]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file sample period - '{snxFilename[23:25]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameConstant3(self,snxFile,snxFilename):
     """Validate the snx filename's third constant value (must be D_).
@@ -243,7 +245,7 @@ class Validator:
       If the constant value is incorrect
     """
     if not snxFilename[25:27] == "D_":
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 3 - {snxFilename[25:27]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file constant 3 - '{snxFilename[25:27]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameSamplePeriod2(self,snxFile,snxFilename):
     """Validate the snx filename's second sample period (01 or 07).
@@ -261,7 +263,7 @@ class Validator:
       If the sample period is incorrect
     """
     if not (snxFilename[27:29] == "01" or snxFilename[27:29] == "07"):
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file sample period 2 - {snxFilename[27:29]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file sample period 2 - '{snxFilename[27:29]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameConstant4(self,snxFile,snxFilename):
     """Validate the snx filename's fourth constant value (must be D_SOL).
@@ -279,7 +281,7 @@ class Validator:
       If the constant value is incorrect
     """
     if not snxFilename[29:34] == "D_SOL":
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file constant 4 - {snxFilename[29:34]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file constant 4 - '{snxFilename[29:34]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameExtension(self,snxFile,snxFilename):
     """Validate the snx filename's extension (should be .snx).
@@ -297,7 +299,7 @@ class Validator:
       If the extension is incorrect.
     """
     if not (snxFilename[34] == "." and snxFilename[35:38].lower() == "snx"):
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file extension - {snxFilename[34:38]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file extension - '{snxFilename[34:38]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameCompressExtension(self,snxFile,snxFilename):
     """Validate the snx filename's compressed extension (should be .gz).
@@ -315,7 +317,7 @@ class Validator:
       If the extension is incorrect.
     """
     if not (snxFilename[38] == "." and snxFilename[39:41].lower() == "gz"):
-      raise ValidationError(f"Wrong filename format for snx file {snxFilename} with path {snxFile} - Wrong snx file compress extension - {snxFilename[38:41]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
+      raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file compress extension - '{snxFilename[38:41]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateMetadataLineSnx(self,line,file):
     """Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5)
