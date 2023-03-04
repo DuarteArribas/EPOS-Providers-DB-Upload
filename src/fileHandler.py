@@ -1,11 +1,12 @@
 import checksumdir
 import smtplib
+import base64
 import shutil
 import gzip
 import glob
 import os
 from email.mime.text import MIMEText
-
+from Crypto.Cipher import AES
 class FileHandler:
   """Handle provider files."""
   
@@ -103,12 +104,19 @@ class FileHandler:
     str
       The read password from the file
     """
-    with open(self.pwdPath,"r") as pPath:
-      lines = pPath.readlines()
-      pwd   = lines[0]
-      return pwd
+    seq = self._deterministicSequence(172)
+    with open(f"{self.pwdPath}/{next(seq)}/{next(seq)}/{next(seq)}/{next(seq)}/{next(seq)}/f40","r") as f:
+      lines           = f.readlines()
+      ciphertext      = base64.b64decode(lines[0].encode("utf-8"))
+      key             = b'Strong pwd GNSS.'
+      iv              = b'.SSNG dwp gnortS'
+      cipher = AES.new(key, AES.MODE_CBC, iv)
+      padded_plaintext = cipher.decrypt(ciphertext)
+      padding_size = padded_plaintext[-1]
+      plaintext = padded_plaintext[:-padding_size]
+      return plaintext.decode("utf-8")
   
-  def deterministicSequence(seed):
+  def _deterministicSequence(self,seed):
     """Deterministic sequence for generating folders
 
     Parameters

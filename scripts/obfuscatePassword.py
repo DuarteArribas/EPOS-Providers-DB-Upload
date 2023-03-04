@@ -1,6 +1,7 @@
 import itertools
 import getpass
 import random
+import base64
 import sys
 import os
 from Crypto.Cipher import AES
@@ -47,7 +48,7 @@ def createDirectories(baseDir,numDirs,levels,ciphertext):
     os.makedirs(dir_name)
     for j in range(10):
       with open(f"{dir_name}/f{random.randint(0,50)}","w") as f:
-        f.write(str(random.randint(0,int("9" * len(str(ciphertext))))))
+        f.write(str(os.urandom(len(ciphertext))))
     createDirectories(dir_name, numDirs, levels-1,ciphertext)
 
 def obfuscatedSequence(password,dir):
@@ -60,14 +61,18 @@ def obfuscatedSequence(password,dir):
   dir     : str
     The base directory
   """
-  key = b'Strong pwd GNSS.'
-  cipher = AES.new(key,AES.MODE_EAX)
-  nonce = cipher.nonce
-  ciphertext,tag = cipher.encrypt_and_digest(password.encode())
+  key             = b'Strong pwd GNSS.'
+  iv              = b'.SSNG dwp gnortS'
+  cipher          = AES.new(key,AES.MODE_CBC,iv)
+  blockSize       = AES.block_size
+  paddingSize     = blockSize - len(password) % blockSize
+  padding         = bytes([paddingSize] * paddingSize)
+  paddedPlaintext = password.encode() + padding
+  ciphertext = cipher.encrypt(paddedPlaintext)
   seq = deterministicSequence(172)
   createDirectories(dir,2,7,ciphertext)
   with open(f"{dir}/{next(seq)}/{next(seq)}/{next(seq)}/{next(seq)}/{next(seq)}/f40","w") as f:
-    f.write(str(ciphertext))
+    f.write(base64.b64encode(ciphertext).decode('utf-8'))
   print("Password hidden successfully!")
   
 def main():
