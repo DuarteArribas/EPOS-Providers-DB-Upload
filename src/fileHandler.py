@@ -107,6 +107,27 @@ class FileHandler:
       lines = pPath.readlines()
       pwd   = lines[0]
       return pwd
+  
+  def deterministicSequence(seed):
+    """Deterministic sequence for generating folders
+
+    Parameters
+    ----------
+    seed : int
+      The sequence's seed
+
+    Yields
+    ------
+    int
+      The next value of the sequence
+    """
+    a = 1103515245
+    c = 12345
+    m = 2 ** 31 - 1
+    x = seed
+    while True:
+      x = (a * x + c) % m
+      yield x % 2
       
   def moveToPublic(self,providerDir,publicDir):
     """Move the file from the provider dir to the corresponding public dir in the correct version.
