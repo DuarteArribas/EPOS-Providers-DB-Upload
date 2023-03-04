@@ -372,285 +372,285 @@ class TestValidation(unittest.TestCase):
     a = Validator(cfg,"dummy","dummy3")
     a._validateSnxLongFilename("arroz/ING5OPSSNX_19993450000_01D_07D_SOL.SNX.gz")
    
-#  def test_getAnalysisCentreValues(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertEqual(a._getAllowedAnalysisCentreValues(),["INGV","LM","NOA","ROB-EUREF","SGO-EPND","UGA-CNRS","WUT-EUREF"])
-#  
-#  def test_validateAnalysisCentreMetadataLines(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre     WUT-EURIF                                                   ","arroz")
-#  
-#  def test_validateAnalysisCentreMetadataLines2(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre     UGA-EUREF                                                   ","arroz")
-#  
-#  def test_validateAnalysisCentreMetadataLines3(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre     arroz                                                   ","arroz")
-#  
-#  def test_validateAnalysisCentreMetadataLines4(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre                                                       ","arroz")
-#  
-#  def test_validateAnalysisCentreMetadataLines5(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" AnalysisCentre     WUT-EUREF                                                   ","arroz")
-#  
-#  def test_validateAnalysisCentreMetadataLines6(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" AnalysisCentre     INGV                                                   ","arroz")
-#    
-#  def test_validateCreationDateMetadataLines(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       15/06/2021 12:00:00                                         ","arroz")
-#  
-#  def test_validateCreationDateMetadataLines2(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       15/2021/06 12:00:00                                         ","arroz")
-#  
-#  def test_validateCreationDateMetadataLines3(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       2021/06/33 12:00:00                                         ","arroz")
-#  
-#  def test_validateCreationDateMetadataLines4(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate       2021/02/29 12:00:00                                         ","arroz")
-#  
-#  def test_validateCreationDateMetadataLines5(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" CreationDate       2021/06/15 12:00:00                                         ","arroz")
-#  
-#  def test_validateCreationDateMetadataLines6(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" CreationDate       2021/06/15 12:11:33                                         ","arroz")
-#  
-#  def test_validateCreationDateMetadataLines7(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" CreationDate       2023/02/11 12:11:33                                         ","arroz")
-#  
-#  def test_validateDOIMetadataLines(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI                                                                     ","arroz")
-#  
-#  def test_validateDOIMetadataLines2(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI             10.24414/ROB-EUREF-C3220                                                    ","arroz")
-#    
-#  def test_validateDOIMetadataLines3(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" DOI                unknown                                                     ","arroz")
-#  
-#  def test_validateDOIMetadataLines4(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" DOI                10.24414/ROB-EUREF-C2220                                                     ","arroz")
-#
-#  def test_validateSoftwareMetadataLines(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Software           Berese GNSS Software 5.2                                   ","arroz")
-#
-#  def test_validateSoftwareMetadataLines2(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Software           Berese GNSS Software 5.3                                   ","arroz")
-#
-#  def test_validateSoftwareMetadataLines3(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Software                                             ","arroz")
-#
-#  def test_validateSoftwareMetadataLines4(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" Software           Bernese GNSS Software 5.2                                   ","arroz")
-#
-#  def test_validateSoftwareMetadataLines5(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" Software           GIPSY-OASIS                                   ","arroz")
-#
-#  def test_validateSoftwareMetadataLines6(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" Software           CATREF                                   ","arroz")
-#
-#  def test_validateSamplingPeriodMetadataLines(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod     aily                                                       ","arroz")
-#
-#  def test_validateSamplingPeriodMetadataLines2(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod     week                                                       ","arroz")
-#
-#  def test_validateSamplingPeriodMetadataLines3(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod     monthly                                                       ","arroz")
-#
-#  def test_validateSamplingPeriodMetadataLines4(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod                                                           ","arroz")
-#
-#  def test_validateSamplingPeriodMetadataLines5(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" SamplingPeriod    daily                                                ","arroz")
-#
-#  def test_validateSamplingPeriodMetadataLines6(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a._validateMetadataLineSnx(" SamplingPeriod    weekly                                                ","arroz")
-#
-#  def test_validateSnxFile(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    a.validateSnx("inTest/ING5OPSSNX_19993450000_01D_07D_SOL.snx.gz")
-#
-#  def test_validateSnxFile2(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_19993450000_02D_07D_SOL.snx.gz")
-#    
-#  def test_validateSnxFile3(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20003450000_01D_07D_SOL.snx.gz")
-#  
-#  def test_validateSnxFile4(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20013450000_01D_07D_SOL.snx.gz")
-#  
-#  def test_validateSnxFile5(self):
-#    logger = Logs("logs/logsTest.log",10000)
-#    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
-#    pgConnection.connect()
-#    cfg = Config("config/appconf.cfg")
-#    a = Validator("dummy",cfg,pgConnection.conn,pgConnection.cursor)
-#    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20023450000_01D_07D_SOL.snx.gz")
+  def test_getAnalysisCentreValues(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertEqual(a._getAllowedAnalysisCentreValues(),["INGV","LM","NOA","ROB-EUREF","SGO-EPND","UGA-CNRS","WUT-EUREF"])
+  
+  def test_validateAnalysisCentreMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre :   WUT-EURIF                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre  :  UGA-EUREF                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre  :  arroz                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," AnalysisCentre                                                       ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" AnalysisCentre  :  WUT-EUREF                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" AnalysisCentre  :  INGV                                                   ","arroz")
+    
+  def test_validateCreationDateMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate  :    15/06/2021 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate   :   15/2021/06 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate   :   2021/06/33 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," CreationDate  :   2021/02/29 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" CreationDate   :   2021/06/15 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" CreationDate   :   2021/06/15 12:11:33                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines7(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" CreationDate    :  2023/02/11 12:11:33                                         ","arroz")
+  
+  def test_validateDOIMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI                                                                     ","arroz")
+  
+  def test_validateDOIMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," DOI   :         10.24414/ROB-EUREF-C3220                                                    ","arroz")
+    
+  def test_validateDOIMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" DOI      :         unknown                                                     ","arroz")
+  
+  def test_validateDOIMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" DOI      :         10.24414/ROB-EUREF-C2220                                                     ","arroz")
+
+  def test_validateSoftwareMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Software    :      Berese GNSS Software 5.2                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Software    :      Berese GNSS Software 5.3                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," Software                                             ","arroz")
+
+  def test_validateSoftwareMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" Software    :      Bernese GNSS Software 5.2                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" Software    :      GIPSY-OASIS                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" Software    :      CATREF                                   ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod  :  aily                                                       ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod :  week                                                       ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod  :  monthly                                                       ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLineSnx," SamplingPeriod                                                           ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" SamplingPeriod  :  daily                                                ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLineSnx(" SamplingPeriod :  weekly                                                ","arroz")
+
+  def test_validateSnxFile(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a.validateSnx("inTest/ING5OPSSNX_19993450000_01D_07D_SOL.snx.gz")
+
+  def test_validateSnxFile2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_19993450000_02D_07D_SOL.snx.gz")
+    
+  def test_validateSnxFile3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20003450000_01D_07D_SOL.snx.gz")
+  
+  def test_validateSnxFile4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20013450000_01D_07D_SOL.snx.gz")
+  
+  def test_validateSnxFile5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20023450000_01D_07D_SOL.snx.gz")
 
 if __name__ == '__main__':
   unittest.main()

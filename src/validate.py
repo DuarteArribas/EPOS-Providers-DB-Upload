@@ -12,9 +12,12 @@ class Validator:
   # == Class variables ==
   DEFAULT_SNX_FILENAME_LENGTH = 41
   
+  
   FILENAME_CONVENTION_ERROR_MSG_SNX     = """\n\n Please make sure that the filename conforms to the long filename specification 
   of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the 
   version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."""
+  
+  FOUND                       = 200
   
   FILENAME_CONVENTION_ERROR_MSG_POS     = """\n\n Please make sure that the filename conforms to the long filename specification 
   of {{XXXX}}{{00}}{{CCC}}.pos.gz, where XXXX00CCC is the Station Long Marker."""
@@ -320,7 +323,7 @@ class Validator:
       raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file compress extension - '{snxFilename[38:41]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateMetadataLineSnx(self,line,file):
-    """Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5)
+    """Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5).
 
     Parameters
     ----------
@@ -329,71 +332,54 @@ class Validator:
     file : str
       The file to which the metadata line belongs to
 
-    Returns
-    -------
-    bool,str
-      True if the snx metadata line is valid and False otherwise
-      Any errors that occurred formatted as a string
+    Raises
+    ------
+    ValidationError
+      If the metadata line is invalid
     """
-    match line.split(":"):
+    match [part.strip() for part in line.split(":",1)]:
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
         if value not in self._getAllowedAnalysisCentreValues():
-          raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["Software",*values]:
         value = " ".join(values)
         if value not in self.cfg.getValidationConfig("SOFTWARE_VALUES").split("|"):
-          raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
-        if requests.get(value).status_code != 200:
-          raise ValidationError(f"Wrong method-url value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+        if requests.get(value).status_code != Validator.FOUND:
+          raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
         if value != "unknown" and not self._validateDoi(value):
-          raise ValidationError(f"Wrong DOI value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["CreationDate",*values]:
         value = " ".join(values)
         if not self._validateDate(value):
-          raise ValidationError(f"Wrong CreationDate format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong CreationDate format '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["ReleaseVersion",*values]:
         value = " ".join(values)
         if not value:
-          raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
-          raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-  
-  def _getAllowedReferenceFrameValues(self):
-    self.cursor.execute("SELECT name FROM reference_frame;")
-    return [item[0] for item in self.cursor.fetchall()]
+          raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
   
   def _getAllowedAnalysisCentreValues(self):
-    self.cursor.execute("SELECT acronym FROM analysis_centers;")
-    return [item[0] for item in self.cursor.fetchall()]
-  
-  def _isFloat(self,num):
-    """Check if a string is a float.
-
-    Parameters
-    ----------
-    num : str
-      The string to check
+    """Get analysis centers from the EPOS db.
 
     Returns
     -------
-    bool
-      True if the string is a float or False if not
+    list
+      A list of all the analyis centers' abbreviations that are in the EPOS db
     """
-    try:
-      float(num)
-      return True
-    except ValueError:
-      return False
+    self.cursor.execute("SELECT acronym FROM analysis_centers;")
+    return [item[0] for item in self.cursor.fetchall()]
 
   def _validateDate(self,date):
-    """Validate a data according to the format `dd/mm/yyyy hh:mm:ss`.
+    """Validate a data according to the format `dd/mm/yyyy hh:mm:ss`, makding sure that it is less than today.
 
     Parameters
     ----------
@@ -412,6 +398,18 @@ class Validator:
       return False
     
   def _validateDoi(self,doiValue):
+    """Validate a DOI value.
+
+    Parameters
+    ----------
+    doiValue : str
+      The DOI value to validate
+
+    Returns
+    -------
+    bool
+      True if the DOI value is valid and False otherwise
+    """
     try:
       return doi.validate_doi(doiValue)
     except Exception:
