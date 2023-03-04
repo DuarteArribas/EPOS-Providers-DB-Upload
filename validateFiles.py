@@ -8,23 +8,33 @@ from src.validate     import *
 CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
-def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg):
+def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg,conn,cursor):
   for i in range(5):
     if not hashesChanged[i]:
       continue
     provider    = list(providerDirs.keys())[i]
     providerDir = list(providerDirs.items())[i][1]
     publicDir   = list(publicDirs.items())[i][1]
-    validator   = Validator(providerDir,cfg)
-    validate,validationError = validator.validateProviderDir()
-    if validate:
-      fileHandler.moveToPublic(providerDir,publicDir)
-    else:
-      fileHandler.sendEmail(
-        f"Validation failure (requires attention in {provider}) | {datetime.datetime.now().strftime('%d/%m/%Y - %H:%M:%S')}",
-        f"{validationError}"
-      )
-        
+    validator   = Validator(providerDir,cfg,conn,cursor)
+    allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
+    for file in allFiles:
+      if file.split(".")[-2].lower() == "snx":
+        try:
+          validator.validateSnx(file)
+          fileHandler.moveSnxFileToPublic(file)
+        except ValidationError as err:
+          fileHandler.sendEmail(
+            f"aaaaa",
+            f"bbbbb"
+          )
+      elif file.split(".")[-1].lower() == "pos":
+        pass
+      else:
+        fileHandler.sendEmail(
+          f"aaaaa",
+          f"bbbbb"
+        )
+      
 # Main function
 def main():
   # Read config file
