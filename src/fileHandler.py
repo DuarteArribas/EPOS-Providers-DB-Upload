@@ -138,10 +138,10 @@ class FileHandler:
       yield x % 2
   
   def moveSnxFileToPublic(self,snxFile,publicDir):
-    with gzip.open(snxFile,"r") as f:
+    with gzip.open(snxFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
-        if line.split(":")[0] == "ReleaseVersion":
+        if line.split(":")[0].strip() == "ReleaseVersion":
           version    = "".join(line.split(":")[1:])
           pathToMove = f"{publicDir}/Coor/{version}"
           if not os.path.exists(pathToMove):
