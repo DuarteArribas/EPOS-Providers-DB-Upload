@@ -136,35 +136,14 @@ class FileHandler:
     while True:
       x = (a * x + c) % m
       yield x % 2
-      
-  def moveToPublic(self,providerDir,publicDir):
-    """Move the file from the provider dir to the corresponding public dir in the correct version.
-
-    Parameters
-    ----------
-    providerDir : str
-      The provider dir from where to move the file
-    publicDir   : str
-      The public dir to where to move the file to
-    """
-    files    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
-    version  = ""
-    coorOrTs = ""
-    for file in files:
-      coorOrTs = file.split("/")[-2] == "TS"
-      with gzip.open(file,"r") as f:
-        lines = f.readlines()
-        lines = [line.strip() for line in lines]
-        if coorOrTs == "Coor":
-          for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
-            if line.split(" ")[0] == "ReleaseNumber":
-              version = "".join(line.split(" ")[1:])
-              break
-        elif coorOrTs == "TS":
-          for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
-            if line.split(" ")[0] == "ReleaseNumber":
-              version = "".join(line.split(" ")[1:])
-              break
-      if not os.path.exists(f"{publicDir}/{version}/{coorOrTs}"):
-        os.makedirs(f"{publicDir}/{version}/{coorOrTs}")
-      shutil.move(file,f"{publicDir}/{version}/{coorOrTs}")
+  
+  def moveSnxFileToPublic(self,snxFile,publicDir):
+    with gzip.open(snxFile,"r") as f:
+      lines = [line.strip() for line in f.readlines()]
+      for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
+        if line.split(":")[0] == "ReleaseVersion":
+          version    = "".join(line.split(":")[1:])
+          pathToMove = f"{publicDir}/Coor/{version}"
+          if not os.path.exists(pathToMove):
+            os.makedirs(pathToMove)
+          shutil.move(snxFile,pathToMove)

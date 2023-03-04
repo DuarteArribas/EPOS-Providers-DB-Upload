@@ -143,7 +143,7 @@ class Validator:
       True if the snx metadata line is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    match line.split():
+    match line.split(":"):
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
         if value not in self._getAllowedAnalysisCentreValues():
