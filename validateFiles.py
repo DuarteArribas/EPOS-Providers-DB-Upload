@@ -53,6 +53,8 @@ def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg,conn,c
 def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
+  # Logger
+  logger = Logs(f"{cfg.getLogsConfig('LOGS_DIR')}/{cfg.getLogsConfig('VALIDATE_LOGS')}",cfg.getLogsConfig("MAX_LOGS"))
   # In and Out folders
   providerDirs = {
     "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",
@@ -79,8 +81,15 @@ def main():
   # Get a connection to the local database
   con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
   # Get a connection to the EPOS database
-  #pgConnection = DBConnection("localhost","5432","arroztestDB","postgres","arroz123",logger)
-  #pgConnection.connect()
+  pgConnection = DBConnection(
+    cfg.getEPOSDBConfig("IP"),
+    cfg.getEPOSDBConfig("PORT"),
+    cfg.getEPOSDBConfig("DATABASE_NAME"),
+    cfg.getEPOSDBConfig("USERNAME"),
+    cfg.getEPOSDBConfig("PASSWORD"),
+    logger
+  )
+  pgConnection.connect()
   # Get list of the hashes changed of each provider
   fileHandler = FileHandler(
     con,
