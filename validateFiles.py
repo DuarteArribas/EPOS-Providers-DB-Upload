@@ -87,7 +87,7 @@ def main():
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    PasswordHandler.getPwdFromFile(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN1")) - 34),
+    PasswordHandler.getPwdFromFile(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34),
     logger
   )
   pgConnection.connect()
@@ -97,7 +97,7 @@ def main():
     cfg.getAppConfig("PROVIDERS_DIR"),
     cfg.getEmailConfig("FROM_EMAIL"),
     cfg.getEmailConfig("TO_EMAIL"),
-    PasswordHandler.getPwdFromFile(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEmailConfig("TOKEN2")) - 1)
+    PasswordHandler.getPwdFromFile(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
   )
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfFilesChanged()
