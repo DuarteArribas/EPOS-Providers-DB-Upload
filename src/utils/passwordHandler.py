@@ -6,11 +6,13 @@ class PasswordHandler:
   
   # == Methods ==
   @staticmethod
-  def getPwdFromFile(path,seed):
+  def getPwdFromFolder(path,seed):
     """Read the password from a file.
     
     Parameters
     ----------
+    path : str
+      The path to the folder starting the password obfuscation
     seed : int
       The sequence's seed
 

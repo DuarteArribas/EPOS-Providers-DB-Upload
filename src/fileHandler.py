@@ -9,33 +9,33 @@ class FileHandler:
   """Handle provider files."""
   
   # == Methods ==
-  def __init__(self,con,providersDir,fromEmail,pwdPath):
+  def __init__(self,con,providersDir,fromEmail,fromEmailPassword):
     """Get default parameters.
 
     Parameters
     ----------
-    con          : Connection
+    con               : Connection
       A connection object to the local database
-    providersDir : str
+    providersDir      : str
       The default directory for the providers
-    fromEmail    : str
+    fromEmail         : str
       The email address to send the email from
-    pwdPath      : str
-      The file containing the password of the from email
+    fromEmailPassword : str
+      The password of the , which is sending the email
     """
-    self.con         = con
-    self.providerDir = {
+    self.con               = con
+    self.providerDir       = {
       "INGV" : f"{providersDir}/providers_ingv/uploads",
       "ROB"  : f"{providersDir}/providers_rob/uploads",
-      "SGO"  : f"{providersDir}/providers_sgo/uploads",
-      "UGA"  : f"{providersDir}/providers_uga/uploads",
+      "SGO"  : f"{providersDir}/providers_ltk/uploads",
+      "UGA"  : f"{providersDir}/providers_uga-cnrs/uploads",
       "WUT"  : f"{providersDir}/providers_wut/uploads"
     }
-    self.fromEmail   = fromEmail
-    self.pwdPath     = pwdPath
+    self.fromEmail         = fromEmail
+    self.fromEmailPassword = fromEmailPassword
   
-  def getListOfFilesChanged(self):
-    """Get the list of files changed.
+  def getListOfHashesChanged(self):
+    """Get the list of hashes changed.
 
     Returns
     -------
@@ -79,25 +79,43 @@ class FileHandler:
       The email subject
     body    : str
       The email body
+    toEmail : str
+      The provider's email address
     """
-    server = smtplib.SMTP("smtp.gmail.com",587)
-    server.connect("smtp.gmail.com",587)
-    server.ehlo()
-    server.starttls()
-    server.ehlo()    
-    server.login(self.fromEmail,self._getPwdFromFile())
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    server.sendmail(self.fromEmail,toEmail,msg.as_string())
-    server.quit()
+    try:
+      server = smtplib.SMTP("smtp.gmail.com",587)
+      server.connect("smtp.gmail.com",587)
+      server.ehlo()
+      server.starttls()
+      server.ehlo()    
+      server.login(self.fromEmail,self.fromEmailPassword)
+      msg = MIMEText(body)
+      msg["Subject"] = subject
+      server.sendmail(self.fromEmail,toEmail,msg.as_string())
+      server.quit()
+    except Exception as err:
+      pass
   
   def moveSnxFileToPublic(self,snxFile,publicDir):
-    with gzip.open(snxFile,"rt") as f:
-      lines = [line.strip() for line in f.readlines()]
-      for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
-        if line.split(":")[0].strip() == "ReleaseVersion":
-          version    = "".join(line.split(":")[1:])
-          pathToMove = f"{publicDir}/Coor/{version}"
-          if not os.path.exists(pathToMove):
-            os.makedirs(pathToMove)
-          shutil.move(snxFile,pathToMove)
+    """Move an snx file to the public directory, according to {publicDir}/Coor/{version}/{snxFile}
+
+    Parameters
+    ----------
+    snxFile   : str
+      The snx file to move
+    publicDir : str
+      The public directory of the correspondent provider
+    """
+    try:
+      with gzip.open(snxFile,"rt") as f:
+        lines = [line.strip() for line in f.readlines()]
+        for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
+          if line.split(":")[0].strip() == "ReleaseVersion":
+            version    = "".join(line.split(":")[1:])
+            pathToMove = f"{publicDir}/Coor/{version}"
+            if not os.path.exists(pathToMove):
+              os.makedirs(pathToMove)
+            shutil.move(snxFile,pathToMove)
+            break
+    except Exception as err:
+      print(err)
