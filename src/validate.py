@@ -62,7 +62,7 @@ class Validator:
         except Exception:
           raise ValidationError(f"No metadata block '+FILE/COMMENT'/'-FILE/COMMENT' in file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
         mandatorySnxHeaders = self.cfg.getValidationConfig("MANDATORY_SNX_HEADERS").split("|")
-        countMatchingMandatoryHeaders = sum([header.split(" ")[0] in mandatorySnxHeaders for header in metadataLines])
+        countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatorySnxHeaders for header in metadataLines])
         if countMatchingMandatoryHeaders != len(mandatorySnxHeaders):
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
         for line in metadataLines:
@@ -439,7 +439,7 @@ class Validator:
         except Exception:
           raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(posFile)}' with path '{posFile}'.")
         mandatoryPosHeaders = self.cfg.getValidationConfig("MANDATORY_POS_HEADERS").split("|")
-        countMatchingMandatoryHeaders = sum([header.split(" ")[0] in mandatoryPosHeaders for header in metadataLines])
+        countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatoryPosHeaders for header in metadataLines])
         if countMatchingMandatoryHeaders != len(mandatoryPosHeaders):
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(posFile)}' with path '{posFile}'.")
         for line in metadataLines:
@@ -462,7 +462,7 @@ class Validator:
         lines = [line.strip() for line in f.readlines()]
         metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
         for line in metadataLines:
-          match line.split(":"):
+          match [part.strip() for part in line.split(":",1)]:
             case ["9-character ID",*values]:
               value = " ".join(values)
               if value != posFilename[:9]:
@@ -490,7 +490,7 @@ class Validator:
       True if the pbo metadata line is valid and False otherwise
       Any errors that occurred formatted as a string
     """
-    match line.split(":"):
+    match [part.strip() for part in line.split(":",1)]:
       case ["9-character ID",*values]:
         value = " ".join(values)
         if value not in self._getAllowed9characterIDValues():

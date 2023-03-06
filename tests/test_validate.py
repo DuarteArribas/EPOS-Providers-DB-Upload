@@ -651,6 +651,334 @@ class TestValidation(unittest.TestCase):
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     self.assertRaises(ValidationError,a.validateSnx,"inTest/ING5OPSSNX_20023450000_01D_07D_SOL.snx.gz")
+  
+  def test_validatePosFilename9characterID(self):
+    a = Validator("dummy","dummy2","dummy3")
+    self.assertRaises(ValidationError,a._validatePosFilename9characterID,"inTest/MEDI00ITA.pos","MEDI00ITA.pbo")
+  
+  def test_validatePosFilename9characterID2(self):
+    a = Validator("dummy","dummy2","dummy3")
+    self.assertRaises(ValidationError,a._validatePosFilename9characterID,"inTest/arroz.pos","arroz.pbo")
+  
+  def test_validatePosFilename9characterID3(self):
+    a = Validator("dummy","dummy2","dummy3")
+    a._validatePosFilename9characterID("inTest/WARN00DEU.pos","WARN00DEU.pbo")
+    
+  def test_validatePosFilename9characterID4(self):
+    a = Validator("dummy","dummy2","dummy3")
+    a._validatePosFilename9characterID("inTest/abcqwertq.pos","abcqwertq.pbo")
+  
+  def test_validatePosFilenameExtension(self):
+    a = Validator("dummy","dummy2","dummy3")
+    self.assertRaises(ValidationError,a._validatePosFilenameExtension,"arroz","abcdefghj.pbo")
+  
+  def test_validatePosFilenameExtension2(self):
+    a = Validator("dummy","dummy2","dummy3")
+    self.assertRaises(ValidationError,a._validatePosFilenameExtension,"arroz","abcdefghj.snx")
+  
+  def test_validatePosFilenameExtension3(self):
+    a = Validator("dummy","dummy2","dummy3")
+    a._validatePosFilenameExtension("arroz","abcdefghj.pos")
+  
+  def test_validatePosFilename(self):
+    a = Validator("dummy","dummy2","dummy3")
+    self.assertRaises(ValidationError,a._validatePosFilename,"inTest/MEDI00ITA.pos")
+  
+  def test_validatePosFilename2(self):
+    a = Validator("dummy","dummy2","dummy3")
+    self.assertRaises(ValidationError,a._validatePosFilename,"inTest/arroz.pbo")
+  
+  def test_validatePosFilename3(self):
+    a = Validator("dummy","dummy2","dummy3")
+    a._validatePosFilename("inTest/WARN00DEU.pos")
+  
+  def test_validatePbo9CharacterIDMetadataLine(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos,"9-character ID: 1111","arroz")
+  
+  def test_validatePbo9CharacterIDMetadataLine2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos,"9-character ID: arroz","arroz")
+  
+  def test_validatePbo9CharacterIDMetadataLine3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos,"9-character ID:     ","arroz")
+  
+  def test_validatePbo9CharacterIDMetadataLine4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos("9-character ID: WARN00DEU","arroz")
+  
+  def test_validateAnalysisCentreMetadataLinesPos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," AnalysisCentre :   WUT-EURIF                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines2Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," AnalysisCentre  :  UGA-EUREF                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines3Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," AnalysisCentre  :  arroz                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines4Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," AnalysisCentre                                                       ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines5Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" AnalysisCentre  :  WUT-EUREF                                                   ","arroz")
+  
+  def test_validateAnalysisCentreMetadataLines6Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" AnalysisCentre  :  INGV                                                   ","arroz")
+    
+  def test_validateCreationDateMetadataLinesPos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," CreationDate  :    15/06/2021 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines2Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," CreationDate   :   15/2021/06 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines3Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," CreationDate   :   2021/06/33 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines4Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," CreationDate  :   2021/02/29 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines5Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" CreationDate   :   2021/06/15 12:00:00                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines6Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" CreationDate   :   2021/06/15 12:11:33                                         ","arroz")
+  
+  def test_validateCreationDateMetadataLines7Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" CreationDate    :  2023/02/11 12:11:33                                         ","arroz")
+  
+  def test_validateDOIMetadataLinesPos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," DOI                                                                     ","arroz")
+  
+  def test_validateDOIMetadataLines2Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," DOI   :         10.24414/ROB-EUREF-C3220                                                    ","arroz")
+    
+  def test_validateDOIMetadataLines3Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" DOI      :         unknown                                                     ","arroz")
+  
+  def test_validateDOIMetadataLines4Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" DOI      :         10.24414/ROB-EUREF-C2220                                                     ","arroz")
+
+  def test_validateSoftwareMetadataLinesPos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," Software    :      Berese GNSS Software 5.2                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines2Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," Software    :      Berese GNSS Software 5.3                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines3Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," Software                                             ","arroz")
+
+  def test_validateSoftwareMetadataLines4Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" Software    :      Bernese GNSS Software 5.2                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines5Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" Software    :      GIPSY-OASIS                                   ","arroz")
+
+  def test_validateSoftwareMetadataLines6Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" Software    :      CATREF                                   ","arroz")
+
+  def test_validateSamplingPeriodMetadataLinesPos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," SamplingPeriod  :  aily                                                       ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines2Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," SamplingPeriod :  week                                                       ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines3Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," SamplingPeriod  :  monthly                                                       ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines4Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a._validateMetadataLinePos," SamplingPeriod                                                           ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines5Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" SamplingPeriod  :  daily                                                ","arroz")
+
+  def test_validateSamplingPeriodMetadataLines6Pos(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateMetadataLinePos(" SamplingPeriod :  weekly                                                ","arroz")
+  
+  def test_validatePosFile(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a.validatePos("inTest/WARN00DEU.pos")
+  
+  def test_validatePosFile2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a.validatePos,"inTest/KAJJ00UKN.pos")
+  
+  def test_validatePosFile3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    self.assertRaises(ValidationError,a.validatePos,"inTest/LEHL00UKN.pos")
 
 if __name__ == '__main__':
   unittest.main()
