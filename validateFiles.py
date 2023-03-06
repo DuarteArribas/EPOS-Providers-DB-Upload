@@ -19,17 +19,29 @@ def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg,conn,c
     publicDir   = list(publicDirs.items())[i][1]
     validator   = Validator(providerDir,cfg,conn,cursor)
     allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
+    # Check each file
     for file in allFiles:
-      if file.split(".")[-2].lower() == "snx":
+      extension = os.path.splitext(file)[1].lower()
+      # Check snx
+      if extension == "snx":
         try:
           validator.validateSnx(file)
           fileHandler.moveSnxFileToPublic(file)
         except ValidationError as err:
           errors.append(err)
-      elif file.split(".")[-1].lower() == "pos":
+      # Check pos
+      elif extension == "pos":
+        try:
+          validator.validatePos(file)
+          fileHandler.movePosFileToBucket(file)
+        except ValidationError as err:
+          errors.append(err)
+      elif extension == "vel":
         pass
+      # Unknown file
       else:
         errors.append(f"File '{os.path.basename(file)}' with path 'file' is neither a snx or pbo file!")
+    # if there were any errors email them
     if len(errors) != 0:
       fileHandler.sendEmail(
         f"Error validating some {provider} files. Attention is required!",
