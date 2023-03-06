@@ -1,9 +1,10 @@
 import sqlite3
 import os
-from src.dbConnection import *
-from src.utils.config import *
-from src.fileHandler  import *
-from src.validate     import *
+from src.utils.passwordHandler import *
+from src.dbConnection          import *
+from src.utils.config          import *
+from src.fileHandler           import *
+from src.validate              import *
 
 # Global variables
 CONFIG_FILE = "config/appconf.cfg"
@@ -86,7 +87,7 @@ def main():
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    cfg.getEPOSDBConfig("PASSWORD"),
+    PasswordHandler.getPwdFromFile(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN1")) - 34),
     logger
   )
   pgConnection.connect()
@@ -96,7 +97,7 @@ def main():
     cfg.getAppConfig("PROVIDERS_DIR"),
     cfg.getEmailConfig("FROM_EMAIL"),
     cfg.getEmailConfig("TO_EMAIL"),
-    cfg.getEmailConfig("FROM_EMAIL_PWD_FILE")
+    PasswordHandler.getPwdFromFile(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEmailConfig("TOKEN2")) - 1)
   )
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfFilesChanged()

@@ -3,6 +3,7 @@ from Crypto.Cipher import AES
 
 class PasswordHandler:
   """Manage password reading "pseudo"-safely."""
+  
   # == Methods ==
   @staticmethod
   def getPwdFromFile(path,seed):
