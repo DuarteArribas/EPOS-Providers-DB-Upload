@@ -1,12 +1,10 @@
 import checksumdir
 import smtplib
-import base64
 import shutil
 import gzip
-import glob
 import os
 from email.mime.text import MIMEText
-from Crypto.Cipher import AES
+
 class FileHandler:
   """Handle provider files."""
   
@@ -92,47 +90,6 @@ class FileHandler:
     msg["Subject"] = subject
     server.sendmail(self.fromEmail,toEmail,msg.as_string())
     server.quit()
-  
-  def _getPwdFromFile(self):
-    """Read the password from a file.
-
-    Returns
-    -------
-    str
-      The read password from the file
-    """
-    seq = self._deterministicSequence(172)
-    with open(f"{self.pwdPath}/{next(seq)}/{next(seq)}/{next(seq)}/{next(seq)}/{next(seq)}/f40","r") as f:
-      lines           = f.readlines()
-      ciphertext      = base64.b64decode(lines[0].encode("utf-8"))
-      key             = b'Strong pwd GNSS.'
-      iv              = b'.SSNG dwp gnortS'
-      cipher = AES.new(key, AES.MODE_CBC, iv)
-      padded_plaintext = cipher.decrypt(ciphertext)
-      padding_size = padded_plaintext[-1]
-      plaintext = padded_plaintext[:-padding_size]
-      return plaintext.decode("utf-8")
-  
-  def _deterministicSequence(self,seed):
-    """Deterministic sequence for generating folders
-
-    Parameters
-    ----------
-    seed : int
-      The sequence's seed
-
-    Yields
-    ------
-    int
-      The next value of the sequence
-    """
-    a = 1103515245
-    c = 12345
-    m = 2 ** 31 - 1
-    x = seed
-    while True:
-      x = (a * x + c) % m
-      yield x % 2
   
   def moveSnxFileToPublic(self,snxFile,publicDir):
     with gzip.open(snxFile,"rt") as f:

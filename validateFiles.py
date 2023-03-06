@@ -90,7 +90,7 @@ def main():
     logger
   )
   pgConnection.connect()
-  # Get list of the hashes changed of each provider
+  # Get a file handler object
   fileHandler = FileHandler(
     con,
     cfg.getAppConfig("PROVIDERS_DIR"),
@@ -98,6 +98,7 @@ def main():
     cfg.getEmailConfig("TO_EMAIL"),
     cfg.getEmailConfig("FROM_EMAIL_PWD_FILE")
   )
+  # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfFilesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
   handleProviders(fileHandler,providerDirs,publicDir,hashesChanged,cfg,providerEmails)
