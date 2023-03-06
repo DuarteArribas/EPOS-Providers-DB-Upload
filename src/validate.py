@@ -12,6 +12,7 @@ class Validator:
   # == Class variables ==
   DEFAULT_SNX_FILENAME_LENGTH = 41
   
+  DEFAULT_POS_FILENAME_LENGTH = 13
   
   FILENAME_CONVENTION_ERROR_MSG_SNX     = """\n\n Please make sure that the filename conforms to the long filename specification 
   of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the 
@@ -449,9 +450,9 @@ class Validator:
       raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(posFile)}' with path '{posFile}'.")
   
   def _validatePosFilename(self,posFile):
-    posFilename = posFile.split("/")[-1]
-    if len(posFilename) != 13:
-      raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Incorrect length {len(posFilename)}. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+    posFilename = os.path.basename(posFile)
+    if len(posFilename) != Validator.DEFAULT_POS_FILENAME_LENGTH:
+      raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Incorrect length '{len(posFilename)}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
     self._validatePosFilename9characterID(posFile,posFilename)
     self._validatePosFilenameExtension(posFile,posFilename)
 
