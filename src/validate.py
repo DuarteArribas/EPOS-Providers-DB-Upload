@@ -466,13 +466,13 @@ class Validator:
             case ["9-character ID",*values]:
               value = " ".join(values)
               if value != posFilename[:9]:
-                raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Pos file long marker name - {posFilename[:9]} does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+                raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Pos file long marker name - '{posFilename[:9]}' does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
     except OSError:
-      raise ValidationError(f"Cannot read file {posFile.split('/')[-1]} with path {posFile}.")
+      raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
 
   def _validatePosFilenameExtension(self,posFile,posFilename):
     if not (posFilename[9] == "." and posFilename[10:13].lower() == "pos"):
-      raise ValidationError(f"Wrong filename format for pos file {posFilename} with path {posFile} - Wrong pos file extension - {posFilename[10:13]}. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+      raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Wrong pos file extension - '{posFilename[10:13]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
   
   def _validateMetadataLinePos(self,line,file):
     """Validate a specific metadata line from a pbo file (according to 20220906UploadGuidelines_v2.5)
@@ -494,42 +494,35 @@ class Validator:
       case ["9-character ID",*values]:
         value = " ".join(values)
         if value not in self._getAllowed9characterIDValues():
-          raise ValidationError(f"Wrong 9-character ID value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case ["ReferenceFrame",*values]:
-        value = " ".join(values)
-        if value not in self._getAllowedReferenceFrameValues():
-          raise ValidationError(f"Wrong ReferenceFrame value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong 9-character ID value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
         if value not in self._getAllowedAnalysisCentreValues():
-          raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Software",*values]:
         value = " ".join(values)
         if value not in self.cfg.getValidationConfig("SOFTWARE_VALUES").split("|"):
-          raise ValidationError(f"Wrong Software value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
         if requests.get(value).status_code != 200:
-          raise ValidationError(f"Wrong method-url value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
         if value != "unknown" and not self._validateDoi(value):
-          raise ValidationError(f"Wrong DOI value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["CreationDate",*values]:
         value = " ".join(values)
         if not self._validateDate(value):
-          raise ValidationError(f"Wrong CreationDate format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong CreationDate format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["ReleaseVersion",*values]:
         value = " ".join(values)
         if not value:
-          raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
-          raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
-      case [header,*values]:
-        value = " ".join(values)
-        raise ValidationError(f"Wrong metadata paremeter '{header}' of value '{value}' in file '{file.split('/')[-1]}', with path: '{file}'.")
+          raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
 
   def _getAllowed9characterIDValues(self):
     self.cursor.execute("SELECT marker FROM station;")
