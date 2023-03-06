@@ -119,3 +119,28 @@ class FileHandler:
             break
     except Exception as err:
       print(err)
+    
+  
+  def movePosFileToPublic(self,posFile,publicDir):
+    """Move a pos file to the public directory, according to {publicDir}/TS/{version}/{posFile}
+
+    Parameters
+    ----------
+    posFile   : str
+      The pos file to move
+    publicDir : str
+      The public directory of the correspondent provider
+    """
+    try:
+      with open(posFile,"rt") as f:
+        lines = [line.strip() for line in f.readlines()]
+        for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
+          if line.split(":")[0].strip() == "ReleaseVersion":
+            version    = "".join(line.split(":")[1:])
+            pathToMove = f"{publicDir}/TS/{version}"
+            if not os.path.exists(pathToMove):
+              os.makedirs(pathToMove)
+            shutil.move(posFile,pathToMove)
+            break
+    except Exception as err:
+      print(err)

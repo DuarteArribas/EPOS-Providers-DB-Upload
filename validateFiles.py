@@ -1,4 +1,5 @@
 import sqlite3
+import glob
 import os
 from src.utils.passwordHandler import *
 from src.dbConnection          import *
@@ -27,14 +28,15 @@ def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,c
       if extension == "snx":
         try:
           validator.validateSnx(file)
-          fileHandler.moveSnxFileToPublic(file)
+          fileHandler.moveSnxFileToPublic(file,publicDir)
         except ValidationError as err:
           errors.append(err)
       # Check pos
       elif extension == "pos":
         try:
           validator.validatePos(file)
-          fileHandler.movePosFileToBucket(file)
+          # upload to db first
+          fileHandler.movePosFileToPublic(file,publicDir)
         except ValidationError as err:
           errors.append(err)
       elif extension == "vel":
@@ -42,7 +44,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,c
       # Unknown file
       else:
         errors.append(f"File '{os.path.basename(file)}' with path 'file' is neither a snx or pbo file!")
-    # if there were any errors email them
+    # If there were any errors email them
     if len(errors) != 0:
       fileHandler.sendEmail(
         f"Error validating some {provider} files. Attention is required!",
