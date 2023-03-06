@@ -435,14 +435,18 @@ class Validator:
         lines = [line.strip() for line in f.readlines()]
         try:
           metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
-        except Exception as err:
-          raise ValidationError(f"No metadata block %Begin EPOS metadata/%End EPOS metadata in file {posFile.split('/')[-1]} with path {posFile}.")
-        if len(metadataLines) != 9:
-          raise ValidationError(f"Wrong number of metadata parameters in file {posFile.split('/')[-1]} with path {posFile}.")
+        except Exception:
+          raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(posFile)}' with path '{posFile}'.")
+        mandatoryPosHeaders = self.cfg.getValidationConfig("MANDATORY_POS_HEADERS").split("|")
+        countMatchingMandatoryHeaders = sum([header.split(" ")[0] in mandatoryPosHeaders for header in metadataLines])
+        if countMatchingMandatoryHeaders != len(mandatoryPosHeaders):
+          raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(posFile)}' with path '{posFile}'.")
         for line in metadataLines:
           self._validateMetadataLinePos(line,posFile)
     except OSError:
-      raise ValidationError(f"Cannot read file {posFile.split('/')[-1]} with path {posFile}.")
+      raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
+    except Exception:
+      raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(posFile)}' with path '{posFile}'.")
   
   def _validatePosFilename(self,posFile):
     posFilename = posFile.split("/")[-1]
