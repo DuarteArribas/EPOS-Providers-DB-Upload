@@ -18,7 +18,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,c
     provider    = list(providersDir.keys())[i]
     providerDir = list(providersDir.items())[i][1]
     publicDir   = list(publicDirs.items())[i][1]
-    validator   = Validator(providerDir,cfg,conn,cursor)
+    validator   = Validator(cfg,conn,cursor)
     allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
     for file in allFiles:
@@ -64,7 +64,7 @@ def main():
     "UGA"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_uga-cnrs/uploads",
     "WUT"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_wut/uploads"
   }
-  publicDir = {
+  publicDirs = {
     "INGV" : f"{cfg.getAppConfig('PUBLIC_DIR')}/INGV",
     "ROB"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/ROB-EUREF",
     "SGO"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/SGO-EPND",
@@ -101,7 +101,7 @@ def main():
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfHashesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
-  handleProviders(fileHandler,providersDir,publicDir,hashesChanged,cfg,providerEmails)
+  handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,pgConnection.conn,pgConnection.cursor,providerEmails)
   
 if __name__ == '__main__':
   main()
