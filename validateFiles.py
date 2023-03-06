@@ -10,13 +10,13 @@ from src.validate              import *
 CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
-def handleProviders(fileHandler,providerDirs,publicDirs,hashesChanged,cfg,conn,cursor,providerEmails):
+def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,cursor,providerEmails):
   for i in range(5):
     if not hashesChanged[i]:
       continue
     errors = []
-    provider    = list(providerDirs.keys())[i]
-    providerDir = list(providerDirs.items())[i][1]
+    provider    = list(providersDir.keys())[i]
+    providerDir = list(providersDir.items())[i][1]
     publicDir   = list(publicDirs.items())[i][1]
     validator   = Validator(providerDir,cfg,conn,cursor)
     allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
@@ -57,7 +57,7 @@ def main():
   # Logger
   logger = Logs(f"{cfg.getLogsConfig('LOGS_DIR')}/{cfg.getLogsConfig('VALIDATE_LOGS')}",cfg.getLogsConfig("MAX_LOGS"))
   # In and Out folders
-  providerDirs = {
+  providersDir = {
     "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",
     "ROB"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_rob/uploads",
     "SGO"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ltk/uploads",
@@ -96,13 +96,12 @@ def main():
     con,
     cfg.getAppConfig("PROVIDERS_DIR"),
     cfg.getEmailConfig("FROM_EMAIL"),
-    cfg.getEmailConfig("TO_EMAIL"),
-    PasswordHandler.getPwdFromFolder(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
+    PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
   )
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfHashesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
-  handleProviders(fileHandler,providerDirs,publicDir,hashesChanged,cfg,providerEmails)
+  handleProviders(fileHandler,providersDir,publicDir,hashesChanged,cfg,providerEmails)
   
 if __name__ == '__main__':
   main()
