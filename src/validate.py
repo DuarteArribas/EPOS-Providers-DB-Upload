@@ -83,7 +83,7 @@ class Validator:
     Raises
     ------
     ValidationError
-      If the name doesn't conform to that specified by the guidelines
+      If the name doesn't conform to the one specified by the guidelines
     """
     snxFilename = os.path.basename(snxFile)
     if len(snxFilename) != Validator.DEFAULT_SNX_FILENAME_LENGTH:
@@ -195,6 +195,18 @@ class Validator:
       raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx day of the year '{snxFilename[15:18]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _isLeapYear(self,year):
+    """Check if year is a leap year.
+
+    Parameters
+    ----------
+    year : int
+      The year to check
+
+    Returns
+    -------
+    bool
+      True if the year is a leap year and False otherwise
+    """
     return year % 4 == 0 and year % 100 != 0 or year % 400 == 0
   
   def _validateSnxFilenameConstant2(self,snxFile,snxFilename):
@@ -374,13 +386,13 @@ class Validator:
     Returns
     -------
     list
-      A list of all the analyis centers' abbreviations that are in the EPOS db
+      A list of all the analysis centers' abbreviations that are in the EPOS db
     """
     self.cursor.execute("SELECT acronym FROM analysis_centers;")
     return [item[0] for item in self.cursor.fetchall()]
 
   def _validateDate(self,date):
-    """Validate a data according to the format `dd/mm/yyyy hh:mm:ss`, makding sure that it is less than today.
+    """Validate a data according to the format `dd/mm/yyyy hh:mm:ss`, making sure that it is less than today.
 
     Parameters
     ----------
@@ -417,18 +429,17 @@ class Validator:
       return False
 
   def validatePos(self,posFile):
-    """Validate a specific pbo file.
+    """Validate a specific pos file.
 
     Parameters
     ----------
-    pboFile : str
-      The pbo file to validate
+    posFile : str
+      The pos file to validate
 
-    Returns
-    -------
-    bool,str
-      True if the pbo file is valid and False otherwise
-      Any errors that occurred formatted as a string
+    Raises
+    ------
+    ValidationError
+      If there was an error validating the pos file
     """
     self._validatePosFilename(posFile)
     try:
@@ -450,6 +461,18 @@ class Validator:
       raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(posFile)}' with path '{posFile}'.")
   
   def _validatePosFilename(self,posFile):
+    """Validate a pos file's filename according to 20220906UploadGuidelines_v2.5 guidelines.
+
+    Parameters
+    ----------
+    posFile : str
+      The full path of the pos file
+
+    Raises
+    ------
+    ValidationError
+      If the name doesn't conform to the one specified by the guidelines
+    """
     posFilename = os.path.basename(posFile)
     if len(posFilename) != Validator.DEFAULT_POS_FILENAME_LENGTH:
       raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Incorrect length '{len(posFilename)}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
@@ -457,6 +480,20 @@ class Validator:
     self._validatePosFilenameExtension(posFile,posFilename)
 
   def _validatePosFilename9characterID(self,posFile,posFilename):
+    """Validate the pos filename's 9 character ID (must conform to the marker inside of the file).
+
+    Parameters
+    ----------
+    posFile     : str
+      The full path of the pos file
+    posFilename : str
+      The filename of the pos file
+
+    Raises
+    ------
+    ValidationError
+      If the 9 character ID doesn't conform to the long marker inside the file's metadata
+    """
     try:
       with open(posFile,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
@@ -471,24 +508,37 @@ class Validator:
       raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
 
   def _validatePosFilenameExtension(self,posFile,posFilename):
+    """Validate the pos filename's extension (should be .pos).
+
+    Parameters
+    ----------
+    posFile     : str
+      The full path of the pos file.
+    posFilename : str
+      The pos file name.
+
+    Raises
+    ------
+    ValidationError
+      If the extension is incorrect.
+    """
     if not (posFilename[9] == "." and posFilename[10:13].lower() == "pos"):
       raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Wrong pos file extension - '{posFilename[10:13]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
   
   def _validateMetadataLinePos(self,line,file):
-    """Validate a specific metadata line from a pbo file (according to 20220906UploadGuidelines_v2.5)
+    """Validate a specific metadata line from a pos file (according to 20220906UploadGuidelines_v2.5)
 
     Parameters
     ----------
     line : str
-      The specific pbo metadata line to validate
+      The specific pos metadata line to validate
     file : str
       The file to which the metadata line belongs to
 
-    Returns
-    -------
-    bool,str
-      True if the pbo metadata line is valid and False otherwise
-      Any errors that occurred formatted as a string
+    Raises
+    ------
+    ValidationError
+      If the metadata line is invalid
     """
     match [part.strip() for part in line.split(":",1)]:
       case ["9-character ID",*values]:
@@ -525,5 +575,12 @@ class Validator:
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
 
   def _getAllowed9characterIDValues(self):
+    """Get all the 9 character ID markers from the EPOS db.
+
+    Returns
+    -------
+    list
+      All the 9 character ID markers available in the EPOS db
+    """
     self.cursor.execute("SELECT marker FROM station;")
     return [item[0] for item in self.cursor.fetchall()]
