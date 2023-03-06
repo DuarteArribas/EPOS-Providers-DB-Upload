@@ -94,7 +94,7 @@ class FileHandler:
       server.sendmail(self.fromEmail,toEmail,msg.as_string())
       server.quit()
     except Exception as err:
-      pass
+      print(err)
   
   def moveSnxFileToPublic(self,snxFile,publicDir):
     """Move an snx file to the public directory, according to {publicDir}/Coor/{version}/{snxFile}

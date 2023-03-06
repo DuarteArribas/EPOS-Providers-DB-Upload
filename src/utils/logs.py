@@ -45,6 +45,7 @@ class Logs:
       The max quantity of allowed logs. Older logs will be deleted if this number is surpassed, so 
       that the number of logs will not be more than maxLogs
     """
+    maxLogs = int(maxLogs)
     self.loggingFile = loggingFile
     if maxLogs > Logs.MAX_NUM_LOGS:
       self.maxLogs = Logs.MAX_NUM_LOGS

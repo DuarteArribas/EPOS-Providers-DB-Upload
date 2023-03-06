@@ -14,14 +14,14 @@ class Validator:
   
   DEFAULT_POS_FILENAME_LENGTH = 13
   
-  FILENAME_CONVENTION_ERROR_MSG_SNX     = """\n\n Please make sure that the filename conforms to the long filename specification 
-  of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the 
-  version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly)."""
+  FILENAME_CONVENTION_ERROR_MSG_SNX     = ("Please make sure that the filename conforms to the long filename specification "
+  "of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the "
+  "version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly).")
   
   FOUND                       = 200
   
-  FILENAME_CONVENTION_ERROR_MSG_POS     = """\n\n Please make sure that the filename conforms to the long filename specification 
-  of {{XXXX}}{{00}}{{CCC}}.pos.gz, where XXXX00CCC is the Station Long Marker."""
+  FILENAME_CONVENTION_ERROR_MSG_POS     = ("Please make sure that the filename conforms to the long filename specification "
+  "of {{XXXX}}{{00}}{{CCC}}.pos.gz, where XXXX00CCC is the Station Long Marker.")
   
   # == Methods ==
   def __init__(self,cfg,conn,cursor):
@@ -67,6 +67,8 @@ class Validator:
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
         for line in metadataLines:
           self._validateMetadataLineSnx(line,snxFile)
+    except ValidationError as err:
+      raise ValidationError(str(err))
     except(OSError,ValueError):
       raise ValidationError(f"File '{os.path.basename(snxFile)}' with path '{snxFile}' is not a valid gzipped file.")
     except Exception:
@@ -455,6 +457,8 @@ class Validator:
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(posFile)}' with path '{posFile}'.")
         for line in metadataLines:
           self._validateMetadataLinePos(line,posFile)
+    except ValidationError as err:
+      raise ValidationError(str(err))
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
     except Exception:

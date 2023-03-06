@@ -23,32 +23,34 @@ def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,c
     allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
     for file in allFiles:
-      extension = os.path.splitext(file)[1].lower()
+      extensionWithGzip    = os.path.splitext(os.path.splitext(file)[0])[1]
+      extensionWithoutGzip = os.path.splitext(file)[1]
       # Check snx
-      if extension == "snx":
+      if extensionWithGzip == ".snx":
         try:
           validator.validateSnx(file)
           fileHandler.moveSnxFileToPublic(file,publicDir)
         except ValidationError as err:
-          errors.append(err)
+          errors.append(str(err))
       # Check pos
-      elif extension == "pos":
+      elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
           # upload to db first
           fileHandler.movePosFileToPublic(file,publicDir)
         except ValidationError as err:
-          errors.append(err)
-      elif extension == "vel":
+          errors.append(str(err))
+      elif extensionWithoutGzip == ".vel":
         pass
       # Unknown file
       else:
-        errors.append(f"File '{os.path.basename(file)}' with path 'file' is neither a snx or pbo file!")
+        errors.append(f"File '{os.path.basename(file)}' with path '{file}' is neither a snx or pbo file!")
     # If there were any errors email them
     if len(errors) != 0:
+      errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]
       fileHandler.sendEmail(
         f"Error validating some {provider} files. Attention is required!",
-        "There were some errors while validating your files: \n\n" + "\n".join(errors) + "\n\n Please re-upload the problematic files or email us back for more information.",
+        "There were some errors while validating your files: \n\n" + "\n".join(errors) + "\n\n\n Please re-upload the problematic files or email us back for more information.",
         providerEmails[provider]
       )
       
