@@ -28,7 +28,13 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload._erasePreviousSolutionFromDB("INGV","timeseries")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
-  
+  def test_checkSolutionAlreadyThere(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+    self.assertEqual(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
+    print(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"))
   
 if __name__ == '__main__':
   unittest.main()
