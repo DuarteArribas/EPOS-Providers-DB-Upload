@@ -24,8 +24,8 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
     allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
     for file in allFiles:
-      extensionWithGzip    = os.path.splitext(os.path.splitext(file)[0])[1]
-      extensionWithoutGzip = os.path.splitext(file)[1]
+      extensionWithGzip    = os.path.splitext(os.path.splitext(file)[0])[1].lower()
+      extensionWithoutGzip = os.path.splitext(file)[1].lower()
       # Check snx
       if extensionWithGzip == ".snx":
         try:
