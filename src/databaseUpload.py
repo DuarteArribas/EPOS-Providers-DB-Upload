@@ -63,18 +63,14 @@ class DatabaseUpload:
     return [item[0] for item in self.cursor.fetchall()]
   
   def _erasePreviousSolutionFromDB(self,ac,dataType):
-    self.cursor.execute("START TRANSACTION")
-    self.cursor.execute("DELETE FROM solution WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
-    self.cursor.execute("COMMIT TRANSACTION")
+    self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
   
   def _getTimeseriesFilesID(self,solutionID):
     self.cursor.execute("SELECT id_timeseries_files FROM solution WHERE id_solution = ?;",solutionID)
     return [item[0] for item in self.cursor.fetchall()]  
   
   def _erasePreviousTimeseriesFilesFromDB(self,timeseriesFilesID):
-    self.cursor.execute("START TRANSACTION")
     self.cursor.execute("DELETE FROM timeseries_files WHERE id = ?;",timeseriesFilesID)
-    self.cursor.execute("COMMIT TRANSACTION")
   
   def _uploadSolution(self,file,dataType):
     solutionParameters = self._getSolutionParameters(file)
