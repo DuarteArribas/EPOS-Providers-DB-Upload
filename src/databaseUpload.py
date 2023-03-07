@@ -35,74 +35,76 @@ class TSDatabaseUpload:
     if not os.path.exists(self.tmpDir):
       os.makedirs(self.tmpDir)
   
-  def uploadAllTS(self,publicDir):
-    """Upload all found time series files to the database. First, get the files to upload and save their information to temporary files.
-    Then, try to bulk insert those files into the db (optimization). If it can't, upload them one by one.
+  def uploadAllTS(self,bucketDir):
+    allTSFiles = self._getListOfTSFiles(bucketDir)
+    if len(allTSFiles) == 0:
+      return
+    self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"TS")
     
-
+    
+    self._uploadSolution(allTSFiles[0])
+  #  for tsFile in allTSFiles:
+  #    self._saveInformationToFile(tsFile)
+  #  try:
+  #    self._uploadTSOptimized()
+  #  except:
+  #    for tsFile in allTSFiles:
+  #      self._uploadTS(tsFile)
+  #
+  
+  def _getListOfTSFiles(self,bucketDir):
+    return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1] == ".pos"]
+  
+  def _checkSolutionAlreadyInDB(self,ac,dataType):
+    self.cursor.execute("SELECT * FROM SOLUTION WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
+    return True if len([item[0] for item in self.cursor.fetchall()]) > 0 else False
+  
+  
+  def _uploadSolution(self,file):
+    """Insert a solution of a time series file to the database
+    
     Parameters
     ----------
-    publicDir : str
-      The public directory to search the time series files
+    solutionParameters : dict
+      The solution information
+    filename           : str
+      The name of the time series file being inserted
     """
-    allTSFiles = self._getListOfTSFiles(publicDir)
-    for tsFile in allTSFiles:
-      self._saveInformationToFile(tsFile)
+    solutionParameters = self._getSolutionParameters(file)
     try:
-      self._uploadTSOptimized()
-    except:
-      for tsFile in allTSFiles:
-        self._uploadTS(tsFile)
-  
-  def _getListOfTSFiles(self,publicDir):
-    """Get the list of time series files (pos or vel) found in the given directory.
-
-    Parameters
-    ----------
-    publicDir : str
-      The public directory to search the time series files
-
-    Returns
-    -------
-    list[str]
-      The list of time series files in the given directory
-    """
-    return [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
-  
-  def _saveInformationToFile(self,tsFile):
-    """Save the information (needed to upload a time series file) of a time series file to a file.
-
-    Parameters
-    ----------
-    tsFile : str
-      The file that contains the needed information
-    """
-    self._saveSolutionToFile(tsFile)
-    # TODO: Save the rest
-  
-  def _saveSolutionToFile(self,tsFile):
-    """Save the information of the solution of a time series file to a file.
-
-    Parameters
-    ----------
-    tsFile : str
-      The file that contains the solution
-    """
-    solutionParameters = self._getSolutionParameters(tsFile)
-    with open(os.path.join(self.tmpDir,TSDatabaseUpload.SOLUTION_TMP),"a") as tmp:
-      tmp.write(
-        str(solutionParameters["solution_type"])   + "," +
-        str(solutionParameters["ac_acronym"])      + "," +
-        str(solutionParameters["creation_date"])   + "," +
-        str(solutionParameters["software"])        + "," +
-        str(solutionParameters["doi"])             + "," +
-        str(solutionParameters["url"])             + "," +
-        str(solutionParameters["ac_name"])         + "," +
-        str(solutionParameters["version"])         + "," +
-        str(solutionParameters["reference_frame"]) + "," +
-        str(solutionParameters["sampling_period"]) + "\n"
+      self.cursor.execute(
+        f"""
+        INSERT INTO solution(
+          creation_date,
+          release_version,
+          data_type,
+          sampling_period,
+          software,
+          doi,
+          processing_parameters_url,
+          ac_acronym,
+          reference_frame
+        )
+        VALUES(
+          '{solutionParameters["solution_type"]}',
+          '{solutionParameters["ac_acronym"]}',
+          '{solutionParameters["creation_date"]}',
+          '{solutionParameters["software"]}',
+          '{solutionParameters["doi"]}',
+          '{solutionParameters["url"]}',
+          '{solutionParameters["ac_name"]}',
+          '{solutionParameters["version"]}',
+          '{solutionParameters["reference_frame"]}',
+          '{solutionParameters["sampling_period"]}'
+        )
+        """
       )
-    
+    except Exception as err:
+      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadError.format(file = filename,uploadType = "solution",errMsg = str(err).replace("\n","---")))
+      raise Exception(err)
+    finally:
+      self.logger.writeSubsubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.END)
+  
   def _getSolutionParameters(self,tsFile):
     """Get the solution information of a time series file.
 
@@ -139,6 +141,42 @@ class TSDatabaseUpload:
           case ["CreationDate",value]:
             solutionParameters["creation_date"] = value
       return solutionParameters
+  
+  def _saveInformationToFile(self,tsFile):
+    """Save the information (needed to upload a time series file) of a time series file to a file.
+
+    Parameters
+    ----------
+    tsFile : str
+      The file that contains the needed information
+    """
+    self._saveSolutionToFile(tsFile)
+    # TODO: Save the rest
+  
+  def _saveSolutionToFile(self,tsFile):
+    """Save the information of the solution of a time series file to a file.
+
+    Parameters
+    ----------
+    tsFile : str
+      The file that contains the solution
+    """
+    solutionParameters = self._getSolutionParameters(tsFile)
+    with open(os.path.join(self.tmpDir,TSDatabaseUpload.SOLUTION_TMP),"a") as tmp:
+      tmp.write(
+        str(solutionParameters["solution_type"])   + "," +
+        str(solutionParameters["ac_acronym"])      + "," +
+        str(solutionParameters["creation_date"])   + "," +
+        str(solutionParameters["software"])        + "," +
+        str(solutionParameters["doi"])             + "," +
+        str(solutionParameters["url"])             + "," +
+        str(solutionParameters["ac_name"])         + "," +
+        str(solutionParameters["version"])         + "," +
+        str(solutionParameters["reference_frame"]) + "," +
+        str(solutionParameters["sampling_period"]) + "\n"
+      )
+    
+  
     
   def _uploadTSOptimized(self):
     """Bulk insert the time series files information to the database based on the saved information.
@@ -228,48 +266,4 @@ class TSDatabaseUpload:
     finally:
       self.logger.writeSubroutineLog(uploadTS,Logs.ROUTINE_STATUS.END)
   
-  def _uploadSolution(self,solutionParameters,filename):
-    """Insert a solution of a time series file to the database
-    
-    Parameters
-    ----------
-    solutionParameters : dict
-      The solution information
-    filename           : str
-      The name of the time series file being inserted
-    """
-    self.logger.writeSubsubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.START)
-    try:
-      self.cursor.execute(
-        f"""
-        INSERT INTO solution(
-          solution_type,
-          ac_acronym,
-          creation_date,
-          software,
-          doi,
-          url,
-          ac_name,
-          version,
-          reference_frame,
-          sampling_period
-        )
-        VALUES(
-          '{solutionParameters["solution_type"]}',
-          '{solutionParameters["ac_acronym"]}',
-          '{solutionParameters["creation_date"]}',
-          '{solutionParameters["software"]}',
-          '{solutionParameters["doi"]}',
-          '{solutionParameters["url"]}',
-          '{solutionParameters["ac_name"]}',
-          '{solutionParameters["version"]}',
-          '{solutionParameters["reference_frame"]}',
-          '{solutionParameters["sampling_period"]}'
-        )
-        """
-      )
-    except Exception as err:
-      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadError.format(file = filename,uploadType = "solution",errMsg = str(err).replace("\n","---")))
-      raise Exception(err)
-    finally:
-      self.logger.writeSubsubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.END)
+  
