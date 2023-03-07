@@ -11,5 +11,15 @@ class TestDatabaseUpload(unittest.TestCase):
     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
     self.assertEqual(tsUpload._getListOfTSFiles("inOutTest/bucket/INGV/1"),["HBLT00UKN.pos","WARN00DEU.pos"])
   
+  def test_checkSolutionAlreadyThere(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+    self.assertEqual(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"),[6,7])
+    print(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"))
+  
+  
+  
 if __name__ == '__main__':
   unittest.main()

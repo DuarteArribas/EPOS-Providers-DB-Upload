@@ -39,9 +39,9 @@ class DatabaseUpload:
     allTSFiles = self._getListOfTSFiles(bucketDir)
     if len(allTSFiles) == 0:
       return
-    solutionIDInDB = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"TS")
+    solutionIDInDB = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"timeseries")
     if(len(solutionIDInDB) > 0):
-      self._erasePreviousSolutionFromDB(os.path.basename(bucketDir),"TS")  
+      self._erasePreviousSolutionFromDB(os.path.basename(bucketDir),"timeseries")  
       for solutionID in solutionIDInDB:
         timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
         self._erasePreviousTimeseriesFilesFromDB(timeseriesFilesIDInDB)
@@ -59,7 +59,7 @@ class DatabaseUpload:
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
   def _checkSolutionAlreadyInDB(self,ac,dataType):
-    self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
+    self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
     return [item[0] for item in self.cursor.fetchall()]
   
   def _erasePreviousSolutionFromDB(self,ac,dataType):
