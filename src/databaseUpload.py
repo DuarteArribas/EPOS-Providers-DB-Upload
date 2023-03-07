@@ -39,8 +39,8 @@ class TSDatabaseUpload:
     allTSFiles = self._getListOfTSFiles(bucketDir)
     if len(allTSFiles) == 0:
       return
-    self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"TS")
-    
+    if(self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"TS")):
+      self._erasePreviousSolutionFromDatabase(os.path.basename(bucketDir),"TS")
     
     self._uploadSolution(allTSFiles[0])
   #  for tsFile in allTSFiles:
@@ -56,9 +56,13 @@ class TSDatabaseUpload:
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1] == ".pos"]
   
   def _checkSolutionAlreadyInDB(self,ac,dataType):
-    self.cursor.execute("SELECT * FROM SOLUTION WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
+    self.cursor.execute("SELECT * FROM solution WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
     return True if len([item[0] for item in self.cursor.fetchall()]) > 0 else False
   
+  def _erasePreviousSolutionFromDatabase(self,ac,dataType):
+    self.cursor.execute("START TRANSACTION")
+    self.cursor.execute("DELETE FROM solution WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
+    self.cursor.execute("COMMIT TRANSACTION")
   
   def _uploadSolution(self,file):
     """Insert a solution of a time series file to the database
