@@ -39,9 +39,12 @@ class TSDatabaseUpload:
     allTSFiles = self._getListOfTSFiles(bucketDir)
     if len(allTSFiles) == 0:
       return
-    if(self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"TS")):
-      self._erasePreviousSolutionFromDatabase(os.path.basename(bucketDir),"TS")
-    
+    solutionIDInDB = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"TS")
+    if(len(solutionIDInDB) > 0):
+      self._erasePreviousSolutionFromDB(os.path.basename(bucketDir),"TS")  
+      for solutionID in solutionIDInDB:
+        timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
+        self._erasePreviousTimeseriesFilesFromDB(timeseriesFilesIDInDB)
     self._uploadSolution(allTSFiles[0])
   #  for tsFile in allTSFiles:
   #    self._saveInformationToFile(tsFile)
@@ -56,12 +59,21 @@ class TSDatabaseUpload:
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1] == ".pos"]
   
   def _checkSolutionAlreadyInDB(self,ac,dataType):
-    self.cursor.execute("SELECT * FROM solution WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
-    return True if len([item[0] for item in self.cursor.fetchall()]) > 0 else False
+    self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
+    return [item[0] for item in self.cursor.fetchall()]
   
-  def _erasePreviousSolutionFromDatabase(self,ac,dataType):
+  def _erasePreviousSolutionFromDB(self,ac,dataType):
     self.cursor.execute("START TRANSACTION")
     self.cursor.execute("DELETE FROM solution WHERE ac_acronym = ? AND data_type = ?;",ac,dataType)
+    self.cursor.execute("COMMIT TRANSACTION")
+  
+  def _getTimeseriesFilesID(self,solutionID):
+    self.cursor.execute("SELECT id_timeseries_files FROM solution WHERE id_solution = ?;",solutionID)
+    return [item[0] for item in self.cursor.fetchall()]  
+  
+  def _erasePreviousTimeseriesFilesFromDB(self,timeseriesFilesID):
+    self.cursor.execute("START TRANSACTION")
+    self.cursor.execute("DELETE FROM timeseries_files WHERE id = ?;",timeseriesFilesID)
     self.cursor.execute("COMMIT TRANSACTION")
   
   def _uploadSolution(self,file):
