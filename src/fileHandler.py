@@ -121,7 +121,7 @@ class FileHandler:
       print(err)
     
   
-  def movePosFileToPublic(self,posFile,bucketDir):
+  def movePosFileToBucket(self,posFile,bucketDir):
     """Move a pos file to the bucket directory, according to {bucketDir}/TS/{version}/{posFile}
 
     Parameters
@@ -132,15 +132,9 @@ class FileHandler:
       The bucket directory of the correspondent provider
     """
     try:
-      with open(posFile,"rt") as f:
-        lines = [line.strip() for line in f.readlines()]
-        for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
-          if line.split(":")[0].strip() == "ReleaseVersion":
-            version    = "".join(line.split(":")[1:])
-            pathToMove = f"{bucketDir}/TS/{version}"
-            if not os.path.exists(pathToMove):
-              os.makedirs(pathToMove)
-            shutil.move(posFile,pathToMove)
-            break
+      pathToMove = f"{bucketDir}/TS"
+      if not os.path.exists(pathToMove):
+        os.makedirs(pathToMove)
+      shutil.move(posFile,pathToMove)
     except Exception as err:
       print(err)

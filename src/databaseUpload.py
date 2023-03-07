@@ -11,7 +11,6 @@ class TSDatabaseUpload:
   """Upload time series to the database."""
   
   # == Class variables ==
-  ANALYSIS_CENTRE = {"INGV":"ING","UGA-CNRS":"UGA","WUT-EUREF":"EUR","ROB-EUREF":"ROB","SGO-EPND":"SGO"}
   SOLUTION_TMP    = "solutionTmp.csv"
   
   # == Methods ==
@@ -46,19 +45,14 @@ class TSDatabaseUpload:
     publicDir : str
       The public directory to search the time series files
     """
-    self.logger.writeRoutineLog("Time series files upload",Logs.ROUTINE_STATUS.START)
     allTSFiles = self._getListOfTSFiles(publicDir)
-    self.logger.writeSubroutineLog(saveFiles,Logs.ROUTINE_STATUS.START)
     for tsFile in allTSFiles:
       self._saveInformationToFile(tsFile)
-    self.logger.writeRegularLog(Logs.SEVERITY.INFO,saveSuccess)
-    self.logger.writeSubroutineLog(saveFiles,Logs.ROUTINE_STATUS.END)
     try:
       self._uploadTSOptimized()
     except:
       for tsFile in allTSFiles:
         self._uploadTS(tsFile)
-    self.logger.writeRoutineLog("Time series files upload",Logs.ROUTINE_STATUS.END)
   
   def _getListOfTSFiles(self,publicDir):
     """Get the list of time series files (pos or vel) found in the given directory.
@@ -73,10 +67,6 @@ class TSDatabaseUpload:
     list[str]
       The list of time series files in the given directory
     """
-    self.logger.writeSubroutineLog(getTSFiles,Logs.ROUTINE_STATUS.START)
-    files = [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
-    self.logger.writeRegularLog(Logs.SEVERITY.INFO,filesFound.format(files = " | ".join(files)) if files else filesNotFound)
-    self.logger.writeSubroutineLog(getTSFiles,Logs.ROUTINE_STATUS.END)
     return [file for file in glob.glob(f"{publicDir}/**/*",recursive = True) if not os.path.isdir(file) and file.split("/")[-2] == "TS"]
   
   def _saveInformationToFile(self,tsFile):
