@@ -11,7 +11,7 @@ from src.validate              import *
 CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
-def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,cursor,providerEmails):
+def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged,cfg,conn,cursor,providerEmails):
   for i in range(5):
     if not hashesChanged[i]:
       continue
@@ -19,6 +19,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,c
     provider    = list(providersDir.keys())[i]
     providerDir = list(providersDir.items())[i][1]
     publicDir   = list(publicDirs.items())[i][1]
+    bucketDir   = list(bucketDirs.items())[i][1]
     validator   = Validator(cfg,conn,cursor)
     allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
@@ -36,8 +37,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,conn,c
       elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
-          # upload to db first
-          fileHandler.movePosFileToPublic(file,publicDir)
+          fileHandler.movePosFileToBucket(file,bucketDir)
         except ValidationError as err:
           errors.append(str(err))
       elif extensionWithoutGzip == ".vel":
@@ -60,13 +60,20 @@ def main():
   cfg = Config(CONFIG_FILE)
   # Logger
   logger = Logs(f"{cfg.getLogsConfig('LOGS_DIR')}/{cfg.getLogsConfig('VALIDATE_LOGS')}",cfg.getLogsConfig("MAX_LOGS"))
-  # In and Out folders
+  # Upload, bucket and public folders
   providersDir = {
     "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",
     "ROB"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_rob/uploads",
     "SGO"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ltk/uploads",
     "UGA"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_uga-cnrs/uploads",
     "WUT"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_wut/uploads"
+  }
+  bucketDirs = {
+    "INGV" : f"{cfg.getAppConfig('BUCKET_DIR')}/INGV",
+    "ROB"  : f"{cfg.getAppConfig('BUCKET_DIR')}/ROB-EUREF",
+    "SGO"  : f"{cfg.getAppConfig('BUCKET_DIR')}/SGO-EPND",
+    "UGA"  : f"{cfg.getAppConfig('BUCKET_DIR')}/UGA-CNRS",
+    "WUT"  : f"{cfg.getAppConfig('BUCKET_DIR')}/WUT-EUREF"
   }
   publicDirs = {
     "INGV" : f"{cfg.getAppConfig('PUBLIC_DIR')}/INGV",
@@ -105,7 +112,7 @@ def main():
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfHashesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
-  handleProviders(fileHandler,providersDir,publicDirs,hashesChanged,cfg,pgConnection.conn,pgConnection.cursor,providerEmails)
+  handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged,cfg,pgConnection.conn,pgConnection.cursor,providerEmails)
   
 if __name__ == '__main__':
   main()
