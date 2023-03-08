@@ -37,13 +37,16 @@ class DatabaseUpload:
       os.makedirs(self.tmpDir)
   
   def uploadAllTS(self,bucketDir):
+    dataType = self.cfg.getUploadConfig("TS_DATATYPE")
     allTSFiles = self._getListOfTSFiles(bucketDir)
     if len(allTSFiles) == 0:
       return
-    self._handlePreviousSolution(os.path.basename(bucketDir),self.cfg.getUploadConfig("TS_DATATYPE"))
+    self._handlePreviousSolution(os.path.basename(bucketDir),dataType)
     solutionParameters = self._getSolutionParameters(allTSFiles[0])
     self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
-    self._uploadSolution(allTSFiles[0])
+    self._uploadSolution(dataType,solutionParameters)
+    # TODO: upload timeseries_files
+    # TODO: upload estimated_coordinates
   #  for tsFile in allTSFiles:
   #    self._saveInformationToFile(tsFile)
   #  try:
