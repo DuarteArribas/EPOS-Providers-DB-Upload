@@ -116,7 +116,17 @@ class TestDatabaseUpload(unittest.TestCase):
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-    tsUpload._getPosFormatVersion("inOutTest/bucket/INGV/1/WARN00DEU.pos")
+    print(tsUpload._getPosFormatVersion("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
+  
+  def test_uploadTimeseriesFile(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+    pgConnection.cursor.execute("START TRANSACTION;")
+    tsUpload._uploadTimeseriesFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",1.1)
+    pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
 if __name__ == '__main__':
   unittest.main()

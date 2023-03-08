@@ -11,7 +11,7 @@ class DatabaseUpload:
   """Upload time series to the database."""
   
   # == Class variables ==
-  SOLUTION_TMP    = "solutionTmp.csv"
+  ESTIMATED_COORDINATES_TEMP = "estimatedCoordinatesTemp.csv"
   
   # == Methods ==
   def __init__(self,conn,cursor,logger,cfg,tmp):
@@ -46,16 +46,10 @@ class DatabaseUpload:
     self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
     self._uploadSolution(dataType,solutionParameters)
     for file in allTSFiles:
-      self._uploadTimeseriesFiles(file,self._getPosFormatVersion(file))
-    # TODO: upload estimated_corr
-  #  for tsFile in allTSFiles:
-  #    self._saveInformationToFile(tsFile)
-  #  try:
-  #    self._uploadTSOptimized()
-  #  except:
-  #    for tsFile in allTSFiles:
-  #      self._uploadTS(tsFile)
-  #
+      self._uploadTimeseriesFile(file,1.1) # TODO: add correct version
+      self._saveEstimatedCoordinatesToFile(file)
+    self._uploadEstimatedCoordinates()
+    self._eraseEstimatedCoordinatesTmpFile()
   
   def _getListOfTSFiles(self,bucketDir):
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
@@ -168,7 +162,7 @@ class DatabaseUpload:
     finally:
       pass
   
-  def _uploadTimeseriesFiles(self,posFile,posFormatVersion):
+  def _uploadTimeseriesFile(self,posFile,posFormatVersion):
     try:
       self.cursor.execute(
         f"""
@@ -178,7 +172,7 @@ class DatabaseUpload:
           file_type
         )
         VALUES(
-          'public/{posFile.split("/")[-3:]}',
+          'public/{"/".join(posFile.split("/")[-3:])}',
           '{posFormatVersion}',
           'pos'
         )
@@ -196,60 +190,71 @@ class DatabaseUpload:
         match [part.strip() for part in line.split(":",1)]:
           case ["Format Version",*values]:
             value = " ".join(values)
-            return int(value)
+            return value
             
-#  def _saveSolutionToFile(self,tsFile):
-#    """Save the information of the solution of a time series file to a file.
-#
-#    Parameters
-#    ----------
-#    tsFile : str
-#      The file that contains the solution
-#    """
-#    solutionParameters = self._getSolutionParameters(tsFile)
-#    with open(os.path.join(self.tmpDir,TSDatabaseUpload.SOLUTION_TMP),"a") as tmp:
-#      tmp.write(
-#        str(solutionParameters["solution_type"])   + "," +
-#        str(solutionParameters["ac_acronym"])      + "," +
-#        str(solutionParameters["creation_date"])   + "," +
-#        str(solutionParameters["software"])        + "," +
-#        str(solutionParameters["doi"])             + "," +
-#        str(solutionParameters["url"])             + "," +
-#        str(solutionParameters["ac_name"])         + "," +
-#        str(solutionParameters["version"])         + "," +
-#        str(solutionParameters["reference_frame"]) + "," +
-#        str(solutionParameters["sampling_period"]) + "\n"
-#      )
-#    
-#  
-#    
-
-#  def _uploadSolutionOptimized(self):
-#    """Bulk insert the time series files solutions to the database based on the saved information."""
-#    self.logger.writeSubsubroutineLog(uploadSolutionOpt,Logs.ROUTINE_STATUS.START)
-#    try:
-#      with open(os.path.join(self.tmpDir,TSDatabaseUpload.SOLUTION_TMP),"r") as csvFile:
-#        self.cursor.copy_expert(
-#          f"""
-#          COPY solution(
-#            solution_type,
-#            ac_acronym,
-#            creation_date,
-#            software,
-#            doi,
-#            url,
-#            ac_name,
-#            version,
-#            reference_frame,
-#            sampling_period
-#          )
-#          FROM STDIN
-#          WITH (FORMAT CSV,HEADER FALSE);
-#          """,
-#          csvFile
-#        )
-#    except Exception as err:
-#      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbUploadAllError.format(uploadType = "solutions",errMsg = str(err).replace("\n","---")))
-#      raise Exception(err)
-#    finally:
-#      self.logger.writeSubsubroutineLog(uploadSolutionOpt,Logs.ROUTINE_STATUS.END)
+  def _saveEstimatedCoordinatesToFile(self,posFile,idSolution,idTimeseriesFiles):
+    with open(posFile,"rt") as f:
+      lines = [line.strip() for line in f.readlines()]
+      stationName = None
+      for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
+        match [part.strip() for part in line.split(":",1)]:
+          case ["9-character ID",*values]:
+            stationName = " ".join(values)
+      station = self._getStationID(stationName)
+      for line in lines:
+        match [part.strip() for part in (" ".join(line.split())).split(" ")]:
+          case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln]:
+            with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"a") as tmp:
+              tmp.write(
+                str(station)           + "," +
+                str(X)                 + "," +
+                str(Y)                 + "," +
+                str(Z)                 + "," +
+                str(Sx)                + "," +
+                str(Sy)                + "," +
+                str(Sz)                + "," +
+                str(Rxy)               + "," +
+                str(Rxz)               + "," +
+                str(Ryz)               + "," +
+                str(0)                 + "," +
+                str(Soln)              + "," +
+                str(idSolution)        + "," +
+                str(idTimeseriesFiles) + "\n"      
+              )
+  def _getStationID(self,stationName):
+    self.cursor.execute("SELECT id FROM station WHERE marker = %s",(stationName,))
+    return [item[0] for item in self.cursor.fetchall()]
+  
+  def _uploadEstimatedCoordinates(self):
+    try:
+      with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csvFile:
+        self.cursor.copy_expert(
+          f"""
+          COPY estimated_coordinates(
+            id_station,
+            x,
+            y,
+            z,
+            var_xx,
+            var_yy,
+            var_zz,
+            var_xy,
+            var_xz,
+            var_yz,
+            outlier,
+            sol_type,
+            id_solution,
+            id_timeseries_files
+          )
+          FROM STDIN
+          WITH (FORMAT CSV,HEADER FALSE);
+          """,
+          csvFile
+        )
+    except Exception as err:
+      raise Exception(err)
+    finally:
+      pass
+  
+  def _eraseEstimatedCoordinatesTmpFile(self):
+    os.remove(DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
