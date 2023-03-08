@@ -55,5 +55,13 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload._handlePreviousSolution("INGV","timeseries")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
+  def test_getSolutionParameters(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+    print(tsUpload._getSolutionParameters("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
+    
 if __name__ == '__main__':
   unittest.main()

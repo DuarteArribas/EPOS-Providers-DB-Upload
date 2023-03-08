@@ -135,6 +135,7 @@ class DatabaseUpload:
           case ["CreationDate",*values]:
             value = " ".join(values)
             solutionParameters["creation_date"] = value
+            solutionParameters["creation_date"] = solutionParameters["creation_date"].replace("/","-")
           case ["ReleaseVersion",*values]:
             value = " ".join(values)
             solutionParameters["release_version"] = value
