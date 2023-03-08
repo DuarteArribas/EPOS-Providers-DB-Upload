@@ -40,7 +40,7 @@ class DatabaseUpload:
     allTSFiles = self._getListOfTSFiles(bucketDir)
     if len(allTSFiles) == 0:
       return
-    
+    self._handlePreviousSolution(os.path.basename(bucketDir),self.cfg.getUploadConfig("TS_DATATYPE"))
     self._uploadSolution(allTSFiles[0])
   #  for tsFile in allTSFiles:
   #    self._saveInformationToFile(tsFile)
@@ -54,8 +54,8 @@ class DatabaseUpload:
   def _getListOfTSFiles(self,bucketDir):
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
-  def _handlePreviousSolution(self,bucketDir,dataType):
-    solutionIDInDB = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),dataType)
+  def _handlePreviousSolution(self,ac,dataType):
+    solutionIDInDB = self._checkSolutionAlreadyInDB(ac,dataType)
     if(len(solutionIDInDB) > 0):
       for solutionID in solutionIDInDB:
         if dataType == self.cfg.getUploadConfig("TS_DATATYPE"):
@@ -64,7 +64,7 @@ class DatabaseUpload:
             self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)
         elif dataType == self.cfg.getUploadConfig("VEL_DATATYPE"):
           pass
-      self._erasePreviousSolutionFromDB(os.path.basename(bucketDir),dataType)
+      self._erasePreviousSolutionFromDB(ac,dataType)
   
   def _checkSolutionAlreadyInDB(self,ac,dataType):
     self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
