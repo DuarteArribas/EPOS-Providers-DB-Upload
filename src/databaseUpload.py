@@ -221,6 +221,7 @@ class DatabaseUpload:
                 str(idSolution)        + "," +
                 str(idTimeseriesFiles) + "\n"      
               )
+  
   def _getStationID(self,stationName):
     self.cursor.execute("SELECT id FROM station WHERE marker = %s",(stationName,))
     return [item[0] for item in self.cursor.fetchall()]

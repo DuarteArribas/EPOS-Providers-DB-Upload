@@ -118,15 +118,23 @@ class TestDatabaseUpload(unittest.TestCase):
     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
     print(tsUpload._getPosFormatVersion("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
   
-  def test_uploadTimeseriesFile(self):
+  #def test_uploadTimeseriesFile(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  cfg = Config("config/appconf.cfg")
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+  #  pgConnection.cursor.execute("START TRANSACTION;")
+  #  tsUpload._uploadTimeseriesFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",1.1)
+  #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
+  
+  def test_getStationID(self):
     logger = Logs("logs/logsTest.log",10000)
     pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-    pgConnection.cursor.execute("START TRANSACTION;")
-    tsUpload._uploadTimeseriesFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",1.1)
-    pgConnection.cursor.execute("COMMIT TRANSACTION;")
+    print(tsUpload._getStationID("OUTA00UKN"))
   
 if __name__ == '__main__':
   unittest.main()
