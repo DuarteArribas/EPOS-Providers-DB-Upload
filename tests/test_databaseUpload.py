@@ -28,12 +28,21 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload._erasePreviousSolutionFromDB("INGV","timeseries")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
-  def test_checkSolutionAlreadyThere(self):
-    logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-    pgConnection.connect()
-    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
-    print(tsUpload._getTimeseriesFilesID(8))
+  #def test_checkSolutionAlreadyThere(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+  #  print(tsUpload._getTimeseriesFilesID(8))
+
+  #def test_erasePreviousTimeseriesFilesFromDB(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
+  #  pgConnection.cursor.execute("START TRANSACTION;")
+  #  tsUpload._erasePreviousTimeseriesFilesFromDB(5)
+  #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
 if __name__ == '__main__':
   unittest.main()
