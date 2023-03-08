@@ -113,7 +113,7 @@ class DatabaseUpload:
     except Exception as err:
       raise Exception(err)
     finally:
-      self.logger.writeSubsubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.END)
+      pass
   
   def _getSolutionParameters(self,posFile):
     with open(posFile,"rt") as f:
@@ -150,44 +150,19 @@ class DatabaseUpload:
       
   def _handleReferenceFrame(self,referenceFrame):
     if len(self._checkReferenceFrameInDB(referenceFrame)) == 0:
-      self._uploadReferenceFrame(referenceFrame)
+      self._uploadReferenceFrame(referenceFrame,"2021-11-11 00:00:00") # TODO Change epoch to correct one
   
   def _checkReferenceFrameInDB(self,referenceFrame):
     self.cursor.execute("SELECT name FROM reference_frame WHERE name = %s;",(referenceFrame,))
     return [item[0] for item in self.cursor.fetchall()]
   
-  def _uploadReferenceFrame(self,dataType,solutionParameters):
+  def _uploadReferenceFrame(self,name,epoch):
     try:
-      self.cursor.execute(
-        f"""
-        INSERT INTO solution(
-          creation_date,
-          release_version,
-          data_type,
-          sampling_period,
-          software,
-          doi,
-          processing_parameters_url,
-          ac_acronym,
-          reference_frame
-        )
-        VALUES(
-          '{solutionParameters["creation_date"]}',
-          '{solutionParameters["release_version"]}',
-          '{dataType}',
-          '{solutionParameters["sampling_period"]}',
-          '{solutionParameters["software"]}',
-          '{solutionParameters["doi"]}',
-          '{solutionParameters["processing_parameters_url"]}',
-          '{solutionParameters["ac_acronym"]}',
-          '{solutionParameters["reference_frame"]}'
-        )
-        """
-      )
+      self.cursor.execute(f"INSERT INTO reference_frame(name,epoch)VALUES('{name}','{epoch}')")
     except Exception as err:
       raise Exception(err)
     finally:
-      self.logger.writeSubsubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.END)
+      pass
     
 #  def _saveSolutionToFile(self,tsFile):
 #    """Save the information of the solution of a time series file to a file.
