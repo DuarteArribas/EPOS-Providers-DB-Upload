@@ -45,9 +45,10 @@ class DatabaseUpload:
     solutionParameters = self._getSolutionParameters(allTSFiles[0])
     self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
     self._uploadSolution(dataType,solutionParameters)
+    currentSolutionID = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),dataType)[0]
     for file in allTSFiles:
       self._uploadTimeseriesFile(file,1.1) # TODO: add correct version
-      self._saveEstimatedCoordinatesToFile(file)
+      self._saveEstimatedCoordinatesToFile(file,currentSolutionID)
     self._uploadEstimatedCoordinates()
     self._eraseEstimatedCoordinatesTmpFile()
   
