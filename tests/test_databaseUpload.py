@@ -144,13 +144,21 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  print(tsUpload._saveEstimatedCoordinatesToFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",1,2))
   
-  def test_removeEstimatedCoordinatesFile(self):
+  #def test_removeEstimatedCoordinatesFile(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  cfg = Config("config/appconf.cfg")
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+  #  print(tsUpload._eraseEstimatedCoordinatesTmpFile())
+  
+  def test_uploadEstimatedCoordinates(self):
     logger = Logs("logs/logsTest.log",10000)
     pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-    print(tsUpload._eraseEstimatedCoordinatesTmpFile())
+    print(tsUpload._uploadEstimatedCoordinates())
   
 if __name__ == '__main__':
   unittest.main()

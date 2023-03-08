@@ -206,20 +206,21 @@ class DatabaseUpload:
           case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"a") as tmp:
               tmp.write(
-                str(station)           + "," +
-                str(X)                 + "," +
-                str(Y)                 + "," +
-                str(Z)                 + "," +
-                str(Sx)                + "," +
-                str(Sy)                + "," +
-                str(Sz)                + "," +
-                str(Rxy)               + "," +
-                str(Rxz)               + "," +
-                str(Ryz)               + "," +
-                str(0)                 + "," +
-                str(Soln)              + "," +
-                str(idSolution)        + "," +
-                str(idTimeseriesFiles) + "\n"      
+                str(station)               + "," +
+                str(X)                     + "," +
+                str(Y)                     + "," +
+                str(Z)                     + "," +
+                str(Sx)                    + "," +
+                str(Sy)                    + "," +
+                str(Sz)                    + "," +
+                str(Rxy)                   + "," +
+                str(Rxz)                   + "," +
+                str(Ryz)                   + "," +
+                str(0)                     + "," + #TODO: Change outlier
+                str("2021-11-11 00:00:00") + "," + #TODO: Change epoch
+                str(Soln)                  + "," +
+                str(idSolution)            + "," +
+                str(idTimeseriesFiles)     + "\n"      
               )
   
   def _getStationID(self,stationName):
