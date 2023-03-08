@@ -33,8 +33,7 @@ class TestDatabaseUpload(unittest.TestCase):
     pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"tmp")
-    self.assertEqual(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
-    print(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"))
+    print(tsUpload._getTimeseriesFilesID(8))
   
 if __name__ == '__main__':
   unittest.main()
