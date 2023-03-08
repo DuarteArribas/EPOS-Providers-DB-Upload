@@ -45,8 +45,9 @@ class DatabaseUpload:
     solutionParameters = self._getSolutionParameters(allTSFiles[0])
     self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
     self._uploadSolution(dataType,solutionParameters)
-    # TODO: upload timeseries_files
-    # TODO: upload estimated_coordinates
+    for file in allTSFiles:
+      self._uploadTimeseriesFiles(file,self._getPosFormatVersion(file))
+    # TODO: upload estimated_corr
   #  for tsFile in allTSFiles:
   #    self._saveInformationToFile(tsFile)
   #  try:
@@ -166,7 +167,37 @@ class DatabaseUpload:
       raise Exception(err)
     finally:
       pass
-    
+  
+  def _uploadTimeseriesFiles(self,posFile,posFormatVersion):
+    try:
+      self.cursor.execute(
+        f"""
+        INSERT INTO timeseries_files(
+          url,
+          version,
+          file_type
+        )
+        VALUES(
+          'public/{posFile.split("/")[-3:]}',
+          '{posFormatVersion}',
+          'pos'
+        )
+        """
+      )
+    except Exception as err:
+      raise Exception(err)
+    finally:
+      pass
+  
+  def _getPosFormatVersion(self,posFile):
+    with open(posFile,"rt") as f:
+      lines = [line.strip() for line in f.readlines()]
+      for line in lines:
+        match [part.strip() for part in line.split(":",1)]:
+          case ["Format Version",*values]:
+            value = " ".join(values)
+            return int(value)
+            
 #  def _saveSolutionToFile(self,tsFile):
 #    """Save the information of the solution of a time series file to a file.
 #
