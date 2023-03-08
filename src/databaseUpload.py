@@ -147,17 +147,7 @@ class DatabaseUpload:
             solutionParameters["reference_frame"] = value
       return solutionParameters
   
-#  def _saveInformationToFile(self,tsFile):
-#    """Save the information (needed to upload a time series file) of a time series file to a file.
-#
-#    Parameters
-#    ----------
-#    tsFile : str
-#      The file that contains the needed information
-#    """
-#    self._saveSolutionToFile(tsFile)
-#    # TODO: Save the rest
-#  
+
 #  def _saveSolutionToFile(self,tsFile):
 #    """Save the information of the solution of a time series file to a file.
 #
@@ -183,44 +173,7 @@ class DatabaseUpload:
 #    
 #  
 #    
-#  def _uploadTSOptimized(self):
-#    """Bulk insert the time series files information to the database based on the saved information.
-#
-#    Raises
-#    ------
-#    Exception
-#      If an error occurred when inserting
-#    """
-#    self.logger.writeSubroutineLog(uploadTSOpt,Logs.ROUTINE_STATUS.START)
-#    try:
-#      self.cursor.execute("BEGIN TRANSACTION")
-#      self._uploadSolutionOptimized()
-#      # TODO: Upload more
-#      self.cursor.execute("COMMIT TRANSACTION")
-#      self.logger.writeRegularLog(Logs.SEVERITY.INFO,tmpFileDelete)
-#      self._removeFilesInDir(self.tmpDir)
-#      self.logger.writeRegularLog(Logs.SEVERITY.INFO,uploadBulkSuccess)
-#    except Exception as err:
-#      self.cursor.execute("ROLLBACK TRANSACTION")
-#      self.logger.writeRegularLog(Logs.SEVERITY.INFO,tmpFileDelete)
-#      self._removeFilesInDir(self.tmpDir)
-#      self.logger.writeRegularLog(Logs.SEVERITY.ERROR,dbBulkUploadError)
-#      raise Exception(err)
-#    finally:
-#      self.logger.writeSubroutineLog(uploadTSOpt,Logs.ROUTINE_STATUS.END)
-#  
-#  def _removeFilesInDir(self,dir):
-#    """Remove files in a dir.
-#
-#    Parameters
-#    ----------
-#    dir : str
-#      The dir from which the files will be removed.
-#    """
-#    files = glob.glob(f"{dir}/*")
-#    for f in files:
-#      os.remove(f)
-#  
+
 #  def _uploadSolutionOptimized(self):
 #    """Bulk insert the time series files solutions to the database based on the saved information."""
 #    self.logger.writeSubsubroutineLog(uploadSolutionOpt,Logs.ROUTINE_STATUS.START)
@@ -250,25 +203,3 @@ class DatabaseUpload:
 #      raise Exception(err)
 #    finally:
 #      self.logger.writeSubsubroutineLog(uploadSolutionOpt,Logs.ROUTINE_STATUS.END)
-#  
-#  def _uploadTS(self,file):
-#    """Insert a time series file to the database.
-#
-#    Parameters
-#    ----------
-#    file : str
-#      The time series file to insert
-#    """
-#    self.logger.writeSubroutineLog(uploadTS,Logs.ROUTINE_STATUS.START)
-#    try:
-#      self.cursor.execute("BEGIN TRANSACTION")
-#      self._uploadSolution(self._getSolutionParameters(file),file)
-#      # TODO: Upload more
-#      self.cursor.execute("COMMIT TRANSACTION")
-#      self.logger.writeRegularLog(Logs.SEVERITY.INFO,uploadSuccess.format(file = file))
-#    except:
-#      self.cursor.execute("ROLLBACK TRANSACTION")
-#    finally:
-#      self.logger.writeSubroutineLog(uploadTS,Logs.ROUTINE_STATUS.END)
-#  
-#  
