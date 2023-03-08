@@ -14,7 +14,7 @@ class DatabaseUpload:
   SOLUTION_TMP    = "solutionTmp.csv"
   
   # == Methods ==
-  def __init__(self,conn,cursor,logger,tmp):
+  def __init__(self,conn,cursor,logger,cfg,tmp):
     """Initialize needed variables for a time series database upload.
 
     Parameters
@@ -31,6 +31,7 @@ class DatabaseUpload:
     self.conn   = conn
     self.cursor = cursor
     self.logger = logger
+    self.cfg    = cfg
     self.tmpDir = tmp + "/" if tmp[-1] != "/" else tmp
     if not os.path.exists(self.tmpDir):
       os.makedirs(self.tmpDir)
@@ -39,12 +40,7 @@ class DatabaseUpload:
     allTSFiles = self._getListOfTSFiles(bucketDir)
     if len(allTSFiles) == 0:
       return
-    solutionIDInDB = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),"timeseries")
-    if(len(solutionIDInDB) > 0):
-      self._erasePreviousSolutionFromDB(os.path.basename(bucketDir),"timeseries")  
-      for solutionID in solutionIDInDB:
-        timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
-        self._erasePreviousTimeseriesFilesFromDB(timeseriesFilesIDInDB)
+    
     self._uploadSolution(allTSFiles[0])
   #  for tsFile in allTSFiles:
   #    self._saveInformationToFile(tsFile)
@@ -58,6 +54,18 @@ class DatabaseUpload:
   def _getListOfTSFiles(self,bucketDir):
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
+  def _handlePreviousSolution(self,bucketDir,dataType):
+    solutionIDInDB = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),dataType)
+    if(len(solutionIDInDB) > 0):
+      for solutionID in solutionIDInDB:
+        if dataType == self.cfg.getUploadConfig("TS_DATATYPE"):
+          timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
+          for timeseriesFileID in timeseriesFilesIDInDB:
+            self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)
+        elif dataType == self.cfg.getUploadConfig("VEL_DATATYPE"):
+          pass
+      self._erasePreviousSolutionFromDB(os.path.basename(bucketDir),dataType)
+  
   def _checkSolutionAlreadyInDB(self,ac,dataType):
     self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
     return [item[0] for item in self.cursor.fetchall()]
@@ -66,7 +74,7 @@ class DatabaseUpload:
     self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
   
   def _getTimeseriesFilesID(self,solutionID):
-    self.cursor.execute("SELECT id_timeseries_files FROM estimated_coordinates WHERE id_solution = %s;",(solutionID,))
+    self.cursor.execute("SELECT id_timeseries_files FROM estimated_coordinates WHERE id_solution = %s GROUP BY id_timeseries_files;",(solutionID,))
     return [item[0] for item in self.cursor.fetchall()]
   
   def _erasePreviousTimeseriesFilesFromDB(self,timeseriesFilesID):

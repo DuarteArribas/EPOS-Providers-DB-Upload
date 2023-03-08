@@ -92,3 +92,18 @@ class Config:
       The corresponding configuration
     """
     return self.config.get("EPOSDB",key)
+  
+  def getUploadConfig(self,key):
+    """Get a config from the UPLOAD section on the config file.
+    
+    Parameters
+    ----------
+    key : str
+      The key corresponding to the wanted configuration
+      
+    Returns
+    ----------
+    str
+      The corresponding configuration
+    """
+    return self.config.get("UPLOAD",key)
