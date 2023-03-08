@@ -42,7 +42,7 @@ class DatabaseUpload:
       return
     self._handlePreviousSolution(os.path.basename(bucketDir),self.cfg.getUploadConfig("TS_DATATYPE"))
     solutionParameters = self._getSolutionParameters(allTSFiles[0])
-    self._handleReferenceFrame(solutionParameters["reference_frame"])
+    self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
     self._uploadSolution(allTSFiles[0])
   #  for tsFile in allTSFiles:
   #    self._saveInformationToFile(tsFile)
@@ -148,9 +148,9 @@ class DatabaseUpload:
             solutionParameters["reference_frame"] = value
       return solutionParameters
       
-  def _handleReferenceFrame(self,referenceFrame):
+  def _handleReferenceFrame(self,referenceFrame,epoch):
     if len(self._checkReferenceFrameInDB(referenceFrame)) == 0:
-      self._uploadReferenceFrame(referenceFrame,"2021-11-11 00:00:00") # TODO Change epoch to correct one
+      self._uploadReferenceFrame(referenceFrame,epoch)
   
   def _checkReferenceFrameInDB(self,referenceFrame):
     self.cursor.execute("SELECT name FROM reference_frame WHERE name = %s;",(referenceFrame,))

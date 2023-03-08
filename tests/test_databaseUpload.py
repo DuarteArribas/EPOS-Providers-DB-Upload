@@ -88,6 +88,16 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.cursor.execute("START TRANSACTION;")
   #  tsUpload._uploadReferenceFrame("arrrozlol2","2022-11-11")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
+
+  #def test_uploadReferenceFrame(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  cfg = Config("config/appconf.cfg")
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+  #  pgConnection.cursor.execute("START TRANSACTION;")
+  #  tsUpload._handleReferenceFrame("arrrozlol3","2022-11-11")
+  #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
 if __name__ == '__main__':
   unittest.main()
