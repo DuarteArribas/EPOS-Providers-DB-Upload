@@ -200,10 +200,10 @@ class DatabaseUpload:
         match [part.strip() for part in line.split(":",1)]:
           case ["9-character ID",*values]:
             stationName = " ".join(values)
-      station = self._getStationID(stationName)
+      station = self._getStationID(stationName)[0]
       for line in lines:
         match [part.strip() for part in (" ".join(line.split())).split(" ")]:
-          case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln]:
+          case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"a") as tmp:
               tmp.write(
                 str(station)           + "," +
@@ -258,4 +258,4 @@ class DatabaseUpload:
       pass
   
   def _eraseEstimatedCoordinatesTmpFile(self):
-    os.remove(DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
+    os.remove(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP))
