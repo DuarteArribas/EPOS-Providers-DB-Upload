@@ -41,6 +41,8 @@ class DatabaseUpload:
     if len(allTSFiles) == 0:
       return
     self._handlePreviousSolution(os.path.basename(bucketDir),self.cfg.getUploadConfig("TS_DATATYPE"))
+    solutionParameters = self._getSolutionParameters(allTSFiles[0])
+    self._handleReferenceFrame(solutionParameters["reference_frame"])
     self._uploadSolution(allTSFiles[0])
   #  for tsFile in allTSFiles:
   #    self._saveInformationToFile(tsFile)
@@ -80,8 +82,7 @@ class DatabaseUpload:
   def _erasePreviousTimeseriesFilesFromDB(self,timeseriesFilesID):
     self.cursor.execute("DELETE FROM timeseries_files WHERE id = %s;",(timeseriesFilesID,))
   
-  def _uploadSolution(self,file,dataType):
-    solutionParameters = self._getSolutionParameters(file)
+  def _uploadSolution(self,dataType,solutionParameters):
     try:
       self.cursor.execute(
         f"""
@@ -117,7 +118,7 @@ class DatabaseUpload:
   def _getSolutionParameters(self,posFile):
     with open(posFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
-      solutionParameters = {}
+      solutionParameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
       for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
         match [part.strip() for part in line.split(":",1)]:
           case ["AnalysisCentre",*values]:
@@ -146,8 +147,48 @@ class DatabaseUpload:
             value = " ".join(values)
             solutionParameters["reference_frame"] = value
       return solutionParameters
+      
+  def _handleReferenceFrame(self,referenceFrame):
+    if len(self._checkReferenceFrameInDB(referenceFrame)) == 0:
+      self._uploadReferenceFrame(referenceFrame)
   
-
+  def _checkReferenceFrameInDB(self,referenceFrame):
+    self.cursor.execute("SELECT name FROM reference_frame WHERE name = %s;",(referenceFrame,))
+    return [item[0] for item in self.cursor.fetchall()]
+  
+  def _uploadReferenceFrame(self,dataType,solutionParameters):
+    try:
+      self.cursor.execute(
+        f"""
+        INSERT INTO solution(
+          creation_date,
+          release_version,
+          data_type,
+          sampling_period,
+          software,
+          doi,
+          processing_parameters_url,
+          ac_acronym,
+          reference_frame
+        )
+        VALUES(
+          '{solutionParameters["creation_date"]}',
+          '{solutionParameters["release_version"]}',
+          '{dataType}',
+          '{solutionParameters["sampling_period"]}',
+          '{solutionParameters["software"]}',
+          '{solutionParameters["doi"]}',
+          '{solutionParameters["processing_parameters_url"]}',
+          '{solutionParameters["ac_acronym"]}',
+          '{solutionParameters["reference_frame"]}'
+        )
+        """
+      )
+    except Exception as err:
+      raise Exception(err)
+    finally:
+      self.logger.writeSubsubroutineLog(uploadSolution,Logs.ROUTINE_STATUS.END)
+    
 #  def _saveSolutionToFile(self,tsFile):
 #    """Save the information of the solution of a time series file to a file.
 #

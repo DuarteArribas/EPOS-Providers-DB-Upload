@@ -55,13 +55,29 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload._handlePreviousSolution("INGV","timeseries")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
-  def test_getSolutionParameters(self):
+  #def test_getSolutionParameters(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  cfg = Config("config/appconf.cfg")
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+  #  print(tsUpload._getSolutionParameters("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
+  
+  def test_checkReferenceFrameInDB(self):
     logger = Logs("logs/logsTest.log",10000)
     pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-    print(tsUpload._getSolutionParameters("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
+    self.assertEqual(tsUpload._checkReferenceFrameInDB("IGb08"),["IGb08"])
+  
+  def test_checkReferenceFrameInDB2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+    self.assertEqual(tsUpload._checkReferenceFrameInDB("IGb01"),[])
     
 if __name__ == '__main__':
   unittest.main()
