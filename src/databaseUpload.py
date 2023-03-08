@@ -244,6 +244,7 @@ class DatabaseUpload:
             var_xz,
             var_yz,
             outlier,
+            epoch,
             sol_type,
             id_solution,
             id_timeseries_files
@@ -254,6 +255,7 @@ class DatabaseUpload:
           csvFile
         )
     except Exception as err:
+      print(err)
       raise Exception(err)
     finally:
       pass
