@@ -47,8 +47,8 @@ class DatabaseUpload:
     self._uploadSolution(dataType,solutionParameters)
     currentSolutionID = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),dataType)[0]
     for file in allTSFiles:
-      self._uploadTimeseriesFile(file,1.1) # TODO: add correct version
-      self._saveEstimatedCoordinatesToFile(file,currentSolutionID)
+      timeseriesFileID = self._uploadTimeseriesFile(file,1.1) # TODO: add correct version
+      self._saveEstimatedCoordinatesToFile(file,currentSolutionID,timeseriesFileID)
     self._uploadEstimatedCoordinates()
     self._eraseEstimatedCoordinatesTmpFile()
   
@@ -106,7 +106,7 @@ class DatabaseUpload:
           '{solutionParameters["processing_parameters_url"]}',
           '{solutionParameters["ac_acronym"]}',
           '{solutionParameters["reference_frame"]}'
-        )
+        );
         """
       )
     except Exception as err:
@@ -177,8 +177,10 @@ class DatabaseUpload:
           '{posFormatVersion}',
           'pos'
         )
+        RETURNING id;
         """
       )
+      return [item[0] for item in self.cursor.fetchall()]
     except Exception as err:
       raise Exception(err)
     finally:
