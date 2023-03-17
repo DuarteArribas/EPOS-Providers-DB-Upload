@@ -8,11 +8,11 @@ Release Date  : 20220719 000000
 XYZ Reference position :      4239149.25630    2886968.02353   3778877.16739 (IGb14)
 NEU Reference position :      36.5663905422    34.2558546955   38.4658926772 (IGb14/WGS84)
 %Begin EPOS metadata
-9-character ID: HBLT00UKN
-AnalysisCentre: INGV
+9-character ID: WARN00DEU
+AnalysisCentre: ROB-EUREF
 Software      : CATREF
 Method-url    : https://youtube.com
-DOI           : 10.24414/INGV-C2220
+DOI           : 10.24414/ROB-EUREF-C2220
 ReleaseVersion: 2220.0
 SamplingPeriod: daily
 CreationDate  : 2022/10/13 00:00:00

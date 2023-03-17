@@ -38,19 +38,32 @@ class DatabaseUpload:
   
   def uploadAllTS(self,bucketDir):
     dataType = self.cfg.getUploadConfig("TS_DATATYPE")
-    allTSFiles = self._getListOfTSFiles(bucketDir)
-    if len(allTSFiles) == 0:
-      return
-    self._handlePreviousSolution(os.path.basename(bucketDir),dataType)
-    solutionParameters = self._getSolutionParameters(allTSFiles[0])
-    self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
-    self._uploadSolution(dataType,solutionParameters)
-    currentSolutionID = self._checkSolutionAlreadyInDB(os.path.basename(bucketDir),dataType)[0]
-    for file in allTSFiles:
-      timeseriesFileID = self._uploadTimeseriesFile(file,1.1) # TODO: add correct version
-      self._saveEstimatedCoordinatesToFile(file,currentSolutionID,timeseriesFileID)
-    self._uploadEstimatedCoordinates()
-    self._eraseEstimatedCoordinatesTmpFile()
+    for provBucketDir in os.listdir(bucketDir):
+      for version in os.listdir(os.path.join(bucketDir,provBucketDir)):
+        currDir = os.path.join(os.path.join(bucketDir,provBucketDir),version)
+        allTSFiles = self._getListOfTSFiles(currDir)
+        if len(allTSFiles) == 0:
+          return
+        self.cursor.execute("START TRANSACTION;")
+        self._handlePreviousSolution(provBucketDir,dataType)
+        self.cursor.execute("COMMIT TRANSACTION;")
+        solutionParameters = self._getSolutionParameters(os.path.join(currDir,allTSFiles[0]))
+        self.cursor.execute("START TRANSACTION;")
+        self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
+        self.cursor.execute("COMMIT TRANSACTION;")
+        self.cursor.execute("START TRANSACTION;")
+        self._uploadSolution(dataType,solutionParameters)
+        self.cursor.execute("COMMIT TRANSACTION;")
+        currentSolutionID = self._checkSolutionAlreadyInDB(provBucketDir,dataType)[0]
+        for file in allTSFiles:
+          self.cursor.execute("START TRANSACTION;")
+          timeseriesFileID = self._uploadTimeseriesFile(os.path.join(currDir,file),1.1) # TODO: add correct version
+          self.cursor.execute("COMMIT TRANSACTION;")
+          self._saveEstimatedCoordinatesToFile(os.path.join(currDir,file),currentSolutionID,timeseriesFileID[0])
+        self.cursor.execute("START TRANSACTION;")
+        self._uploadEstimatedCoordinates()
+        self.cursor.execute("COMMIT TRANSACTION;")
+        self._eraseEstimatedCoordinatesTmpFile()
   
   def _getListOfTSFiles(self,bucketDir):
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
