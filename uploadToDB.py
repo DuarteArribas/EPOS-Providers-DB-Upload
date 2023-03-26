@@ -6,6 +6,36 @@ from src.validate              import *
 
 # Global variables
 CONFIG_FILE = "config/appconf.cfg"
+
+# Functions
+def uploadAllTS(self,bucketDir):
+  dataType = self.cfg.getUploadConfig("TS_DATATYPE")
+  for provBucketDir in os.listdir(bucketDir):
+    for version in os.listdir(os.path.join(bucketDir,provBucketDir)):
+      currDir = os.path.join(os.path.join(bucketDir,provBucketDir),version)
+      allTSFiles = self.getListOfTSFiles(currDir)
+      if len(allTSFiles) == 0:
+        return
+      self.cursor.execute("START TRANSACTION;")
+      self.handlePreviousSolution(provBucketDir,dataType)
+      self.cursor.execute("COMMIT TRANSACTION;")
+      solutionParameters = self.getSolutionParameters(os.path.join(currDir,allTSFiles[0]))
+      self.cursor.execute("START TRANSACTION;")
+      self.handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
+      self.cursor.execute("COMMIT TRANSACTION;")
+      self.cursor.execute("START TRANSACTION;")
+      self.uploadSolution(dataType,solutionParameters)
+      self.cursor.execute("COMMIT TRANSACTION;")
+      currentSolutionID = self.checkSolutionAlreadyInDB(provBucketDir,dataType)[0]
+      for file in allTSFiles:
+        self.cursor.execute("START TRANSACTION;")
+        timeseriesFileID = self.uploadTimeseriesFile(os.path.join(currDir,file),1.1) # TODO: add correct version
+        self.cursor.execute("COMMIT TRANSACTION;")
+        self.saveEstimatedCoordinatesToFile(os.path.join(currDir,file),currentSolutionID,timeseriesFileID[0])
+      self.cursor.execute("START TRANSACTION;")
+      self.uploadEstimatedCoordinates()
+      self.cursor.execute("COMMIT TRANSACTION;")
+      self.eraseEstimatedCoordinatesTmpFile()
       
 # Main function
 def main():

@@ -36,40 +36,11 @@ class DatabaseUpload:
     if not os.path.exists(self.tmpDir):
       os.makedirs(self.tmpDir)
   
-  def uploadAllTS(self,bucketDir):
-    dataType = self.cfg.getUploadConfig("TS_DATATYPE")
-    for provBucketDir in os.listdir(bucketDir):
-      for version in os.listdir(os.path.join(bucketDir,provBucketDir)):
-        currDir = os.path.join(os.path.join(bucketDir,provBucketDir),version)
-        allTSFiles = self._getListOfTSFiles(currDir)
-        if len(allTSFiles) == 0:
-          return
-        self.cursor.execute("START TRANSACTION;")
-        self._handlePreviousSolution(provBucketDir,dataType)
-        self.cursor.execute("COMMIT TRANSACTION;")
-        solutionParameters = self._getSolutionParameters(os.path.join(currDir,allTSFiles[0]))
-        self.cursor.execute("START TRANSACTION;")
-        self._handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
-        self.cursor.execute("COMMIT TRANSACTION;")
-        self.cursor.execute("START TRANSACTION;")
-        self._uploadSolution(dataType,solutionParameters)
-        self.cursor.execute("COMMIT TRANSACTION;")
-        currentSolutionID = self._checkSolutionAlreadyInDB(provBucketDir,dataType)[0]
-        for file in allTSFiles:
-          self.cursor.execute("START TRANSACTION;")
-          timeseriesFileID = self._uploadTimeseriesFile(os.path.join(currDir,file),1.1) # TODO: add correct version
-          self.cursor.execute("COMMIT TRANSACTION;")
-          self._saveEstimatedCoordinatesToFile(os.path.join(currDir,file),currentSolutionID,timeseriesFileID[0])
-        self.cursor.execute("START TRANSACTION;")
-        self._uploadEstimatedCoordinates()
-        self.cursor.execute("COMMIT TRANSACTION;")
-        self._eraseEstimatedCoordinatesTmpFile()
-  
-  def _getListOfTSFiles(self,bucketDir):
+  def getListOfTSFiles(self,bucketDir):
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
-  def _handlePreviousSolution(self,ac,dataType):
-    solutionIDInDB = self._checkSolutionAlreadyInDB(ac,dataType)
+  def handlePreviousSolution(self,ac,dataType):
+    solutionIDInDB = self.checkSolutionAlreadyInDB(ac,dataType)
     if(len(solutionIDInDB) > 0):
       for solutionID in solutionIDInDB:
         if dataType == self.cfg.getUploadConfig("TS_DATATYPE"):
@@ -80,7 +51,7 @@ class DatabaseUpload:
           pass
       self._erasePreviousSolutionFromDB(ac,dataType)
   
-  def _checkSolutionAlreadyInDB(self,ac,dataType):
+  def checkSolutionAlreadyInDB(self,ac,dataType):
     self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
     return [item[0] for item in self.cursor.fetchall()]
   
@@ -94,7 +65,7 @@ class DatabaseUpload:
   def _erasePreviousTimeseriesFilesFromDB(self,timeseriesFilesID):
     self.cursor.execute("DELETE FROM timeseries_files WHERE id = %s;",(timeseriesFilesID,))
   
-  def _uploadSolution(self,dataType,solutionParameters):
+  def uploadSolution(self,dataType,solutionParameters):
     try:
       self.cursor.execute(
         f"""
@@ -127,7 +98,7 @@ class DatabaseUpload:
     finally:
       pass
   
-  def _getSolutionParameters(self,posFile):
+  def getSolutionParameters(self,posFile):
     with open(posFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       solutionParameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
@@ -160,7 +131,7 @@ class DatabaseUpload:
             solutionParameters["reference_frame"] = value
       return solutionParameters
       
-  def _handleReferenceFrame(self,referenceFrame,epoch):
+  def handleReferenceFrame(self,referenceFrame,epoch):
     if len(self._checkReferenceFrameInDB(referenceFrame)) == 0:
       self._uploadReferenceFrame(referenceFrame,epoch)
   
@@ -176,7 +147,7 @@ class DatabaseUpload:
     finally:
       pass
   
-  def _uploadTimeseriesFile(self,posFile,posFormatVersion):
+  def uploadTimeseriesFile(self,posFile,posFormatVersion):
     try:
       self.cursor.execute(
         f"""
@@ -208,7 +179,7 @@ class DatabaseUpload:
             value = " ".join(values)
             return value
             
-  def _saveEstimatedCoordinatesToFile(self,posFile,idSolution,idTimeseriesFiles):
+  def saveEstimatedCoordinatesToFile(self,posFile,idSolution,idTimeseriesFiles):
     with open(posFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       stationName = None
@@ -243,7 +214,7 @@ class DatabaseUpload:
     self.cursor.execute("SELECT id FROM station WHERE marker = %s",(stationName,))
     return [item[0] for item in self.cursor.fetchall()]
   
-  def _uploadEstimatedCoordinates(self):
+  def uploadEstimatedCoordinates(self):
     try:
       with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csvFile:
         self.cursor.copy_expert(
@@ -276,5 +247,5 @@ class DatabaseUpload:
     finally:
       pass
   
-  def _eraseEstimatedCoordinatesTmpFile(self):
+  def eraseEstimatedCoordinatesTmpFile(self):
     os.remove(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP))

@@ -10,15 +10,15 @@ class TestDatabaseUpload(unittest.TestCase):
   #   pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
   #   pgConnection.connect()
   #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
-  #   self.assertEqual(tsUpload._getListOfTSFiles("inOutTest/bucket/INGV/1"),["HBLT00UKN.pos","WARN00DEU.pos"])
+  #   self.assertEqual(tsUpload.getListOfTSFiles("inOutTest/bucket/INGV/1"),["HBLT00UKN.pos","WARN00DEU.pos"])
   
   #def test_checkSolutionAlreadyThere(self):
   #  logger = Logs("logs/logsTest.log",10000)
   #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
   #  pgConnection.connect()
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
-  #  self.assertEqual(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
-  #  print(tsUpload._checkSolutionAlreadyInDB("INGV","timeseries"))
+  #  self.assertEqual(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
+  #  print(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"))
   
   #def test_erasePreviousSolutionFromDB(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -52,7 +52,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload._handlePreviousSolution("INGV","timeseries")
+  #  tsUpload.handlePreviousSolution("INGV","timeseries")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
   #def test_getSolutionParameters(self):
@@ -61,7 +61,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.connect()
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #  print(tsUpload._getSolutionParameters("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
+  #  print(tsUpload.getSolutionParameters("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
   
   # def test_checkReferenceFrameInDB(self):
   #   logger = Logs("logs/logsTest.log",10000)
@@ -96,7 +96,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload._handleReferenceFrame("arrrozlol3","2022-11-11")
+  #  tsUpload.handleReferenceFrame("arrrozlol3","2022-11-11")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
   #def test_uploadSolution(self):
@@ -107,7 +107,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  solutionParameters = {'reference_frame': 'IGb14', 'ac_acronym': 'ROB-EUREF', 'software': 'CATREF', 'processing_parameters_url': 'https://youtube.com', 'doi': '10.24414/ROB-EUREF-C2220', 'release_version': '2220.0', 'sampling_period': 'daily', 'creation_date': '2022-10-13 00:00:00'}
   #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload._uploadSolution("timeseries",solutionParameters)
+  #  tsUpload.uploadSolution("timeseries",solutionParameters)
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
   # def test_getFormatVersion(self):
@@ -125,7 +125,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload._uploadTimeseriesFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",1.1)
+  #  tsUpload.uploadTimeseriesFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",1.1)
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
   # def test_getStationID(self):
@@ -142,7 +142,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.connect()
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #  print(tsUpload._saveEstimatedCoordinatesToFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",28,13))
+  #  print(tsUpload.saveEstimatedCoordinatesToFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",28,13))
   
   #def test_removeEstimatedCoordinatesFile(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -150,7 +150,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.connect()
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #  print(tsUpload._eraseEstimatedCoordinatesTmpFile())
+  #  print(tsUpload.eraseEstimatedCoordinatesTmpFile())
   
   #def test_uploadEstimatedCoordinates(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -159,7 +159,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload._uploadEstimatedCoordinates()
+  #  tsUpload.uploadEstimatedCoordinates()
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
 
    def test_uploadAllTS(self):
