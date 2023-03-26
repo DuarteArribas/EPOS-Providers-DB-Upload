@@ -12,7 +12,7 @@ def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
   # Logger
-  logger = Logs(f"{cfg.getLogsConfig('LOGS_DIR')}/{cfg.getLogsConfig('UPLOADING_LOGS')}",cfg.getLogsConfig("MAX_LOGS"))
+  logger = Logs(f"{os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('UPLOADING_LOGS'))}",cfg.getLogsConfig("MAX_LOGS"))
   # Bucket and public folders
   bucketDirs = {
     "INGV" : f"{cfg.getAppConfig('BUCKET_DIR')}/INGV",
