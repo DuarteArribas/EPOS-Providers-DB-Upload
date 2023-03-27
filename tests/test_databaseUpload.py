@@ -35,7 +35,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
   #  pgConnection.connect()
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
-  #  print(tsUpload._getTimeseriesFilesID(17))
+  #  self.assertEqual(tsUpload._getTimeseriesFilesID(32),[16])
 
   #def test_erasePreviousTimeseriesFilesFromDB(self):
   #  logger = Logs("logs/logsTest.log",10000)

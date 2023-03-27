@@ -92,6 +92,18 @@ class DatabaseUpload:
     self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
   
   def _getTimeseriesFilesID(self,solutionID):
+    """Get the timeseries files ID from the database.
+    
+    Parameters
+    ----------
+    solutionID : int
+      The solution ID
+    
+    Returns
+    -------
+    list
+      A list of timeseries files IDs
+    """
     self.cursor.execute("SELECT id_timeseries_files FROM estimated_coordinates WHERE id_solution = %s GROUP BY id_timeseries_files;",(solutionID,))
     return [item[0] for item in self.cursor.fetchall()]
   
