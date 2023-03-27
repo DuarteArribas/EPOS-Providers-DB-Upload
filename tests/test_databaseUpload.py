@@ -74,7 +74,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.cursor.execute("START TRANSACTION;")
   #  tsUpload.uploadSolution("timeseries",solutionParameters)
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
-  #
+  
   #def test_uploadSolution2(self):
   #  logger = Logs("logs/logsTest.log",10000)
   #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
@@ -92,7 +92,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #   pgConnection.connect()
   #   cfg = Config("config/appconf.cfg")
   #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #   print(tsUpload._getPosFormatVersion("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
+  #   print(tsUpload.getPosFormatVersion("inOutTest/bucket/INGV/1/WARN00DEU.pos"))
   
   #def test_uploadTimeseriesFile(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -128,14 +128,6 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  tsUpload.saveEstimatedCoordinatesToFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",32,16)
   
-  #def test_removeEstimatedCoordinatesFile(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  cfg = Config("config/appconf.cfg")
-  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #  print(tsUpload.eraseEstimatedCoordinatesTmpFile())
-  
   #def test_uploadEstimatedCoordinates(self):
   #  logger = Logs("logs/logsTest.log",10000)
   #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
@@ -146,6 +138,14 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload.uploadEstimatedCoordinates()
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
 
+  #def test_removeEstimatedCoordinatesFile(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  cfg = Config("config/appconf.cfg")
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+  #  tsUpload.eraseEstimatedCoordinatesTmpFile()
+  
   # def test_uploadAllTS(self):
   #   logger = Logs("logs/logsTest.log",10000)
   #   pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)

@@ -229,7 +229,14 @@ class DatabaseUpload:
     except Exception as err:
       raise UploadError(f"Could not upload time series file to database. Error: {UploadError.formatError(str(err))}.")
   
-  def _getPosFormatVersion(self,posFile):
+  def getPosFormatVersion(self,posFile):
+    """Get the version of the POS format used. (e.g. 1.1.1)
+    
+    Parameters
+    ----------
+    posFile : str
+      The path to the POS file
+    """
     with open(posFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       for line in lines:
@@ -351,4 +358,7 @@ class DatabaseUpload:
       raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
   
   def eraseEstimatedCoordinatesTmpFile(self):
-    os.remove(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP))
+    """Erase the temporary file containing the previous estimated coordinates."""
+    tempPath = os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
+    if os.path.exists(tempPath):
+      os.remove(tempPath)
