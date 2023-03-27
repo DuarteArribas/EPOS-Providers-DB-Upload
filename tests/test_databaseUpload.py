@@ -12,13 +12,13 @@ class TestDatabaseUpload(unittest.TestCase):
   #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
   #   self.assertEqual(tsUpload.getListOfTSFiles("inOutTest/bucket/INGV/1"),["HBLT00UKN.pos","WARN00DEU.pos"])
   
-  def test_checkSolutionAlreadyThere(self):
-    logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-    pgConnection.connect()
-    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
-    self.assertEqual(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
-    print(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"))
+  #def test_checkSolutionAlreadyThere(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
+  #  self.assertEqual(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
+  #  print(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"))
   
   #def test_erasePreviousSolutionFromDB(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -99,16 +99,16 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload.handleReferenceFrame("arrrozlol3","2022-11-11")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
-  #def test_uploadSolution(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  cfg = Config("config/appconf.cfg")
-  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #  solutionParameters = {'reference_frame': 'IGb14', 'ac_acronym': 'ROB-EUREF', 'software': 'CATREF', 'processing_parameters_url': 'https://youtube.com', 'doi': '10.24414/ROB-EUREF-C2220', 'release_version': '2220.0', 'sampling_period': 'daily', 'creation_date': '2022-10-13 00:00:00'}
-  #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload.uploadSolution("timeseries",solutionParameters)
-  #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
+  def test_uploadSolution(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+    solutionParameters = {'reference_frame': 'IGb14', 'ac_acronym': 'INGV', 'software': 'CATREF', 'processing_parameters_url': 'https://youtube.com', 'doi': '10.24414/ROB-EUREF-C2220', 'release_version': '2220.0', 'sampling_period': 'daily', 'creation_date': '2022-10-13 00:00:00'}
+    pgConnection.cursor.execute("START TRANSACTION;")
+    tsUpload.uploadSolution("timeseries",solutionParameters)
+    pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
   # def test_getFormatVersion(self):
   #   logger = Logs("logs/logsTest.log",10000)

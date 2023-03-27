@@ -1,6 +1,7 @@
 import os
 from src.utils.constants import *
 from src.utils.logs      import *
+from src.uploadError     import *
 
 class DatabaseUpload:
   """Upload data to the database."""
@@ -117,9 +118,7 @@ class DatabaseUpload:
         """
       )
     except Exception as err:
-      raise Exception(err)
-    finally:
-      pass
+      raise UploadError(f"Could not upload solution to database. Error: {UploadError.formatError(err)}.")
   
   def getSolutionParameters(self,posFile):
     with open(posFile,"rt") as f:
