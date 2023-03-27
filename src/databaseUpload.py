@@ -239,6 +239,17 @@ class DatabaseUpload:
             return value
             
   def saveEstimatedCoordinatesToFile(self,posFile,idSolution,idTimeseriesFiles):
+    """Save the estimated coordinates to a temporary file for bulk upload.
+    
+    Parameters
+    ----------
+    posFile           : str
+      The path to the POS file
+    idSolution        : int
+      The ID of the solution
+    idTimeseriesFiles : int
+      The ID of the time series file
+    """
     with open(posFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       stationName = None
@@ -246,7 +257,7 @@ class DatabaseUpload:
         match [part.strip() for part in line.split(":",1)]:
           case ["9-character ID",*values]:
             stationName = " ".join(values)
-      station = self._getStationID(stationName)[0]
+      station = self._getStationID(stationName)
       for line in lines:
         match [part.strip() for part in (" ".join(line.split())).split(" ")]:
           case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
@@ -303,6 +314,13 @@ class DatabaseUpload:
     return f"{YYYYMMDD[0:4]}-{YYYYMMDD[4:6]}-{YYYYMMDD[6:8]} {HHMMSS[0:2]}:{HHMMSS[2:4]}:{HHMMSS[4:6]}"
   
   def uploadEstimatedCoordinates(self):
+    """Bulk upload the estimated coordinates from the temporary file to the database.
+    
+    Raises
+    ------
+    UploadError
+      If the estimated coordinates could not be uploaded to the database
+    """
     try:
       with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csvFile:
         self.cursor.copy_expert(
@@ -330,10 +348,7 @@ class DatabaseUpload:
           csvFile
         )
     except Exception as err:
-      print(err)
-      raise Exception(err)
-    finally:
-      pass
+      raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
   
   def eraseEstimatedCoordinatesTmpFile(self):
     os.remove(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP))

@@ -126,7 +126,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.connect()
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #  print(tsUpload.saveEstimatedCoordinatesToFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",28,13))
+  #  tsUpload.saveEstimatedCoordinatesToFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",32,16)
   
   #def test_removeEstimatedCoordinatesFile(self):
   #  logger = Logs("logs/logsTest.log",10000)
