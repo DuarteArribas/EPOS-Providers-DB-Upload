@@ -34,6 +34,39 @@ class DatabaseUpload:
     if not os.path.exists(self.tmpDir):
       os.makedirs(self.tmpDir)
   
+  def uploadAllProviderTS(self,bucketDir):
+    self.cursor.execute("START TRANSACTION;")
+    try:
+      dataType = self.cfg.getUploadConfig("TS_DATATYPE")
+      for provBucketDir in os.listdir(bucketDir):
+        for filetype in os.listdir(os.path.join(bucketDir,provBucketDir)):
+          if filetype == "TS":
+            for version in os.listdir(os.path.join(os.path.join(bucketDir,provBucketDir),filetype)):
+              currDir = os.path.join(os.path.join(os.path.join(bucketDir,provBucketDir),filetype),version)
+              allTSFiles = self.getListOfTSFiles(currDir)
+              if len(allTSFiles) == 0:
+                break
+              self.handlePreviousSolution(provBucketDir,dataType)
+              self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
+              currentSolutionID = self.checkSolutionAlreadyInDB(provBucketDir,dataType)[0]
+              for file in allTSFiles:
+                currFile = os.path.join(currDir,file)
+                timeseriesFileID = self.uploadTimeseriesFile(
+                  currFile,
+                  self.getPosFormatVersion(currFile)
+                )
+                self.saveEstimatedCoordinatesToFile(
+                  currFile,
+                  currentSolutionID,
+                  timeseriesFileID
+                )
+              self.uploadEstimatedCoordinates()
+              self.eraseEstimatedCoordinatesTmpFile()
+              self.cursor.execute("COMMIT TRANSACTION;")
+    except UploadError as err:
+      self.cursor.execute("ROLLBACK TRANSACTION;")
+      raise UploadError(str(err))
+  
   def getListOfTSFiles(self,bucketDir):
     """Get a list of all timeseries files in a directory.
     
@@ -257,7 +290,7 @@ class DatabaseUpload:
         RETURNING id;
         """
       )
-      return [item[0] for item in self.cursor.fetchall()]
+      return [item[0] for item in self.cursor.fetchall()][0]
     except Exception as err:
       raise UploadError(f"Could not upload time series file to database. Error: {UploadError.formatError(str(err))}.")
   

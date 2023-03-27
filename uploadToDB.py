@@ -19,12 +19,8 @@ def uploadAllTS(self,bucketDir):
       self.cursor.execute("START TRANSACTION;")
       self.handlePreviousSolution(provBucketDir,dataType)
       self.cursor.execute("COMMIT TRANSACTION;")
-      solutionParameters = self.getSolutionParameters(os.path.join(currDir,allTSFiles[0]))
       self.cursor.execute("START TRANSACTION;")
-      self.handleReferenceFrame(solutionParameters["reference_frame"],"2021-11-11") # TODO: add correct epoch
-      self.cursor.execute("COMMIT TRANSACTION;")
-      self.cursor.execute("START TRANSACTION;")
-      self.uploadSolution(dataType,solutionParameters)
+      self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
       self.cursor.execute("COMMIT TRANSACTION;")
       currentSolutionID = self.checkSolutionAlreadyInDB(provBucketDir,dataType)[0]
       for file in allTSFiles:
