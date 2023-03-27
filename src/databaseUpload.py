@@ -69,7 +69,7 @@ class DatabaseUpload:
     ac       : str
       The analysis centre acronym
     dataType : str
-      The data type of the solution
+      The data type of the solution (timeseries or velocity)
     
     Returns
     -------
@@ -90,6 +90,21 @@ class DatabaseUpload:
     self.cursor.execute("DELETE FROM timeseries_files WHERE id = %s;",(timeseriesFilesID,))
   
   def uploadSolution(self,dataType,solutionParameters):
+    """Upload a solution to the database.
+    
+    Parameters
+    ----------
+    dataType           : str
+      The data type of the solution (timeseries or velocity)
+      
+    solutionParameters : dict
+      The solution parameters
+        
+    Raises
+    ------
+    UploadError
+      If the solution could not be uploaded to the database
+    """
     try:
       self.cursor.execute(
         f"""
