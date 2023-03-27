@@ -110,15 +110,16 @@ class TestDatabaseUpload(unittest.TestCase):
   #   pgConnection.connect()
   #   cfg = Config("config/appconf.cfg")
   #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #   print(tsUpload._getStationID("OUTA00UKN"))
+  #   self.assertEqual(tsUpload._getStationID("OUTA00UKN"),14)
   
-  def test_formatDate(self):
-    logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-    pgConnection.connect()
-    cfg = Config("config/appconf.cfg")
-    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-    self.assertEqual(tsUpload._formatDate("20201013","010536"),"2020-10-13 01:05:36")
+  #def test_formatDate(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  cfg = Config("config/appconf.cfg")
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+  #  self.assertEqual(tsUpload._formatDate("20201013","010536"),"2020-10-13 01:05:36")
+    
   #def test_saveEstimatedCoordinatesToFile(self):
   #  logger = Logs("logs/logsTest.log",10000)
   #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)

@@ -270,10 +270,36 @@ class DatabaseUpload:
               )
   
   def _getStationID(self,stationName):
+    """Get the ID of a station.
+    
+    Parameters
+    ----------
+    stationName : str
+      The long marker name of the station
+    
+    Returns
+    -------
+    int
+      The ID of the correspondent station
+    """
     self.cursor.execute("SELECT id FROM station WHERE marker = %s",(stationName,))
-    return [item[0] for item in self.cursor.fetchall()]
+    return [item[0] for item in self.cursor.fetchall()][0]
   
   def _formatDate(self,YYYYMMDD,HHMMSS):
+    """Format a date in the format YYYYMMDD HHMMSS to YYYY-MM-DD HH:MM:SS.
+    
+    Parameters
+    ----------
+    YYYYMMDD  : str
+      The date in the format YYYYMMDD
+    HHMMSS    : str
+      The time in the format HHMMSS
+    
+    Returns
+    -------
+    str
+      The date in the format YYYY-MM-DD HH:MM:SS 
+    """
     return f"{YYYYMMDD[0:4]}-{YYYYMMDD[4:6]}-{YYYYMMDD[6:8]} {HHMMSS[0:2]}:{HHMMSS[2:4]}:{HHMMSS[4:6]}"
   
   def uploadEstimatedCoordinates(self):
