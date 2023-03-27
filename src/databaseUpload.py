@@ -80,6 +80,15 @@ class DatabaseUpload:
     return [item[0] for item in self.cursor.fetchall()]
   
   def _erasePreviousSolutionFromDB(self,ac,dataType):
+    """Erase a previous solution from the database.
+    
+    Parameters
+    ----------
+    ac       : str
+      The analysis centre acronym
+    dataType : str
+      The data type of the solution (timeseries or velocity)
+    """
     self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
   
   def _getTimeseriesFilesID(self,solutionID):
@@ -133,7 +142,7 @@ class DatabaseUpload:
         """
       )
     except Exception as err:
-      raise UploadError(f"Could not upload solution to database. Error: {UploadError.formatError(err)}.")
+      raise UploadError(f"Could not upload solution to database. Error: {UploadError.formatError(str(err))}.")
   
   def getSolutionParameters(self,posFile):
     with open(posFile,"rt") as f:
