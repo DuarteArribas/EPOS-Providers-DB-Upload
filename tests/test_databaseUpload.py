@@ -30,12 +30,12 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload._erasePreviousSolutionFromDB("INGV","timeseries")
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
-  #def test_getTimeseriesFilesID(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
-  #  print(tsUpload._getTimeseriesFilesID(13))
+  def test_getTimeseriesFilesID(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
+    print(tsUpload._getTimeseriesFilesID(17))
 
   #def test_erasePreviousTimeseriesFilesFromDB(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -137,7 +137,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload.uploadTimeseriesFile("inOutTest/bucket/INGV/1/WARN00DEU.pos",1.1)
+  #  print(tsUpload.uploadTimeseriesFile("inOutTest/bucket/INGV/1/WARN00DEU.pos","1.1.1"))
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
   
   # def test_getStationID(self):

@@ -49,15 +49,15 @@ class DatabaseUpload:
     """
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
-  def handlePreviousSolution(self,ac,dataType):
+  def handlePreviousSolution(self,ac,dataType,tsDatatype,velDatatype):
     solutionIDInDB = self.checkSolutionAlreadyInDB(ac,dataType)
     if(len(solutionIDInDB) > 0):
       for solutionID in solutionIDInDB:
-        if dataType == self.cfg.getUploadConfig("TS_DATATYPE"):
+        if dataType == tsDatatype:
           timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
           for timeseriesFileID in timeseriesFilesIDInDB:
             self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)
-        elif dataType == self.cfg.getUploadConfig("VEL_DATATYPE"):
+        elif dataType == velDatatype:
           pass
       self._erasePreviousSolutionFromDB(ac,dataType)
   
@@ -177,23 +177,42 @@ class DatabaseUpload:
             solutionParameters["reference_frame"] = value
       return solutionParameters
       
-  def handleReferenceFrame(self,referenceFrame,epoch):
-    if len(self._checkReferenceFrameInDB(referenceFrame)) == 0:
-      self._uploadReferenceFrame(referenceFrame,epoch)
-  
-  def _checkReferenceFrameInDB(self,referenceFrame):
-    self.cursor.execute("SELECT name FROM reference_frame WHERE name = %s;",(referenceFrame,))
-    return [item[0] for item in self.cursor.fetchall()]
-  
-  def _uploadReferenceFrame(self,name,epoch):
-    try:
-      self.cursor.execute(f"INSERT INTO reference_frame(name,epoch)VALUES('{name}','{epoch}')")
-    except Exception as err:
-      raise Exception(err)
-    finally:
-      pass
+  #def handleReferenceFrame(self,referenceFrame,epoch):
+  #  if len(self._checkReferenceFrameInDB(referenceFrame)) == 0:
+  #    self._uploadReferenceFrame(referenceFrame,epoch)
+  #
+  #def _checkReferenceFrameInDB(self,referenceFrame):
+  #  self.cursor.execute("SELECT name FROM reference_frame WHERE name = %s;",(referenceFrame,))
+  #  return [item[0] for item in self.cursor.fetchall()]
+  #
+  #def _uploadReferenceFrame(self,name,epoch):
+  #  try:
+  #    self.cursor.execute(f"INSERT INTO reference_frame(name,epoch)VALUES('{name}','{epoch}')")
+  #  except Exception as err:
+  #    raise Exception(err)
+  #  finally:
+  #    pass
   
   def uploadTimeseriesFile(self,posFile,posFormatVersion):
+    """Upload a time series file to the database.
+    
+    Parameters
+    ----------
+    posFile           : str
+      The path to the time series file on the bucket directory
+    posFormatVersion  : str
+      The version of the POS format used
+    
+    Raises
+    ------
+    UploadError
+      If the time series file could not be uploaded to the database
+    
+    Returns
+    -------
+    list
+      A list, containing the ID of the uploaded time series file
+    """
     try:
       self.cursor.execute(
         f"""
@@ -203,18 +222,16 @@ class DatabaseUpload:
           file_type
         )
         VALUES(
-          'public/{"/".join(posFile.split("/")[-3:])}',
+          'public/{"/".join(posFile.split("/")[-3:])}', 
           '{posFormatVersion}',
           'pos'
         )
         RETURNING id;
-        """
+        """ #TODO : change public/... to something else
       )
       return [item[0] for item in self.cursor.fetchall()]
     except Exception as err:
-      raise Exception(err)
-    finally:
-      pass
+      raise UploadError(f"Could not upload time series file to database. Error: {UploadError.formatError(str(err))}.")
   
   def _getPosFormatVersion(self,posFile):
     with open(posFile,"rt") as f:
