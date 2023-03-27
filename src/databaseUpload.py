@@ -188,22 +188,6 @@ class DatabaseUpload:
             value = " ".join(values)
             solutionParameters["reference_frame"] = value
       return solutionParameters
-      
-  #def handleReferenceFrame(self,referenceFrame,epoch):
-  #  if len(self._checkReferenceFrameInDB(referenceFrame)) == 0:
-  #    self._uploadReferenceFrame(referenceFrame,epoch)
-  #
-  #def _checkReferenceFrameInDB(self,referenceFrame):
-  #  self.cursor.execute("SELECT name FROM reference_frame WHERE name = %s;",(referenceFrame,))
-  #  return [item[0] for item in self.cursor.fetchall()]
-  #
-  #def _uploadReferenceFrame(self,name,epoch):
-  #  try:
-  #    self.cursor.execute(f"INSERT INTO reference_frame(name,epoch)VALUES('{name}','{epoch}')")
-  #  except Exception as err:
-  #    raise Exception(err)
-  #  finally:
-  #    pass
   
   def uploadTimeseriesFile(self,posFile,posFormatVersion):
     """Upload a time series file to the database.
@@ -268,26 +252,29 @@ class DatabaseUpload:
           case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"a") as tmp:
               tmp.write(
-                str(station)               + "," +
-                str(X)                     + "," +
-                str(Y)                     + "," +
-                str(Z)                     + "," +
-                str(Sx)                    + "," +
-                str(Sy)                    + "," +
-                str(Sz)                    + "," +
-                str(Rxy)                   + "," +
-                str(Rxz)                   + "," +
-                str(Ryz)                   + "," +
-                str(0)                     + "," + #TODO: Change outlier
-                str("2021-11-11 00:00:00") + "," + #TODO: Change epoch
-                str(Soln)                  + "," +
-                str(idSolution)            + "," +
-                str(idTimeseriesFiles)     + "\n"      
+                str(station)                           + "," +
+                str(X)                                 + "," +
+                str(Y)                                 + "," +
+                str(Z)                                 + "," +
+                str(Sx)                                + "," +
+                str(Sy)                                + "," +
+                str(Sz)                                + "," +
+                str(Rxy)                               + "," +
+                str(Rxz)                               + "," +
+                str(Ryz)                               + "," +
+                str(1 if Soln == "outlier" else 0)     + "," +
+                str(self._formatDate(YYYYMMDD,HHMMSS)) + "," +
+                str(Soln)                              + "," +
+                str(idSolution)                        + "," +
+                str(idTimeseriesFiles)                 + "\n"      
               )
   
   def _getStationID(self,stationName):
     self.cursor.execute("SELECT id FROM station WHERE marker = %s",(stationName,))
     return [item[0] for item in self.cursor.fetchall()]
+  
+  def _formatDate(self,YYYYMMDD,HHMMSS):
+    return f"{YYYYMMDD[0:4]}-{YYYYMMDD[4:6]}-{YYYYMMDD[6:8]} {HHMMSS[0:2]}:{HHMMSS[2:4]}:{HHMMSS[4:6]}"
   
   def uploadEstimatedCoordinates(self):
     try:
