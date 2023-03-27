@@ -43,7 +43,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.connect()
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
   #  pgConnection.cursor.execute("START TRANSACTION;")
-  #  tsUpload._erasePreviousTimeseriesFilesFromDB(6)
+  #  tsUpload._erasePreviousTimeseriesFilesFromDB(17)
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
 
   #def test_handlePreviousSolution(self):

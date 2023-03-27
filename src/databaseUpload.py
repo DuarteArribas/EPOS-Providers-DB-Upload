@@ -108,6 +108,13 @@ class DatabaseUpload:
     return [item[0] for item in self.cursor.fetchall()]
   
   def _erasePreviousTimeseriesFilesFromDB(self,timeseriesFilesID):
+    """Erase a previous timeseries file from the database.
+    
+    Parameters
+    ----------
+    timeseriesFilesID : int
+      The timeseries files ID to remove
+    """
     self.cursor.execute("DELETE FROM timeseries_files WHERE id = %s;",(timeseriesFilesID,))
   
   def uploadSolution(self,dataType,solutionParameters):
