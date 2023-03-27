@@ -68,6 +68,8 @@ def main():
     logger
   )
   pgConnection.connect()
+  # Upload all ts files
+  uploadAllTS()
   
 if __name__ == '__main__':
   main()

@@ -1,21 +1,16 @@
-import psycopg2
-import shutil
-import glob
-import gzip
-import sys
 import os
 from src.utils.constants import *
 from src.utils.logs      import *
 
 class DatabaseUpload:
-  """Upload time series to the database."""
+  """Upload data to the database."""
   
   # == Class variables ==
   ESTIMATED_COORDINATES_TEMP = "estimatedCoordinatesTemp.csv"
   
   # == Methods ==
   def __init__(self,conn,cursor,logger,cfg,tmp):
-    """Initialize needed variables for a time series database upload.
+    """Initialize needed variables for a database upload.
 
     Parameters
     ----------
@@ -25,6 +20,8 @@ class DatabaseUpload:
       A cursor object to the database
     logger : Logs
       A logging object to which logs can be written
+    cfg    : Config
+      A configuration object to which configuration parameters can be read
     tmp    : str
       A directory to which temporary files used for bulk database insertion (optimization) will be saved to
     """
@@ -37,6 +34,18 @@ class DatabaseUpload:
       os.makedirs(self.tmpDir)
   
   def getListOfTSFiles(self,bucketDir):
+    """Get a list of all timeseries files in a directory.
+    
+    Parameters
+    ----------
+    bucketDir : str
+      The bucket directory to search for timeseries files
+      
+    Returns
+    -------
+    list
+      A list of all timeseries files in the directory
+    """
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
   def handlePreviousSolution(self,ac,dataType):
@@ -52,6 +61,20 @@ class DatabaseUpload:
       self._erasePreviousSolutionFromDB(ac,dataType)
   
   def checkSolutionAlreadyInDB(self,ac,dataType):
+    """Check if a solution is already in the database.
+    
+    Parameters
+    ----------
+    ac       : str
+      The analysis centre acronym
+    dataType : str
+      The data type of the solution
+    
+    Returns
+    -------
+    list
+      A list of solution IDs if the solution is already in the database or an empty list otherwise
+    """
     self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
     return [item[0] for item in self.cursor.fetchall()]
   

@@ -12,13 +12,13 @@ class TestDatabaseUpload(unittest.TestCase):
   #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
   #   self.assertEqual(tsUpload.getListOfTSFiles("inOutTest/bucket/INGV/1"),["HBLT00UKN.pos","WARN00DEU.pos"])
   
-  #def test_checkSolutionAlreadyThere(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
-  #  self.assertEqual(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
-  #  print(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"))
+  def test_checkSolutionAlreadyThere(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp")
+    self.assertEqual(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"),[8,9])
+    print(tsUpload.checkSolutionAlreadyInDB("INGV","timeseries"))
   
   #def test_erasePreviousSolutionFromDB(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -162,13 +162,13 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload.uploadEstimatedCoordinates()
   #  pgConnection.cursor.execute("COMMIT TRANSACTION;")
 
-   def test_uploadAllTS(self):
-     logger = Logs("logs/logsTest.log",10000)
-     pgConnection = DBConnection("localhost","5432","gnss202","postgres","arroz123",logger)
-     pgConnection.connect()
-     cfg = Config("config/appconf.cfg")
-     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-     tsUpload.uploadAllTS("inOutTest/bucket")
+  # def test_uploadAllTS(self):
+  #   logger = Logs("logs/logsTest.log",10000)
+  #   pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #   pgConnection.connect()
+  #   cfg = Config("config/appconf.cfg")
+  #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
+  #   tsUpload.uploadAllTS("inOutTest/bucket")
   
 if __name__ == '__main__':
   unittest.main()
