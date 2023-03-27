@@ -145,6 +145,18 @@ class DatabaseUpload:
       raise UploadError(f"Could not upload solution to database. Error: {UploadError.formatError(str(err))}.")
   
   def getSolutionParameters(self,posFile):
+    """Get the solution parameters from a POS file.
+    
+    Parameters
+    ----------
+    posFile : str
+      The path to the POS file
+    
+    Returns
+    -------
+    dict
+      The solution parameters
+    """
     with open(posFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       solutionParameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
