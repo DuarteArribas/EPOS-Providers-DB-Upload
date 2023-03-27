@@ -255,7 +255,7 @@ class DatabaseUpload:
           'pos'
         )
         RETURNING id;
-        """ #TODO : change public/... to something else
+        """
       )
       return [item[0] for item in self.cursor.fetchall()]
     except Exception as err:
