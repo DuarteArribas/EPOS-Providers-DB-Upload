@@ -50,6 +50,19 @@ class DatabaseUpload:
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
   def handlePreviousSolution(self,ac,dataType,tsDatatype,velDatatype):
+    """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its associated timeseries files and estimated coordinates.
+    
+    Parameters
+    ----------
+    ac          : str
+      The analysis centre acronym
+    dataType    : str
+      The data type of the solution (timeseries or velocity)
+    tsDatatype  : str
+      The timeseries data type
+    velDatatype : str
+      The velocity data type
+    """
     solutionIDInDB = self.checkSolutionAlreadyInDB(ac,dataType)
     if(len(solutionIDInDB) > 0):
       for solutionID in solutionIDInDB:
