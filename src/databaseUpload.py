@@ -34,37 +34,54 @@ class DatabaseUpload:
     if not os.path.exists(self.tmpDir):
       os.makedirs(self.tmpDir)
   
-  def uploadAllProviderTS(self,bucketDir):
+  def uploadAllProviderTS(self,provBucketDir):
+    """Upload all timeseries files from a provider bucket directory to the database.
+    
+    Parameters
+    ----------
+    provBucketDir : str
+      The path to the provider bucket directory
+    
+    Raises
+    ------
+    UploadError
+      If the upload was unsuccessful
+    """
     self.cursor.execute("START TRANSACTION;")
     try:
+      ac       = os.path.basename(provBucketDir)
       dataType = self.cfg.getUploadConfig("TS_DATATYPE")
-      for provBucketDir in os.listdir(bucketDir):
-        for filetype in os.listdir(os.path.join(bucketDir,provBucketDir)):
-          if filetype == "TS":
-            for version in os.listdir(os.path.join(os.path.join(bucketDir,provBucketDir),filetype)):
-              currDir = os.path.join(os.path.join(os.path.join(bucketDir,provBucketDir),filetype),version)
-              allTSFiles = self.getListOfTSFiles(currDir)
-              if len(allTSFiles) == 0:
-                break
-              self.handlePreviousSolution(provBucketDir,dataType)
-              self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
-              currentSolutionID = self.checkSolutionAlreadyInDB(provBucketDir,dataType)[0]
-              for file in allTSFiles:
-                currFile = os.path.join(currDir,file)
-                timeseriesFileID = self.uploadTimeseriesFile(
-                  currFile,
-                  self.getPosFormatVersion(currFile)
-                )
-                self.saveEstimatedCoordinatesToFile(
-                  currFile,
-                  currentSolutionID,
-                  timeseriesFileID
-                )
-              self.uploadEstimatedCoordinates()
-              self.eraseEstimatedCoordinatesTmpFile()
-              self.cursor.execute("COMMIT TRANSACTION;")
+      for filetype in os.listdir(provBucketDir):
+        if filetype == "TS":
+          for version in os.listdir(os.path.join(provBucketDir,filetype)):
+            currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
+            allTSFiles = self.getListOfTSFiles(currDir)
+            if len(allTSFiles) == 0:
+              break
+            self.handlePreviousSolution(
+              ac,
+              dataType,
+              self.cfg.getUploadConfig("TS_DATATYPE"),
+              self.cfg.getUploadConfig("VEL_DATATYPE")
+            )
+            self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
+            currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
+            for file in allTSFiles:
+              currFile = os.path.join(currDir,file)
+              timeseriesFileID = self.uploadTimeseriesFile(
+                currFile,
+                self.getPosFormatVersion(currFile)
+              )
+              self.saveEstimatedCoordinatesToFile(
+                currFile,
+                currentSolutionID,
+                timeseriesFileID
+              )
+            self.uploadEstimatedCoordinates()
+            self.eraseEstimatedCoordinatesTmpFile()
+            self.cursor.execute("COMMIT TRANSACTION;")
     except UploadError as err:
-      self.cursor.execute("ROLLBACK TRANSACTION;")
+      self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
   
   def getListOfTSFiles(self,bucketDir):
