@@ -573,6 +573,7 @@ class Validator:
         value = " ".join(values)
         if not value:
           raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+        self.version = value
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):

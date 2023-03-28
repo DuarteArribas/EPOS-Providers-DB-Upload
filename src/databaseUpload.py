@@ -10,7 +10,7 @@ class DatabaseUpload:
   ESTIMATED_COORDINATES_TEMP = "estimatedCoordinatesTemp.csv"
   
   # == Methods ==
-  def __init__(self,conn,cursor,logger,cfg,tmp):
+  def __init__(self,conn,cursor,logger,cfg,tmp,fileHandler):
     """Initialize needed variables for a database upload.
 
     Parameters
@@ -25,6 +25,8 @@ class DatabaseUpload:
       A configuration object to which configuration parameters can be read
     tmp    : str
       A directory to which temporary files used for bulk database insertion (optimization) will be saved to
+    fileHandler : FileHandler
+      A file handler object
     """
     self.conn   = conn
     self.cursor = cursor
@@ -33,14 +35,17 @@ class DatabaseUpload:
     self.tmpDir = tmp + "/" if tmp[-1] != "/" else tmp
     if not os.path.exists(self.tmpDir):
       os.makedirs(self.tmpDir)
+    self.fileHandler = fileHandler
   
-  def uploadAllProviderTS(self,provBucketDir):
+  def uploadAllProviderTS(self,provBucketDir,publicDir):
     """Upload all timeseries files from a provider bucket directory to the database.
     
     Parameters
     ----------
     provBucketDir : str
       The path to the provider bucket directory
+    publicDir     : str
+      The path to the provider's public directory
     
     Raises
     ------
@@ -80,6 +85,7 @@ class DatabaseUpload:
             self.uploadEstimatedCoordinates()
             self.eraseEstimatedCoordinatesTmpFile()
             self.cursor.execute("COMMIT TRANSACTION;")
+            self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))

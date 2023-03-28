@@ -37,9 +37,10 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
       elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
-          fileHandler.movePosFile(file,bucketDir)
+          fileHandler.movePosFileToBucket(file,bucketDir,"TS",validator.version)
         except ValidationError as err:
           errors.append(str(err))
+      # Check vel
       elif extensionWithoutGzip == ".vel":
         pass
       # Unknown file
@@ -60,7 +61,7 @@ def main():
   cfg = Config(CONFIG_FILE)
   # Logger
   logger = Logs(f"{os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('VALIDATE_LOGS'))}",cfg.getLogsConfig("MAX_LOGS"))
-  # Upload, bucket and public folders
+  # Upload, bucket and public directories
   providersDir = {
     "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",
     "ROB"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_rob/uploads",

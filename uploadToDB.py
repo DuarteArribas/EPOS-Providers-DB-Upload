@@ -10,14 +10,32 @@ from src.databaseUpload        import *
 CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
-def uploadAllTS(bucketDir,cfg,logger,bucketDirs,publicDirs,providerEmails,pgConnection,fileHandler):
-  databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"))
+def uploadAllTS(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,fileHandler):
+  """Upload all TS files from all the providers to the database.
+  
+  Parameters
+  ----------
+  bucketDir      : str
+    The bucket directory where the TS files are stored.
+  cfg            : Config
+    The configuration object.
+  logger         : Logs
+    The logger object.
+  publicDirs     : dict
+    The public directory of each provider.
+  providerEmails : dict
+    The email of each provider.
+  pgConnection   : PgConnection
+    The database connection object.
+  fileHandler    : FileHandler
+    The file handler object.
+  """
+  databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"),fileHandler)
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
     provider    = list(publicDirs.keys())[count]
     publicDir   = list(publicDirs.items())[count][1]
     try:
-      databaseUpload.uploadAllProviderTS(os.path.join(bucketDir,providerBucketDir))
-      #TODO: Move all files to public
+      databaseUpload.uploadAllProviderTS(os.path.join(bucketDir,providerBucketDir),publicDir)
     except UploadError as err:
       fileHandler.sendEmail(
         f"Error uploading {provider} files. Attention is required!",
@@ -31,14 +49,7 @@ def main():
   cfg = Config(CONFIG_FILE)
   # Logger
   logger = Logs(f"{os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('UPLOADING_LOGS'))}",cfg.getLogsConfig("MAX_LOGS"))
-  # Bucket and public folders
-  bucketDirs = {
-    "INGV" : f"{cfg.getAppConfig('BUCKET_DIR')}/INGV",
-    "ROB"  : f"{cfg.getAppConfig('BUCKET_DIR')}/ROB-EUREF",
-    "SGO"  : f"{cfg.getAppConfig('BUCKET_DIR')}/SGO-EPND",
-    "UGA"  : f"{cfg.getAppConfig('BUCKET_DIR')}/UGA-CNRS",
-    "WUT"  : f"{cfg.getAppConfig('BUCKET_DIR')}/WUT-EUREF"
-  }
+  # Public directories
   publicDirs = {
     "INGV" : f"{cfg.getAppConfig('PUBLIC_DIR')}/INGV",
     "ROB"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/ROB-EUREF",
@@ -77,7 +88,6 @@ def main():
     cfg.getAppConfig('BUCKET_DIR'),
     cfg,
     logger,
-    bucketDirs,
     publicDirs,
     providerEmails,
     pgConnection,
