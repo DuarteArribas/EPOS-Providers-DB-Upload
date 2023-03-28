@@ -300,7 +300,7 @@ class DatabaseUpload:
           file_type
         )
         VALUES(
-          'public/{"/".join(posFile.split("/")[-3:])}', 
+          'public/{"/".join(posFile.split("/")[-4:])}', 
           '{posFormatVersion}',
           'pos'
         )
