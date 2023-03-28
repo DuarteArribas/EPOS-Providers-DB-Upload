@@ -9,29 +9,11 @@ CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
 def uploadAllTS(self,bucketDir):
-  dataType = self.cfg.getUploadConfig("TS_DATATYPE")
-  for provBucketDir in os.listdir(bucketDir):
-    for version in os.listdir(os.path.join(bucketDir,provBucketDir)):
-      currDir = os.path.join(os.path.join(bucketDir,provBucketDir),version)
-      allTSFiles = self.getListOfTSFiles(currDir)
-      if len(allTSFiles) == 0:
-        return
-      self.cursor.execute("START TRANSACTION;")
-      self.handlePreviousSolution(provBucketDir,dataType)
-      self.cursor.execute("COMMIT TRANSACTION;")
-      self.cursor.execute("START TRANSACTION;")
-      self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
-      self.cursor.execute("COMMIT TRANSACTION;")
-      currentSolutionID = self.checkSolutionAlreadyInDB(provBucketDir,dataType)[0]
-      for file in allTSFiles:
-        self.cursor.execute("START TRANSACTION;")
-        timeseriesFileID = self.uploadTimeseriesFile(os.path.join(currDir,file),1.1) # TODO: add correct version
-        self.cursor.execute("COMMIT TRANSACTION;")
-        self.saveEstimatedCoordinatesToFile(os.path.join(currDir,file),currentSolutionID,timeseriesFileID[0])
-      self.cursor.execute("START TRANSACTION;")
-      self.uploadEstimatedCoordinates()
-      self.cursor.execute("COMMIT TRANSACTION;")
-      self.eraseEstimatedCoordinatesTmpFile()
+  for providerBucketDir in bucketDir:
+    try:
+      pass
+    except UploadError:
+      pass
       
 # Main function
 def main():
@@ -54,6 +36,14 @@ def main():
     "UGA"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/UGA-CNRS",
     "WUT"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/WUT-EUREF"
   }
+  # Provider emails
+  providerEmails = {
+    "INGV" : f"{cfg.getEmailConfig('INGV_EMAIL')}",
+    "ROB"  : f"{cfg.getEmailConfig('ROB_EMAIL')}",
+    "SGO"  : f"{cfg.getEmailConfig('SGO_EMAIL')}",
+    "UGA"  : f"{cfg.getEmailConfig('UDA_EMAIL')}",
+    "WUT"  : f"{cfg.getEmailConfig('WUT_EMAIL')}"
+  }
   # Get a connection to the EPOS database
   pgConnection = DBConnection(
     cfg.getEPOSDBConfig("IP"),
@@ -64,6 +54,12 @@ def main():
     logger
   )
   pgConnection.connect()
+  # Get a file handler object
+  fileHandler = FileHandler(
+    providersDir = cfg.getAppConfig("PROVIDERS_DIR"),
+    fromEmail = cfg.getEmailConfig("FROM_EMAIL"),
+    fromEmailPassword = PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
+  )
   # Upload all ts files
   uploadAllTS()
   

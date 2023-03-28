@@ -9,21 +9,20 @@ class FileHandler:
   """Handle provider files."""
   
   # == Methods ==
-  def __init__(self,con,providersDir,fromEmail,fromEmailPassword):
+  def __init__(self,providersDir,fromEmail,fromEmailPassword,con = None):
     """Get default parameters.
 
     Parameters
     ----------
-    con               : Connection
-      A connection object to the local database
     providersDir      : str
       The default directory for the providers
     fromEmail         : str
       The email address to send the email from
     fromEmailPassword : str
       The password of the , which is sending the email
+    con               : Connection
+      A connection object to the local database
     """
-    self.con               = con
     self.providerDir       = {
       "INGV" : f"{providersDir}/providers_ingv/uploads",
       "ROB"  : f"{providersDir}/providers_rob/uploads",
@@ -33,6 +32,7 @@ class FileHandler:
     }
     self.fromEmail         = fromEmail
     self.fromEmailPassword = fromEmailPassword
+    self.con               = con
   
   def getListOfHashesChanged(self):
     """Get the list of hashes changed.

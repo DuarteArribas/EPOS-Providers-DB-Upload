@@ -104,10 +104,10 @@ def main():
   pgConnection.connect()
   # Get a file handler object
   fileHandler = FileHandler(
-    con,
-    cfg.getAppConfig("PROVIDERS_DIR"),
-    cfg.getEmailConfig("FROM_EMAIL"),
-    PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
+    providersDir = cfg.getAppConfig("PROVIDERS_DIR"),
+    fromEmail = cfg.getEmailConfig("FROM_EMAIL"),
+    fromEmailPassword = PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34),
+    con = con
   )
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfHashesChanged()
