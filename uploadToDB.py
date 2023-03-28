@@ -3,17 +3,27 @@ from src.dbConnection          import *
 from src.utils.config          import *
 from src.fileHandler           import *
 from src.validate              import *
+from src.uploadError           import *
+from src.databaseUpload        import *
 
 # Global variables
 CONFIG_FILE = "config/appconf.cfg"
 
 # Functions
-def uploadAllTS(self,bucketDir):
-  for providerBucketDir in bucketDir:
+def uploadAllTS(bucketDir,cfg,logger,bucketDirs,publicDirs,providerEmails,pgConnection,fileHandler):
+  databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"))
+  for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
+    provider    = list(publicDirs.keys())[count]
+    publicDir   = list(publicDirs.items())[count][1]
     try:
-      pass
-    except UploadError:
-      pass
+      databaseUpload.uploadAllProviderTS(os.path.join(bucketDir,providerBucketDir))
+      #TODO: Move all files to public
+    except UploadError as err:
+      fileHandler.sendEmail(
+        f"Error uploading {provider} files. Attention is required!",
+        "There were some errors while uploading your files: \n\n" + str(err) + "\n\n\n Please email us back for more information.",
+        providerEmails[provider]
+      )
       
 # Main function
 def main():
@@ -44,24 +54,35 @@ def main():
     "UGA"  : f"{cfg.getEmailConfig('UDA_EMAIL')}",
     "WUT"  : f"{cfg.getEmailConfig('WUT_EMAIL')}"
   }
+  # Get Password
+  password = PasswordHandler.getPwdFromFolder(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
   # Get a connection to the EPOS database
   pgConnection = DBConnection(
     cfg.getEPOSDBConfig("IP"),
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    PasswordHandler.getPwdFromFolder(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34),
+    password,
     logger
   )
   pgConnection.connect()
   # Get a file handler object
   fileHandler = FileHandler(
-    providersDir = cfg.getAppConfig("PROVIDERS_DIR"),
-    fromEmail = cfg.getEmailConfig("FROM_EMAIL"),
-    fromEmailPassword = PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
+    providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
+    fromEmail         = cfg.getEmailConfig("FROM_EMAIL"),
+    fromEmailPassword = password
   )
   # Upload all ts files
-  uploadAllTS()
+  uploadAllTS(
+    cfg.getAppConfig('BUCKET_DIR'),
+    cfg,
+    logger,
+    bucketDirs,
+    publicDirs,
+    providerEmails,
+    pgConnection,
+    fileHandler,
+  )
   
 if __name__ == '__main__':
   main()
