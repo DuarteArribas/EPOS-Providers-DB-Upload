@@ -37,7 +37,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
       elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
-          fileHandler.movePosFileToBucket(file,bucketDir)
+          fileHandler.movePosFile(file,bucketDir)
         except ValidationError as err:
           errors.append(str(err))
       elif extensionWithoutGzip == ".vel":

@@ -121,44 +121,22 @@ class FileHandler:
       print(err)
     
   
-  def movePosFileToBucket(self,posFile,bucketDir,filetype,version):
+  def movePosFile(self,posFile,publicOrBucketDir,filetype,version):
     """Move a pos file to the bucket directory, according to {bucketDir}/TS/{version}/{posFile}
 
     Parameters
     ----------
-    posFile   : str
+    posFile           : str
       The pos file to move
-    bucketDir : str
-      The bucket directory of the correspondent provider
-    fileType  : str
+    publicOrBucketDir : str
+      Either the bucket directory of the correspondent provider or its public directory
+    fileType          : str
       The type of the file (TS or VEL)
-    version   : str
+    version           : str
       The release number
     """
     try:
-      pathToMove = f"{bucketDir}/{filetype}/{version}"
-      if not os.path.exists(pathToMove):
-        os.makedirs(pathToMove)
-      shutil.move(posFile,pathToMove)
-    except Exception as err:
-      print(err)
-  
-  def movePosFileToPublic(self,posFile,publicDir,filetype,version):
-    """Move a pos file to the bucket directory, according to {bucketDir}/TS/{version}/{posFile}
-
-    Parameters
-    ----------
-    posFile   : str
-      The pos file to move
-    bucketDir : str
-      The bucket directory of the correspondent provider
-    fileType  : str
-      The type of the file (TS or VEL)
-    version   : str
-      The release number
-    """
-    try:
-      pathToMove = f"{publicDir}/{filetype}/{version}"
+      pathToMove = f"{publicOrBucketDir}/{filetype}/{version}"
       if not os.path.exists(pathToMove):
         os.makedirs(pathToMove)
       shutil.move(posFile,pathToMove)
