@@ -75,7 +75,7 @@ class DatabaseUpload:
               currFile = os.path.join(currDir,file)
               timeseriesFileID = self.uploadTimeseriesFile(
                 currFile,
-                self.getPosFormatVersion(currFile)
+                self.getPBOFormatVersion(currFile)
               )
               self.saveEstimatedCoordinatesToFile(
                 currFile,
@@ -315,15 +315,15 @@ class DatabaseUpload:
     except Exception as err:
       raise UploadError(f"Could not upload time series file to database. Error: {UploadError.formatError(str(err))}.")
   
-  def getPosFormatVersion(self,posFile):
-    """Get the version of the POS format used. (e.g. 1.1.1)
+  def getPBOFormatVersion(self,pboFile):
+    """Get the version of the PBO format used. (e.g. 1.1.1)
     
     Parameters
     ----------
-    posFile : str
-      The path to the POS file
+    pboFile : str
+      The path to the PBO file
     """
-    with open(posFile,"rt") as f:
+    with open(pboFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       for line in lines:
         match [part.strip() for part in line.split(":",1)]:
@@ -483,21 +483,21 @@ class DatabaseUpload:
             )
             self.uploadSolution(dataType,self.getSolutionParametersVel(os.path.join(currDir,allVelFiles[0])))
             currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
-            for file in allTSFiles:
+            for file in allVelFiles:
               currFile = os.path.join(currDir,file)
-              timeseriesFileID = self.uploadTimeseriesFile(
+              velocityFileID = self.uploadVelocityFile(
                 currFile,
-                self.getPosFormatVersion(currFile)
+                self.getPBOFormatVersion(currFile)
               )
-              self.saveEstimatedCoordinatesToFile(
-                currFile,
-                currentSolutionID,
-                timeseriesFileID
-              )
+              #self.saveEstimatedCoordinatesToFile(
+              #  currFile,
+              #  currentSolutionID,
+              #  velocityFileID
+              #)
             self.uploadEstimatedCoordinates()
             self.eraseEstimatedCoordinatesTmpFile()
             self.cursor.execute("COMMIT TRANSACTION;")
-            self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
+            self.fileHandler.moveSolutionToPublic(currDir,publicDir,"Vel")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
@@ -543,4 +543,66 @@ class DatabaseUpload:
     """
     self.cursor.execute("DELETE FROM velocities_files WHERE id = %s;",(velocityFilesID,))
   
+  def getSolutionParametersVel(self,velFile):
+    """Get the solution parameters from a Vel file.
+    
+    Parameters
+    ----------
+    velFile : str
+      The path to the Vel file
+    
+    Returns
+    -------
+    dict
+      The solution parameters
+    """
+    with open(velFile,"rt") as f:
+      lines = [line.strip() for line in f.readlines()]
+      solutionParameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
+      for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
+        match [part.strip() for part in line.split(":",1)]:
+          case ["AnalysisCentre",*values]:
+            value = " ".join(values)
+            solutionParameters["ac_acronym"] = value
+          case ["Software",*values]:
+            value = " ".join(values)
+            solutionParameters["software"] = value
+          case ["Method-url",*values]:
+            value = " ".join(values)
+            solutionParameters["processing_parameters_url"] = value
+          case ["DOI",*values]:
+            value = " ".join(values)
+            solutionParameters["doi"] = value
+          case ["ReleaseVersion",*values]:
+            value = " ".join(values)
+            solutionParameters["release_version"] = value
+          case ["SamplingPeriod",*values]:
+            value = " ".join(values)
+            solutionParameters["sampling_period"] = value
+      return solutionParameters
   
+  def uploadVelocityFile(self,velFile,velFormatVersion):
+    """Upload a velocity file to the database."""
+    try:
+      self.cursor.execute(
+        f"""
+        INSERT INTO velocities_files(
+          url,
+          epoch,
+          version,
+          file_type,
+          data_type
+        )
+        VALUES(
+          'public/{"/".join(velFile.split("/")[-4:])}',
+          '2011-01-01 00:00:00'
+          '{velFormatVersion}',
+          'vel',
+          'vel'
+        )
+        RETURNING id;
+        """ #TODO: Mudar epoch aqui!!!!!!!!!!!!
+      )
+      return [item[0] for item in self.cursor.fetchall()][0]
+    except Exception as err:
+      raise UploadError(f"Could not upload velocity file to database. Error: {UploadError.formatError(str(err))}.")
