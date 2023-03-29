@@ -69,7 +69,7 @@ class DatabaseUpload:
               self.cfg.getUploadConfig("TS_DATATYPE"),
               self.cfg.getUploadConfig("VEL_DATATYPE")
             )
-            self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
+            self.uploadSolution(dataType,self.getSolutionParametersTS(os.path.join(currDir,allTSFiles[0])))
             currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
             for file in allTSFiles:
               currFile = os.path.join(currDir,file)
@@ -127,7 +127,9 @@ class DatabaseUpload:
           for timeseriesFileID in timeseriesFilesIDInDB:
             self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)
         elif dataType == velDatatype:
-          pass
+          velocityFilesInDB = self._getVelocityFilesID(solutionID)
+          for velocityFileID in velocityFilesInDB:
+            self._erasePreviousVelocityFilesFromDB(velocityFileID)
       self._erasePreviousSolutionFromDB(ac,dataType)
   
   def checkSolutionAlreadyInDB(self,ac,dataType):
@@ -193,7 +195,6 @@ class DatabaseUpload:
     ----------
     dataType           : str
       The data type of the solution (timeseries or velocity)
-      
     solutionParameters : dict
       The solution parameters
         
@@ -232,7 +233,7 @@ class DatabaseUpload:
     except Exception as err:
       raise UploadError(f"Could not upload solution to database. Error: {UploadError.formatError(str(err))}.")
   
-  def getSolutionParameters(self,posFile):
+  def getSolutionParametersTS(self,posFile):
     """Get the solution parameters from a POS file.
     
     Parameters
@@ -272,9 +273,6 @@ class DatabaseUpload:
           case ["SamplingPeriod",*values]:
             value = " ".join(values)
             solutionParameters["sampling_period"] = value
-          case ["ReferenceFrame",*values]:
-            value = " ".join(values)
-            solutionParameters["reference_frame"] = value
       return solutionParameters
   
   def uploadTimeseriesFile(self,posFile,posFormatVersion):
@@ -475,7 +473,7 @@ class DatabaseUpload:
           for version in os.listdir(os.path.join(provBucketDir,filetype)):
             currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
             allVelFiles = self.getListOfVelFiles(currDir)
-            if len(allTSFiles) == 0:
+            if len(allVelFiles) == 0:
               break
             self.handlePreviousSolution(
               ac,
@@ -483,7 +481,7 @@ class DatabaseUpload:
               self.cfg.getUploadConfig("TS_DATATYPE"),
               self.cfg.getUploadConfig("VEL_DATATYPE")
             )
-            self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
+            self.uploadSolution(dataType,self.getSolutionParametersVel(os.path.join(currDir,allVelFiles[0])))
             currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
             for file in allTSFiles:
               currFile = os.path.join(currDir,file)
@@ -518,3 +516,31 @@ class DatabaseUpload:
       A list of all velocity files in the directory
     """
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".vel"]
+  
+  def _getVelocityFilesID(self,solutionID):
+    """Get the velocity files ID from the database.
+    
+    Parameters
+    ----------
+    solutionID : int
+      The solution ID
+    
+    Returns
+    -------
+    list
+      A list of velocity files IDs
+    """
+    self.cursor.execute("SELECT id_velocities_files FROM reference_position_velocities WHERE id_solution = %s GROUP BY id_velocities_files;",(solutionID,))
+    return [item[0] for item in self.cursor.fetchall()]
+  
+  def _erasePreviousVelocityFilesFromDB(self,velocityFilesID):
+    """Erase a previous velocity file from the database.
+    
+    Parameters
+    ----------
+    velocityFilesID : int
+      The velocity files ID to remove
+    """
+    self.cursor.execute("DELETE FROM velocities_files WHERE id = %s;",(velocityFilesID,))
+  
+  

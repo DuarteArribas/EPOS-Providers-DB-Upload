@@ -62,7 +62,7 @@ class TestDatabaseUpload(unittest.TestCase):
   #  pgConnection.connect()
   #  cfg = Config("config/appconf.cfg")
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
-  #  print(tsUpload.getSolutionParameters("inOutTest/bucket/INGV/TS/1/WARN00DEU.pos"))
+  #  print(tsUpload.getSolutionParametersTS("inOutTest/bucket/INGV/TS/1/WARN00DEU.pos"))
   
   #def test_uploadSolution(self):
   #  logger = Logs("logs/logsTest.log",10000)
