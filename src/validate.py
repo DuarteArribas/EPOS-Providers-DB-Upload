@@ -10,19 +10,21 @@ class Validator:
   """Validate provider files before handling them."""
   
   # == Class variables ==
-  DEFAULT_SNX_FILENAME_LENGTH = 41
+  DEFAULT_SNX_FILENAME_LENGTH       = 41
   
-  DEFAULT_POS_FILENAME_LENGTH = 13
+  DEFAULT_POS_FILENAME_LENGTH       = 13
   
-  FILENAME_CONVENTION_ERROR_MSG_SNX     = ("Please make sure that the filename conforms to the long filename specification "
+  FILENAME_CONVENTION_ERROR_MSG_SNX = ("Please make sure that the filename conforms to the long filename specification "
   "of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the "
   "version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly).")
   
-  FOUND                       = 200
+  FILENAME_CONVENTION_ERROR_MSG_POS = ("Please make sure that the filename conforms to the long filename specification "
+  "of {{XXXX}}{{00}}{{CCC}}.pos, where XXXX00CCC is the Station Long Marker.")
   
-  FILENAME_CONVENTION_ERROR_MSG_POS     = ("Please make sure that the filename conforms to the long filename specification "
-  "of {{XXXX}}{{00}}{{CCC}}.pos.gz, where XXXX00CCC is the Station Long Marker.")
+  FILENAME_CONVENTION_ERROR_MSG_VEL = ("Please make sure that the filename conforms to the long filename specification "
+  "of {{XXX}}.{{version}}.{{refframe}}.vel, where XXX is the provider abbreviation, version is the ReleaseVersion and refframe is the reference frame.")
   
+  FOUND                             = 200
   # == Methods ==
   def __init__(self,cfg,conn,cursor):
     """Get default parameters.
@@ -527,7 +529,7 @@ class Validator:
       If the extension is incorrect.
     """
     if not (posFilename[9] == "." and posFilename[10:13].lower() == "pos"):
-      raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Wrong pos file extension - '{posFilename[10:13]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+      raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Wrong pos file extension - '{posFilename[9:13]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
   
   def _validateMetadataLinePos(self,line,file):
     """Validate a specific metadata line from a pos file (according to 20220906UploadGuidelines_v2.5)
@@ -623,3 +625,39 @@ class Validator:
       raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
     except Exception:
       raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(posFile)}' with path '{posFile}'.")
+  
+  def _validateVelFilename(self,velFile):
+    """Validate a vel file's filename according to 20220906UploadGuidelines_v2.5 guidelines.
+
+    Parameters
+    ----------
+    velFile : str
+      The full path of the vel file
+
+    Raises
+    ------
+    ValidationError
+      If the name doesn't conform to the one specified by the guidelines
+    """
+    velFilename = os.path.basename(velFile)
+    self._validatePosFilename9characterID(posFile,posFilename)
+    self._validateVelFilenameExtension(velFile,velFilename)
+    
+  
+  def _validateVelFilnameExtension(self,velFile,velFilename):
+    """Validate the vel filename's extension (should be .vel).
+
+    Parameters
+    ----------
+    velFile     : str
+      The full path of the vel file.
+    velFilename : str
+      The vel file name.
+
+    Raises
+    ------
+    ValidationError
+      If the extension is incorrect.
+    """
+    if not (velFilename[-4] == "." and velFilename[-3:-1].lower() == "vel"):
+      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file extension - '{velFilename[-4:-1]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
