@@ -649,6 +649,6 @@ class DatabaseUpload:
                 str(self._formatDate(first_epoch)) + "," +
                 str(self._formatDate(last_epoch))  + "," +
                 str(self._formatDate(Ref_epoch))   + "," +
-                str(idVelocityFiles)               + ","      
+                str(idVelocityFiles)               + "," +   
                 str(idSolution)                    + "\n"
               )
