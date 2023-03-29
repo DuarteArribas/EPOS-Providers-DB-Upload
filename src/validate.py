@@ -616,17 +616,17 @@ class Validator:
         except Exception:
           raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(velFile)}' with path '{velFile}'.")
         mandatoryVelHeaders = self.cfg.getValidationConfig("MANDATORY_VEL_HEADERS").split("|")
-        countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatoryPosHeaders for header in metadataLines])
-        if countMatchingMandatoryHeaders != len(mandatoryPosHeaders):
-          raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(posFile)}' with path '{posFile}'.")
+        countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatoryVelHeaders for header in metadataLines])
+        if countMatchingMandatoryHeaders != len(mandatoryVelHeaders):
+          raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(velFile)}' with path '{velFile}'.")
         for line in metadataLines:
-          self._validateMetadataLinePos(line,posFile)
+          self._validateMetadataLineVel(line,velFile)
     except ValidationError as err:
       raise ValidationError(str(err))
     except OSError:
-      raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
+      raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
     except Exception:
-      raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(posFile)}' with path '{posFile}'.")
+      raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(velFile)}' with path '{velFile}'.")
   
   def _validateVelFilename(self,velFile):
     """Validate a vel file's filename according to 20220906UploadGuidelines_v2.5 guidelines.
