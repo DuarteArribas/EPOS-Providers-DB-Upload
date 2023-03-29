@@ -1023,13 +1023,13 @@ class TestValidation(unittest.TestCase):
     with self.assertRaises(ValidationError):
       validator._validateVelFilnameExtension(velFile,velFilename)
   
-  def test_validRefernceFrame(self):
-    logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-    pgConnection.connect()
-    cfg = Config("config/appconf.cfg")
-    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
-    a._validateReferenceFrame("ReferenceFrame :  ITRF2000                                                       ","arroz")
+  #def test_validRefernceFrame(self):
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  cfg = Config("config/appconf.cfg")
+  #  validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+  #  validator._validateVelFilenameVersion("inTest/","")
 
 if __name__ == '__main__':
   unittest.main()

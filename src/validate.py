@@ -665,8 +665,11 @@ class Validator:
     ValidationError
       If the abbreviation doesn't conform
     """
-    if not velFilename[:3] in allowedAC:
-      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong abbreviation '{velFilename[:3]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+    try:
+      if not velFilename[:3] in allowedAC:
+        raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong abbreviation '{velFilename[:3]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+    except IndexError:
+      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file abbreviation for file '{velFilename}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
   
   def _validateVelFilenameVersion(self,velFile,velFilename):
     """Validate the vel filename's version (should be the same as the ReleaseVersion).
@@ -695,6 +698,8 @@ class Validator:
                 raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{velFilename.split('.')[1]}' does not match the metadata file ReleaseVersion of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
+    except IndexError:
+      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file version for file '{velFilename}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
   
   def _validateVelFilenameReferenceFrame(self,velFile,velFilename):
     """Validate the vel filename's reference frame (should bt the same as the reference frame of the file).
@@ -718,6 +723,8 @@ class Validator:
           raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file reference frame '{velFilename.split('.')[-2]}' does not match the metadata file reference frame of {lines[0].split(':')[1].strip()}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
+    except IndexError:
+      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file reference frame for file '{velFilename}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
   
   def _validateVelFilnameExtension(self,velFile,velFilename):
     """Validate the vel filename's extension (should be .vel).
@@ -734,8 +741,11 @@ class Validator:
     ValidationError
       If the extension is incorrect
     """
-    if not (velFilename[-4] == "." and velFilename[-3:-1].lower() == "vel"):
-      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file extension - '{velFilename[-4:-1]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+    try:
+      if not (velFilename[-4] == "." and velFilename[-3:].lower() == "vel"):
+        raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file extension - '{velFilename[-4:]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+    except IndexError:
+      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file extension for file '{velFilename}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
   
   def _getAllowedReferenceFrameValues(self):
     """Get the allowed reference frame values from the database.
