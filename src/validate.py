@@ -589,3 +589,37 @@ class Validator:
     """
     self.cursor.execute("SELECT marker FROM station;")
     return [item[0] for item in self.cursor.fetchall()]
+  
+  def validateVel(self,velFile):
+    """Validate a specific vel file.
+
+    Parameters
+    ----------
+    velFile : str
+      The vel file to validate
+
+    Raises
+    ------
+    ValidationError
+      If there was an error validating the vel file
+    """
+    self._validateVelFilename(velFile)
+    try:
+      with open(posFile,"rt") as f:
+        lines = [line.strip() for line in f.readlines()]
+        try:
+          metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+        except Exception:
+          raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(posFile)}' with path '{posFile}'.")
+        mandatoryPosHeaders = self.cfg.getValidationConfig("MANDATORY_POS_HEADERS").split("|")
+        countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatoryPosHeaders for header in metadataLines])
+        if countMatchingMandatoryHeaders != len(mandatoryPosHeaders):
+          raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(posFile)}' with path '{posFile}'.")
+        for line in metadataLines:
+          self._validateMetadataLinePos(line,posFile)
+    except ValidationError as err:
+      raise ValidationError(str(err))
+    except OSError:
+      raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
+    except Exception:
+      raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(posFile)}' with path '{posFile}'.")
