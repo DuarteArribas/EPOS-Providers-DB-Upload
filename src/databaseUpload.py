@@ -450,3 +450,71 @@ class DatabaseUpload:
     tempPath = os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
     if os.path.exists(tempPath):
       os.remove(tempPath)
+  
+  def uploadAllProviderVel(self,provBucketDir,publicDir):
+    """Upload all velocity files from a provider bucket directory to the database.
+    
+    Parameters
+    ----------
+    provBucketDir : str
+      The path to the provider bucket directory
+    publicDir     : str
+      The path to the provider's public directory
+    
+    Raises
+    ------
+    UploadError
+      If the upload was unsuccessful
+    """
+    self.cursor.execute("START TRANSACTION;")
+    try:
+      ac       = os.path.basename(provBucketDir)
+      dataType = self.cfg.getUploadConfig("VEL_DATATYPE")
+      for filetype in os.listdir(provBucketDir):
+        if filetype == "VEL":
+          for version in os.listdir(os.path.join(provBucketDir,filetype)):
+            currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
+            allVelFiles = self.getListOfVelFiles(currDir)
+            if len(allTSFiles) == 0:
+              break
+            self.handlePreviousSolution(
+              ac,
+              dataType,
+              self.cfg.getUploadConfig("TS_DATATYPE"),
+              self.cfg.getUploadConfig("VEL_DATATYPE")
+            )
+            self.uploadSolution(dataType,self.getSolutionParameters(os.path.join(currDir,allTSFiles[0])))
+            currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
+            for file in allTSFiles:
+              currFile = os.path.join(currDir,file)
+              timeseriesFileID = self.uploadTimeseriesFile(
+                currFile,
+                self.getPosFormatVersion(currFile)
+              )
+              self.saveEstimatedCoordinatesToFile(
+                currFile,
+                currentSolutionID,
+                timeseriesFileID
+              )
+            self.uploadEstimatedCoordinates()
+            self.eraseEstimatedCoordinatesTmpFile()
+            self.cursor.execute("COMMIT TRANSACTION;")
+            self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
+    except UploadError as err:
+      self.cursor.execute("ROLLBACK TRANSACTION")
+      raise UploadError(str(err))
+  
+  def getListOfVelFiles(self,bucketDir):
+    """Get a list of all velocity files in a directory.
+    
+    Parameters
+    ----------
+    bucketDir : str
+      The bucket directory to search for velocity files
+      
+    Returns
+    -------
+    list
+      A list of all velocity files in the directory
+    """
+    return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".vel"]
