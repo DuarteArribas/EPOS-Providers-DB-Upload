@@ -509,7 +509,7 @@ class Validator:
             case ["9-character ID",*values]:
               value = " ".join(values)
               if value != posFilename[:9]:
-                raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Pos file long marker name - '{posFilename[:9]}' does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+                raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Pos file long marker name '{posFilename[:9]}' does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
 
@@ -668,7 +668,7 @@ class Validator:
             case ["ReleaseVersion",*values]:
               value = " ".join(values)
               if value != velFilename.split(".")[1]:
-                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file version - '{velFilename.split('.')[1]}' (doesn't match the ReleaseVersion in the file). {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{velFilename.split('.')[1]}' does not match the metadata file ReleaseVersion. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
   
