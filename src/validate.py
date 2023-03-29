@@ -561,7 +561,7 @@ class Validator:
           raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
-        if requests.get(value).status_code != 200:
+        if requests.get(value).status_code != Validator.FOUND:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
@@ -747,3 +747,45 @@ class Validator:
     """
     self.cursor.execute("SELECT name FROM reference_frame;")
     return [item[0] for item in self.cursor.fetchall()]
+  
+  def _validateMetadataLineVel(self,line,file):
+    """Validate a specific metadata line from a vel file (according to 20220906UploadGuidelines_v2.5)
+
+    Parameters
+    ----------
+    line : str
+      The specific vel metadata line to validate
+    file : str
+      The file to which the metadata line belongs to
+
+    Raises
+    ------
+    ValidationError
+      If the metadata line is invalid
+    """
+    match [part.strip() for part in line.split(":",1)]:
+      case ["AnalysisCentre",*values]:
+        value = " ".join(values)
+        if value not in self._getAllowedAnalysisCentreValues():
+          raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+      case ["Software",*values]:
+        value = " ".join(values)
+        if value not in self.cfg.getValidationConfig("SOFTWARE_VALUES").split("|"):
+          raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+      case ["Method-url",*values]:
+        value = " ".join(values)
+        if requests.get(value).status_code != Validator.FOUND:
+          raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+      case ["DOI",*values]:
+        value = " ".join(values)
+        if value != "unknown" and not self._validateDoi(value):
+          raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+      case ["ReleaseVersion",*values]:
+        value = " ".join(values)
+        if not value:
+          raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+        self.version = value
+      case ["SamplingPeriod",*values]:
+        value = " ".join(values)
+        if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
+          raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
