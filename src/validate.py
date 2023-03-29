@@ -640,9 +640,37 @@ class Validator:
       If the name doesn't conform to the one specified by the guidelines
     """
     velFilename = os.path.basename(velFile)
-    self._validatePosFilename9characterID(posFile,posFilename)
+    self._validateVelFilenameVersion(velFile,velFilename)
     self._validateVelFilenameExtension(velFile,velFilename)
     
+  
+  def _validateVelFilenameVersion(self,velFile,velFilename):
+    """Validate the vel filename's version (should be the same as the ReleaseVersion).
+
+    Parameters
+    ----------
+    velFile     : str
+      The full path of the vel file
+    velFilename : str
+      The vel file name
+
+    Raises
+    ------
+    ValidationError
+      If the version is not equal to the ReleaseNumber of the file
+    """
+    try:
+      with open(velFile,"rt") as f:
+        lines = [line.strip() for line in f.readlines()]
+        metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+        for line in metadataLines:
+          match [part.strip() for part in line.split(":",1)]:
+            case ["ReleaseVersion",*values]:
+              value = " ".join(values)
+              if value != velFilename.split(".")[1]:
+                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file version - '{velFilename.split('.')[1]}' (doesn't match the ReleaseVersion in the file). {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+    except OSError:
+      raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
   
   def _validateVelFilnameExtension(self,velFile,velFilename):
     """Validate the vel filename's extension (should be .vel).
@@ -650,14 +678,14 @@ class Validator:
     Parameters
     ----------
     velFile     : str
-      The full path of the vel file.
+      The full path of the vel file
     velFilename : str
-      The vel file name.
+      The vel file name
 
     Raises
     ------
     ValidationError
-      If the extension is incorrect.
+      If the extension is incorrect
     """
     if not (velFilename[-4] == "." and velFilename[-3:-1].lower() == "vel"):
       raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file extension - '{velFilename[-4:-1]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
