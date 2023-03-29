@@ -509,7 +509,7 @@ class Validator:
             case ["9-character ID",*values]:
               value = " ".join(values)
               if value != posFilename[:9]:
-                raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Pos file long marker name '{posFilename[:9]}' does not match the metadata file long marker name. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+                raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Pos file long marker name '{posFilename[:9]}' does not match the metadata file long marker name of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(posFile)}' with path '{posFile}'.")
 
@@ -607,12 +607,12 @@ class Validator:
     """
     self._validateVelFilename(velFile)
     try:
-      with open(posFile,"rt") as f:
+      with open(velFile,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
         try:
           metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
         except Exception:
-          raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(posFile)}' with path '{posFile}'.")
+          raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(velFile)}' with path '{posFile}'.")
         mandatoryPosHeaders = self.cfg.getValidationConfig("MANDATORY_POS_HEADERS").split("|")
         countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatoryPosHeaders for header in metadataLines])
         if countMatchingMandatoryHeaders != len(mandatoryPosHeaders):
@@ -640,9 +640,31 @@ class Validator:
       If the name doesn't conform to the one specified by the guidelines
     """
     velFilename = os.path.basename(velFile)
+    self._validateVelFilenameAbbr(velFile,velFilename,self.cfg.getValidationConfig("VEL_ACS").split("|"))
     self._validateVelFilenameVersion(velFile,velFilename)
+    self._validateVelFilenameReferenceFrame(velFile,velFilename)
     self._validateVelFilenameExtension(velFile,velFilename)
-    
+  
+  
+  def _validateVelFilenameAbbr(self,velFile,velFilename,allowedAC):
+    """Validate the vel filename's abbreviation according to the allowed analysis centers.
+
+    Parameters
+    ----------
+    velFile     : str
+      The full path of the vel file
+    velFilename : str
+      The vel file name
+    allowedAC   : list
+      The allowed analysis centers' abbreviations in the long file name
+
+    Raises
+    ------
+    ValidationError
+      If the abbreviation doesn't conform
+    """
+    if not velFilename[:3] in allowedAC:
+      raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong abbreviation '{velFilename[:3]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
   
   def _validateVelFilenameVersion(self,velFile,velFilename):
     """Validate the vel filename's version (should be the same as the ReleaseVersion).
@@ -668,7 +690,30 @@ class Validator:
             case ["ReleaseVersion",*values]:
               value = " ".join(values)
               if value != velFilename.split(".")[1]:
-                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{velFilename.split('.')[1]}' does not match the metadata file ReleaseVersion. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{velFilename.split('.')[1]}' does not match the metadata file ReleaseVersion of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+    except OSError:
+      raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
+  
+  def _validateVelFilenameReferenceFrame(self,velFile,velFilename):
+    """Validate the vel filename's reference frame (should bt the same as the reference frame of the file).
+
+    Parameters
+    ----------
+    velFile     : str
+      The full path of the vel file
+    velFilename : str
+      The vel file name
+
+    Raises
+    ------
+    ValidationError
+      If the reference frame is not equal to the reference frame of the file
+    """
+    try:
+      with open(velFile,"rt") as f:
+        lines = [line.strip() for line in f.readlines()]
+        if lines[0].split(":")[1].strip() != velFilename.split(".")[2]:
+          raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file reference frame '{velFilename.split('.')[2]}' does not match the metadata file reference frame of {lines[0].split(':')[1].strip()}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
   
