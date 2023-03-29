@@ -2,11 +2,10 @@ PBO Velocity file from pbo_nam08_180825.sum Reference Frame : IGb14
 Format Version: 1.1.0
 Release Date  : 20180918095220
 %Begin EPOS metadata
-AnalysisCentre: ROB-EUREF
 Software      : CATREF
-Method-url    : https://www.youtube.com
+Method-url    : https://www.youtube.com/arroz 
 DOI           : 10.24414/ROB-EUREF-C2220
-ReleaseVersion: 2220.0
+ReleaseVersion: 2221.0
 SamplingPeriod: daily
 %End EPOS metadata
 Start Field Description

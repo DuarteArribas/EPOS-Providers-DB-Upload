@@ -1007,29 +1007,125 @@ class TestValidation(unittest.TestCase):
     velFilename = "ABC.001.CRF.vel"
     velFile = "/path/to/file/ABC.001.CRF.vel"
     validator = Validator("dummy1","dummy2","dummy3")
-    self.assertIsNone(validator._validateVelFilnameExtension(velFile,velFilename))
+    self.assertIsNone(validator._validateVelFilenameExtension(velFile,velFilename))
 
   def test_invalid_vel_filename_extension(self):
     velFilename = "ABC.001.CRF.xyz"
     velFile = "/path/to/file/ABC.001.CRF.xyz"
     validator = Validator("dummy1","dummy2","dummy3")
     with self.assertRaises(ValidationError):
-      validator._validateVelFilnameExtension(velFile,velFilename)
+      validator._validateVelFilenameExtension(velFile,velFilename)
 
   def test_empty_velFilename(self):
     velFilename = ""
     velFile = "/path/to/file/"
     validator = Validator("dummy1","dummy2","dummy3")
     with self.assertRaises(ValidationError):
-      validator._validateVelFilnameExtension(velFile,velFilename)
+      validator._validateVelFilenameExtension(velFile,velFilename)
   
-  #def test_validRefernceFrame(self):
-  #  logger = Logs("logs/logsTest.log",10000)
-  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-  #  pgConnection.connect()
-  #  cfg = Config("config/appconf.cfg")
-  #  validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
-  #  validator._validateVelFilenameVersion("inTest/","")
+  def test_validVersion(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    validator._validateVelFilenameVersion("inTest/ROB.2220.0.IGb14.vel","ROB.2220.0.IGb14.vel")
+  
+  def test_validVersion2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilenameVersion("inTest/ROB.2220.0.IGb15.vel","ROB.2220.0.IGb15.vel")
+  
+  def test_validReferenceFrame(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    validator._validateVelFilenameReferenceFrame("inTest/ROB.2220.0.IGb14.vel","ROB.2220.0.IGb14.vel")
+  
+  def test_validReferenceFrame2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilenameReferenceFrame("inTest/ROB.2220.0.IGb15.vel","ROB.2220.0.IGb15.vel")
+  
+  def test_validateVelFilename(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    validator._validateVelFilename("inTest/ROB.2220.0.IGb14.vel")
+  
+  def test_validateVelFilename2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilename("inTest/ROB.2220.0.IGb15.vel")
+  
+  def test_validateVel(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    validator.validateVel("inTest/ROB.2220.0.IGb14.vel")
+  
+  def test_validateVel2(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator.validateVel("inTest/ROB.2220.0.IGb15.vel")
+  
+  def test_validateVel3(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator.validateVel("inTest/ROB.2220.0.IGb16.vel")
+  
+  def test_validateVel4(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator.validateVel("inTest/ROB.2220.0.IGb17.vel")
+  
+  def test_validateVel5(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator.validateVel("inTest/ROB.2221.0.IGb14.vel")
+  
+  def test_validateVel6(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator.validateVel("inTest/ING.2221.0.IGb14.vel")
 
 if __name__ == '__main__':
   unittest.main()

@@ -694,8 +694,8 @@ class Validator:
           match [part.strip() for part in line.split(":",1)]:
             case ["ReleaseVersion",*values]:
               value = " ".join(values)
-              if value != velFilename.split(".")[1:-2]:
-                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{velFilename.split('.')[1]}' does not match the metadata file ReleaseVersion of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+              if value != ".".join(velFilename.split(".")[1:-2]):
+                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{'.'.join(velFilename.split('.')[1:-2])}' does not match the metadata file ReleaseVersion of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
     except IndexError:
@@ -726,7 +726,7 @@ class Validator:
     except IndexError:
       raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file reference frame for file '{velFilename}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
   
-  def _validateVelFilnameExtension(self,velFile,velFilename):
+  def _validateVelFilenameExtension(self,velFile,velFilename):
     """Validate the vel filename's extension (should be .vel).
 
     Parameters
