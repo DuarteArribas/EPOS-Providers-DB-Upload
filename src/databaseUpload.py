@@ -7,7 +7,8 @@ class DatabaseUpload:
   """Upload data to the database."""
   
   # == Class variables ==
-  ESTIMATED_COORDINATES_TEMP = "estimatedCoordinatesTemp.csv"
+  ESTIMATED_COORDINATES_TEMP         = "estimatedCoordinatesTemp.csv"
+  REFERENCE_POSITION_VELOCITIES_TEMP = "referencePositionVelocitiesTemp.csv"
   
   # == Methods ==
   def __init__(self,conn,cursor,logger,cfg,tmp,fileHandler):
@@ -606,3 +607,48 @@ class DatabaseUpload:
       return [item[0] for item in self.cursor.fetchall()][0]
     except Exception as err:
       raise UploadError(f"Could not upload velocity file to database. Error: {UploadError.formatError(str(err))}.")
+  
+  def saveReferencePositionVelocitiesToFile(self,velFile,idSolution,idVelocityFiles):
+    """Save the reference position velocities to a temporary file for bulk upload.
+    
+    Parameters
+    ----------
+    velFile           : str
+      The path to the Vel file
+    idSolution        : int
+      The ID of the solution
+    idVelocityFiles    : int
+      The ID of the velocities file
+    """
+    with open(velFile,"rt") as f:
+      lines = [line.strip() for line in f.readlines()]
+      for line in lines:
+        match [part.strip() for part in (" ".join(line.split())).split(" ")]:
+          case [Dot,Name,Ref_epoch,Ref_jday,Ref_X,Ref_Y,Ref_Z,Ref_Nlat,Ref_Elong,Ref_Up,dXDt,dYDt,dZDt,SXd,SYd,SZd,Rxy,Rxz,Rzy,dNDt,dEDt,dUDt,SNd,SEd,SUd,Rne,Rnu,Reu,first_epoch,last_epoch] if Dot[0] != "*":
+            with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"a") as tmp:
+              tmp.write(
+                str(self._getStationID(Name))      + "," +
+                str(dXDt)                          + "," +
+                str(dYDt)                          + "," +
+                str(dZDt)                          + "," +
+                str(SXd)                           + "," +
+                str(SYd)                           + "," +
+                str(SZd)                           + "," +
+                str(Rxy)                           + "," +
+                str(Rxz)                           + "," +
+                str(Rzy)                           + "," +
+                str(dNDt)                          + "," +
+                str(dEDt)                          + "," +
+                str(dUDt)                          + "," +
+                str(SNd)                           + "," +
+                str(SEd)                           + "," +
+                str(SUd)                           + "," +
+                str(Rne)                           + "," +
+                str(Rnu)                           + "," +
+                str(Reu)                           + "," +
+                str(self._formatDate(first_epoch)) + "," +
+                str(self._formatDate(last_epoch))  + "," +
+                str(self._formatDate(Ref_epoch))   + "," +
+                str(idVelocityFiles)               + ","      
+                str(idSolution)                    + "\n"
+              )
