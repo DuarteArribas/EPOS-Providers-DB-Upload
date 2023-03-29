@@ -609,11 +609,13 @@ class Validator:
     try:
       with open(velFile,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
+        if lines[0].split(":")[1].strip() not in self._getAllowedReferenceFrameValues():
+          raise ValidationError(f"Wrong reference frame value '{lines[0].split(':')[1].strip()}' in file '{os.path.basename(velFile)}' with path '{velFile}'.")
         try:
           metadataLines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
         except Exception:
-          raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(velFile)}' with path '{posFile}'.")
-        mandatoryPosHeaders = self.cfg.getValidationConfig("MANDATORY_POS_HEADERS").split("|")
+          raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(velFile)}' with path '{velFile}'.")
+        mandatoryVelHeaders = self.cfg.getValidationConfig("MANDATORY_VEL_HEADERS").split("|")
         countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatoryPosHeaders for header in metadataLines])
         if countMatchingMandatoryHeaders != len(mandatoryPosHeaders):
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(posFile)}' with path '{posFile}'.")
@@ -734,3 +736,14 @@ class Validator:
     """
     if not (velFilename[-4] == "." and velFilename[-3:-1].lower() == "vel"):
       raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Wrong vel file extension - '{velFilename[-4:-1]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+  
+  def _getAllowedReferenceFrameValues(self):
+    """Get the allowed reference frame values from the database.
+    
+    Returns
+    -------
+    list
+      The allowed reference frame values
+    """
+    self.cursor.execute("SELECT name FROM reference_frame;")
+    return [item[0] for item in self.cursor.fetchall()]
