@@ -121,13 +121,13 @@ class FileHandler:
       print(err)
     
   
-  def movePosFileToBucket(self,posFile,bucketDir,filetype,version):
-    """Move a pos file to the bucket directory, according to {bucketDir}/TS/{version}/{posFile}
+  def movePboFileToBucket(self,pboFile,bucketDir,filetype,version):
+    """Move a pbo file to the bucket directory, according to {bucketDir}/TS/{version}/{pboFile}
 
     Parameters
     ----------
-    posFile   : str
-      The pos file to move
+    pboFile   : str
+      The pbo file to move
     bucketDir : str
       Either the bucket directory of the correspondent provider or its public directory
     fileType  : str
@@ -139,7 +139,7 @@ class FileHandler:
       pathToMove = f"{bucketDir}/{filetype}/{version}"
       if not os.path.exists(pathToMove):
         os.makedirs(pathToMove)
-      shutil.move(posFile,pathToMove)
+      shutil.move(pboFile,pathToMove)
     except Exception as err:
       print(err)
   

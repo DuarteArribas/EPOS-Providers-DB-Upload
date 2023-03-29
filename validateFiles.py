@@ -37,12 +37,16 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
       elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
-          fileHandler.movePosFileToBucket(file,bucketDir,"TS",validator.version)
+          fileHandler.movePboFileToBucket(file,bucketDir,"TS",validator.version)
         except ValidationError as err:
           errors.append(str(err))
       # Check vel
       elif extensionWithoutGzip == ".vel":
-        pass
+        try:
+          validator.validateVel(file)
+          fileHandler.movePboFileToBucket(file,bucketDir,"VEL",validator.version)
+        except ValidationError as err:
+          errors.append(str(err))
       # Unknown file
       else:
         errors.append(f"File '{os.path.basename(file)}' with path '{file}' is neither a snx or pbo file!")
