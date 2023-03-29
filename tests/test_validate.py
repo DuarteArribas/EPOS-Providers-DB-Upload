@@ -3,7 +3,7 @@ from src.utils.config import *
 from src.dbConnection import *
 from src.validate     import *
 
-class TestValidation(unittest.TestCase):    
+class TestValidation(unittest.TestCase):
   def test_validateSnxFilenameAbbr(self):
     a = Validator("dummy","dummy2","dummy3")
     self.assertRaises(ValidationError,a._validateSnxFilenameAbbr,"arroz","XXXvOPSSNX_yyyyddd0000_ppD_ppD_SOL.SNX.gz",["ING","UGA","EUR"])
@@ -374,7 +374,7 @@ class TestValidation(unittest.TestCase):
    
   def test_getAnalysisCentreValues(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -382,7 +382,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -390,7 +390,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -398,7 +398,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -406,7 +406,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines4(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -414,7 +414,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines5(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -422,7 +422,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines6(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -430,7 +430,7 @@ class TestValidation(unittest.TestCase):
     
   def test_validateCreationDateMetadataLines(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -438,7 +438,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -446,7 +446,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -454,7 +454,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines4(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -462,7 +462,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines5(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -470,7 +470,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines6(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -478,7 +478,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines7(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -486,7 +486,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateDOIMetadataLines(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -494,7 +494,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateDOIMetadataLines2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -502,7 +502,7 @@ class TestValidation(unittest.TestCase):
     
   def test_validateDOIMetadataLines3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -510,7 +510,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateDOIMetadataLines4(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -518,7 +518,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -526,7 +526,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -534,7 +534,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -542,7 +542,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines4(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -550,7 +550,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines5(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -558,7 +558,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines6(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -566,7 +566,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -574,7 +574,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -582,7 +582,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -590,7 +590,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines4(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -598,7 +598,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines5(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -606,7 +606,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines6(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -614,7 +614,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSnxFile(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -622,7 +622,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSnxFile2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -630,7 +630,7 @@ class TestValidation(unittest.TestCase):
     
   def test_validateSnxFile3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -638,7 +638,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateSnxFile4(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -646,7 +646,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateSnxFile5(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -694,7 +694,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validatePbo9CharacterIDMetadataLine(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -702,7 +702,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validatePbo9CharacterIDMetadataLine2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -710,7 +710,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validatePbo9CharacterIDMetadataLine3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -718,7 +718,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validatePbo9CharacterIDMetadataLine4(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -726,7 +726,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLinesPos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -734,7 +734,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines2Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -742,7 +742,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines3Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -750,7 +750,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines4Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -758,7 +758,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines5Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -766,7 +766,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateAnalysisCentreMetadataLines6Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -774,7 +774,7 @@ class TestValidation(unittest.TestCase):
     
   def test_validateCreationDateMetadataLinesPos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -782,7 +782,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines2Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -790,7 +790,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines3Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -798,7 +798,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines4Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -806,7 +806,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines5Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -814,7 +814,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines6Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -822,7 +822,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateCreationDateMetadataLines7Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -830,7 +830,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateDOIMetadataLinesPos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -838,7 +838,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateDOIMetadataLines2Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -846,7 +846,7 @@ class TestValidation(unittest.TestCase):
     
   def test_validateDOIMetadataLines3Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -854,7 +854,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validateDOIMetadataLines4Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -862,7 +862,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLinesPos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -870,7 +870,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines2Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -878,7 +878,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines3Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -886,7 +886,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines4Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -894,7 +894,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines5Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -902,7 +902,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSoftwareMetadataLines6Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -910,7 +910,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLinesPos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -918,7 +918,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines2Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -926,7 +926,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines3Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -934,7 +934,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines4Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -942,7 +942,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines5Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -950,7 +950,7 @@ class TestValidation(unittest.TestCase):
 
   def test_validateSamplingPeriodMetadataLines6Pos(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -958,7 +958,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validatePosFile(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -966,7 +966,7 @@ class TestValidation(unittest.TestCase):
   
   def test_validatePosFile2(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
@@ -974,11 +974,62 @@ class TestValidation(unittest.TestCase):
   
   def test_validatePosFile3(self):
     logger = Logs("logs/logsTest.log",10000)
-    pgConnection = DBConnection("localhost","5432","eposTest","postgres","arroz123",logger)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
     cfg = Config("config/appconf.cfg")
     a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     self.assertRaises(ValidationError,a.validatePos,"inTest/LEHL00UKN.pos")
+  
+  def test_valid_vel_filename_abbreviation(self):
+    allowedAC = ["ING","UGA","ROB","SGO"]
+    velFilename = "ING.001.CRF.vel"
+    velFile = "/path/to/file/ING.001.CRF.vel"
+    validator = Validator("dummy1","dummy2","dummy3")
+    self.assertIsNone(validator._validateVelFilenameAbbr(velFile,velFilename,allowedAC))
+
+  def test_invalid_vel_filename_abbreviation(self):
+    allowedAC = ["ING","UGA","ROB","SGO"]
+    velFilename = "XYZ.001.CRF.vel"
+    velFile = "/path/to/file/XYZ.001.CRF.vel"
+    validator = Validator("dummy1","dummy2","dummy3")
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilenameAbbr(velFile,velFilename,allowedAC)
+
+  def test_empty_allowedAC(self):
+    allowedAC = ["ING","UGA","ROB","SGO"]
+    velFilename = ".001.CRF.vel"
+    velFile = "/path/to/file/.001.CRF.vel"
+    validator = Validator("dummy1","dummy2","dummy3")
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilenameAbbr(velFile,velFilename,allowedAC)
+  
+  def test_valid_vel_filename_extension(self):
+    velFilename = "ABC.001.CRF.vel"
+    velFile = "/path/to/file/ABC.001.CRF.vel"
+    validator = Validator("dummy1","dummy2","dummy3")
+    self.assertIsNone(validator._validateVelFilnameExtension(velFile,velFilename))
+
+  def test_invalid_vel_filename_extension(self):
+    velFilename = "ABC.001.CRF.xyz"
+    velFile = "/path/to/file/ABC.001.CRF.xyz"
+    validator = Validator("dummy1","dummy2","dummy3")
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilnameExtension(velFile,velFilename)
+
+  def test_empty_velFilename(self):
+    velFilename = ""
+    velFile = "/path/to/file/"
+    validator = Validator("dummy1","dummy2","dummy3")
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilnameExtension(velFile,velFilename)
+  
+  def test_validRefernceFrame(self):
+    logger = Logs("logs/logsTest.log",10000)
+    pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+    pgConnection.connect()
+    cfg = Config("config/appconf.cfg")
+    a = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    a._validateReferenceFrame("ReferenceFrame :  ITRF2000                                                       ","arroz")
 
 if __name__ == '__main__':
   unittest.main()

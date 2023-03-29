@@ -691,7 +691,7 @@ class Validator:
           match [part.strip() for part in line.split(":",1)]:
             case ["ReleaseVersion",*values]:
               value = " ".join(values)
-              if value != velFilename.split(".")[1]:
+              if value != velFilename.split(".")[1:-2]:
                 raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{velFilename.split('.')[1]}' does not match the metadata file ReleaseVersion of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
@@ -714,8 +714,8 @@ class Validator:
     try:
       with open(velFile,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
-        if lines[0].split(":")[1].strip() != velFilename.split(".")[2]:
-          raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file reference frame '{velFilename.split('.')[2]}' does not match the metadata file reference frame of {lines[0].split(':')[1].strip()}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+        if lines[0].split(":")[1].strip() != velFilename.split(".")[-2]:
+          raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file reference frame '{velFilename.split('.')[-2]}' does not match the metadata file reference frame of {lines[0].split(':')[1].strip()}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
   
