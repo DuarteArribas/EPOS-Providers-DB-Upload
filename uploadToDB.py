@@ -98,15 +98,13 @@ def main():
     "UGA"  : f"{cfg.getEmailConfig('UDA_EMAIL')}",
     "WUT"  : f"{cfg.getEmailConfig('WUT_EMAIL')}"
   }
-  # Get Password
-  password = PasswordHandler.getPwdFromFolder(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
   # Get a connection to the EPOS database
   pgConnection = DBConnection(
     cfg.getEPOSDBConfig("IP"),
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    password,
+    PasswordHandler.getPwdFromFolder(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34),
     logger
   )
   pgConnection.connect()
@@ -114,10 +112,20 @@ def main():
   fileHandler = FileHandler(
     providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
     fromEmail         = cfg.getEmailConfig("FROM_EMAIL"),
-    fromEmailPassword = password
+    fromEmailPassword = PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
   )
   # Upload all ts files
   uploadAllTS(
+    cfg.getAppConfig('BUCKET_DIR'),
+    cfg,
+    logger,
+    publicDirs,
+    providerEmails,
+    pgConnection,
+    fileHandler,
+  )
+  # Upload all vel files
+  uploadAllVel(
     cfg.getAppConfig('BUCKET_DIR'),
     cfg,
     logger,
