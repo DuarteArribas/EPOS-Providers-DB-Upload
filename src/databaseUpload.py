@@ -495,8 +495,8 @@ class DatabaseUpload:
                 currentSolutionID,
                 velocityFileID
               )
-            self.uploadEstimatedCoordinates()
-            self.eraseEstimatedCoordinatesTmpFile()
+            self.uploadReferencePositionVelocities()
+            self.eraseReferencePositionVelocitiesTmpFile()
             self.cursor.execute("COMMIT TRANSACTION;")
             self.fileHandler.moveSolutionToPublic(currDir,publicDir,"Vel")
     except UploadError as err:
@@ -698,3 +698,9 @@ class DatabaseUpload:
         )
     except Exception as err:
       raise UploadError(f"Could not upload reference position velocities to database. Error: {UploadError.formatError(str(err))}.")
+  
+  def eraseReferencePositionVelocitiesTmpFile(self):
+    """Erase the temporary file containing the previous reference position velocities."""
+    tempPath = os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP)
+    if os.path.exists(tempPath):
+      os.remove(tempPath)
