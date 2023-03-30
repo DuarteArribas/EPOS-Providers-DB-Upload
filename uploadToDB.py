@@ -32,13 +32,46 @@ def uploadAllTS(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,file
   """
   databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"),fileHandler)
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
-    provider    = list(publicDirs.keys())[count]
-    publicDir   = list(publicDirs.items())[count][1]
+    provider  = list(publicDirs.keys())[count]
+    publicDir = list(publicDirs.items())[count][1]
     try:
       databaseUpload.uploadAllProviderTS(os.path.join(bucketDir,providerBucketDir),publicDir)
     except UploadError as err:
       fileHandler.sendEmail(
-        f"Error uploading {provider} files. Attention is required!",
+        f"Error uploading {provider} TS files. Attention is required!",
+        "There were some errors while uploading your files: \n\n" + str(err) + "\n\n\n Please email us back for more information.",
+        providerEmails[provider]
+      )
+
+def uploadAllVel(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,fileHandler):
+  """Upload all Vel files from all the providers to the database.
+  
+  Parameters
+  ----------
+  bucketDir      : str
+    The bucket directory where the Vel files are stored.
+  cfg            : Config
+    The configuration object.
+  logger         : Logs
+    The logger object.
+  publicDirs     : dict
+    The public directory of each provider.
+  providerEmails : dict
+    The email of each provider.
+  pgConnection   : PgConnection
+    The database connection object.
+  fileHandler    : FileHandler
+    The file handler object.
+  """
+  databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"),fileHandler)
+  for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
+    provider  = list(publicDirs.keys())[count]
+    publicDir = list(publicDirs.items())[count][1]
+    try:
+      databaseUpload.uploadAllProviderVel(os.path.join(bucketDir,providerBucketDir),publicDir)
+    except UploadError as err:
+      fileHandler.sendEmail(
+        f"Error uploading {provider} Vel files. Attention is required!",
         "There were some errors while uploading your files: \n\n" + str(err) + "\n\n\n Please email us back for more information.",
         providerEmails[provider]
       )
