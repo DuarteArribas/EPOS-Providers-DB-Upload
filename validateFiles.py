@@ -44,7 +44,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
       elif extensionWithoutGzip == ".vel":
         try:
           validator.validateVel(file)
-          fileHandler.movePboFileToBucket(file,bucketDir,"VEL",validator.version)
+          fileHandler.movePboFileToBucket(file,bucketDir,"Vel",validator.version)
         except ValidationError as err:
           errors.append(str(err))
       # Unknown file

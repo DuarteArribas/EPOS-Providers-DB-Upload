@@ -470,7 +470,7 @@ class DatabaseUpload:
       ac       = os.path.basename(provBucketDir)
       dataType = self.cfg.getUploadConfig("VEL_DATATYPE")
       for filetype in os.listdir(provBucketDir):
-        if filetype == "VEL":
+        if filetype == "Vel":
           for version in os.listdir(os.path.join(provBucketDir,filetype)):
             currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
             allVelFiles = self.getListOfVelFiles(currDir)
@@ -490,7 +490,7 @@ class DatabaseUpload:
                 currFile,
                 self.getPBOFormatVersion(currFile)
               )
-              self.saveEstimatedCoordinatesToFile(
+              self.saveReferencePositionVelocitiesToFile(
                 currFile,
                 currentSolutionID,
                 velocityFileID
@@ -560,6 +560,7 @@ class DatabaseUpload:
     with open(velFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       solutionParameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
+      solutionParameters["creation_date"] = "2011-01-01 00:00:00" #TODO: Change this
       for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
         match [part.strip() for part in line.split(":",1)]:
           case ["AnalysisCentre",*values]:
@@ -596,7 +597,7 @@ class DatabaseUpload:
         )
         VALUES(
           'public/{"/".join(velFile.split("/")[-4:])}',
-          '2011-01-01 00:00:00'
+          '2011-01-01 00:00:00',
           '{velFormatVersion}',
           'vel',
           'vel'
@@ -627,32 +628,47 @@ class DatabaseUpload:
           case [Dot,Name,Ref_epoch,Ref_jday,Ref_X,Ref_Y,Ref_Z,Ref_Nlat,Ref_Elong,Ref_Up,dXDt,dYDt,dZDt,SXd,SYd,SZd,Rxy,Rxz,Rzy,dNDt,dEDt,dUDt,SNd,SEd,SUd,Rne,Rnu,Reu,first_epoch,last_epoch] if Dot[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"a") as tmp:
               tmp.write(
-                str(self._getStationID(Name))      + "," +
-                str(dXDt)                          + "," +
-                str(dYDt)                          + "," +
-                str(dZDt)                          + "," +
-                str(SXd)                           + "," +
-                str(SYd)                           + "," +
-                str(SZd)                           + "," +
-                str(Rxy)                           + "," +
-                str(Rxz)                           + "," +
-                str(Rzy)                           + "," +
-                str(dNDt)                          + "," +
-                str(dEDt)                          + "," +
-                str(dUDt)                          + "," +
-                str(SNd)                           + "," +
-                str(SEd)                           + "," +
-                str(SUd)                           + "," +
-                str(Rne)                           + "," +
-                str(Rnu)                           + "," +
-                str(Reu)                           + "," +
-                str(self._formatDate(first_epoch)) + "," +
-                str(self._formatDate(last_epoch))  + "," +
-                str(self._formatDate(Ref_epoch))   + "," +
-                str(idVelocityFiles)               + "," +   
-                str(idSolution)                    + "\n"
+                str(self._getStationID(Name))          + "," +
+                str(dXDt)                              + "," +
+                str(dYDt)                              + "," +
+                str(dZDt)                              + "," +
+                str(SXd)                               + "," +
+                str(SYd)                               + "," +
+                str(SZd)                               + "," +
+                str(Rxy)                               + "," +
+                str(Rxz)                               + "," +
+                str(Rzy)                               + "," +
+                str(dNDt)                              + "," +
+                str(dEDt)                              + "," +
+                str(dUDt)                              + "," +
+                str(SNd)                               + "," +
+                str(SEd)                               + "," +
+                str(SUd)                               + "," +
+                str(Rne)                               + "," +
+                str(Rnu)                               + "," +
+                str(Reu)                               + "," +
+                str(self._formatOnlyDate(first_epoch)) + "," +
+                str(self._formatOnlyDate(last_epoch))  + "," +
+                str(self._formatOnlyDate(Ref_epoch))   + "," +
+                str(idVelocityFiles)                   + "," +   
+                str(idSolution)                        + "\n"
               )
-              
+  
+  def _formatOnlyDate(self,YYYYMMDD):
+    """Format a date in the format YYYYMMDD to YYYY-MM-DD.
+    
+    Parameters
+    ----------
+    YYYYMMDD  : str
+      The date in the format YYYYMMDD
+    
+    Returns
+    -------
+    str
+      The date in the format YYYY-MM-DD
+    """
+    return f"{YYYYMMDD[0:4]}-{YYYYMMDD[4:6]}-{YYYYMMDD[6:8]}"
+       
   def uploadReferencePositionVelocities(self):
     """Bulk upload the reference position velocities from the temporary file to the database.
     

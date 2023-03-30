@@ -1,0 +1,46 @@
+PBO Velocity file from pbo_nam08_180825.sum Reference Frame : IGb14           
+Format Version: 1.1.0
+Release Date  : 20180918095220
+%Begin EPOS metadata
+AnalysisCentre: INGV
+Software      : CATREF
+Method-url    : https://www.youtube.com
+DOI           : 10.24414/INGV-C2220
+ReleaseVersion: 2220.0
+SamplingPeriod: daily
+%End EPOS metadata
+Start Field Description
+Dot#        4-character identifier for a given station (starting at column 2)
+Name        9-character identifier for a given station (starting at column 7)
+Ref_epoch   Date and time at which the station position is as given in ref_XYZ and ref_NEU. Format is YYYYMMDDhhmmss (starting at column 24)
+Ref_jday    Reference epoch, represented as Modified Julian day (starting at column 39)
+Ref_X       Reference X coordinate at Ref_epoch, meters (starting at column 50)
+Ref_Y       Reference Y coordinate at Ref_epoch, meters (starting at column 66)
+Ref_Z       Reference Z coordinate at Ref_epoch, meters (starting at column 81)
+Ref_Nlat    Reference North latitude WGS-84 ellipsoid, decimal degrees (starting at column 96)
+Ref_Elong   Reference East Longitude WGS-84 ellipsoid, decimal degrees (starting at column 112)
+Ref_Up      Reference Height  WGS-84 ellipsoid, meters (starting at column 128)
+dX/dt       X component of station velocity, meters/yr (starting at column 139)
+dY/dt       Y component of station velocity, meters/yr (starting at column 150)
+dZ/dt       Z component of station velocity, meters/yr (starting at column 159)
+SXd         Standard deviation of X velocity, meters/yr (starting at column 50)
+SYd         Standard deviation of Y velocity,  meters/yr
+SZd         Standard deviation of Z velocity,  meters/yr
+Rxy         Correlation of X and Y velocity
+Rxz         Correlation of X and Z velocity
+Ryz         Correlation of Y and Z velocity, 
+dN/dt       North component of station velocity, meters/yr
+dE/dt       East component of station velocity, meters/yr
+dU/dt       Vertical component of station velocity, meters/yr
+SNd         Standard deviation of North velocity, meters/yr
+SEd         Standard deviation of East velocity, meters/yr
+SUd         Standard deviation of vertical velocity, meters/yr
+Rne         Correlation of North and East velocity
+Rnu         Correlation of North and vertical velocity
+Reu         Correlation of East and vertical velocity
+first_epoch Epoch of first data used to derive the station velocity, in the same format as ref_epoch.
+last_epoch  Epoch of last data used to derive the station velocity, in the same format as ref_epoch.
+End Field Description
+ 
+*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch 
+ CASC CASC00PRT     20101224000000 55554.0000   -113402.86794 -5504361.33856  3209404.21190   30.4074247557  268.8197383407   -6.54541   -0.00047  0.00300 -0.00093 0.00044 0.00026 0.00020 -0.022 -0.006 -0.470    0.00071 -0.00053 -0.00305 0.00016 0.00044 0.00029  0.000  0.000  0.000 20030423120000 20080620120000
