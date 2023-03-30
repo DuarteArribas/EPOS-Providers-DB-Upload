@@ -490,11 +490,11 @@ class DatabaseUpload:
                 currFile,
                 self.getPBOFormatVersion(currFile)
               )
-              #self.saveEstimatedCoordinatesToFile(
-              #  currFile,
-              #  currentSolutionID,
-              #  velocityFileID
-              #)
+              self.saveEstimatedCoordinatesToFile(
+                currFile,
+                currentSolutionID,
+                velocityFileID
+              )
             self.uploadEstimatedCoordinates()
             self.eraseEstimatedCoordinatesTmpFile()
             self.cursor.execute("COMMIT TRANSACTION;")
@@ -652,3 +652,49 @@ class DatabaseUpload:
                 str(idVelocityFiles)               + "," +   
                 str(idSolution)                    + "\n"
               )
+              
+  def uploadReferencePositionVelocities(self):
+    """Bulk upload the reference position velocities from the temporary file to the database.
+    
+    Raises
+    ------
+    UploadError
+      If the reference position velocities could not be uploaded to the database
+    """
+    try:
+      with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"r") as csvFile:
+        self.cursor.copy_expert(
+          f"""
+          COPY reference_position_velocities(
+            id_station,
+            velx,
+            vely,
+            velz,
+            velx_sigma,
+            vely_sigma,
+            velz_sigma,
+            vel_rho_xy,
+            vel_rho_xz,
+            vel_rho_yz,
+            reference_position_x,
+            reference_position_y,
+            reference_position_z,
+            reference_position_x_sigma,
+            reference_position_y_sigma,
+            reference_position_z_sigma,
+            reference_position_rho_xy,
+            reference_position_rho_xz,
+            reference_position_rho_yz,
+            start_epoch,
+            end_epoch,
+            ref_epoch,
+            id_velocities_files,
+            id_solution
+          )
+          FROM STDIN
+          WITH (FORMAT CSV,HEADER FALSE);
+          """,
+          csvFile
+        )
+    except Exception as err:
+      raise UploadError(f"Could not upload reference position velocities to database. Error: {UploadError.formatError(str(err))}.")
