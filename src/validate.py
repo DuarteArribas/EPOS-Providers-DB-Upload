@@ -409,7 +409,7 @@ class Validator:
       True if the date is according to the format or False otherwise
     """
     try:
-      comparison = datetime.strptime(date,"%Y/%m/%d %H:%M:%S") < datetime.today()
+      comparison = datetime.strptime(date,"%Y-%m-%d %H:%M:%S") < datetime.today()
       return comparison
     except ValueError:
       return False

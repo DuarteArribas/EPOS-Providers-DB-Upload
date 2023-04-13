@@ -600,7 +600,7 @@ class DatabaseUpload:
           '2011-01-01 00:00:00',
           '{velFormatVersion}',
           'vel',
-          'vel'
+          'velocities'
         )
         RETURNING id;
         """ #TODO: Mudar epoch aqui!!!!!!!!!!!!
