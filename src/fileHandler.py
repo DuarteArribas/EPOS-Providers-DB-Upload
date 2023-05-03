@@ -129,7 +129,7 @@ class FileHandler:
     pboFile   : str
       The pbo file to move
     bucketDir : str
-      Either the bucket directory of the correspondent provider or its public directory
+      The bucket directory of the correspondent provider
     fileType  : str
       The type of the file (TS or VEL)
     version   : str

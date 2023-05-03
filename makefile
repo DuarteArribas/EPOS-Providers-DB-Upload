@@ -1,6 +1,6 @@
 #variables
-PYTHON                  := python
-PIP                     := pip
+PYTHON                  := python3
+PIP                     := pip3
 #python main files
 VALIDATION_MAIN_FILE    := validateFiles.py
 UPLOAD_TO_DB_MAIN_FILE  := uploadToDB.py

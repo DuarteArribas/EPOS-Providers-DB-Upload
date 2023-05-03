@@ -64,27 +64,59 @@ class DatabaseUpload:
             allTSFiles = self.getListOfTSFiles(currDir)
             if len(allTSFiles) == 0:
               break
-            self.handlePreviousSolution(
+            isUpdate = self.handlePreviousSolution(
               ac,
               dataType,
               self.cfg.getUploadConfig("TS_DATATYPE"),
-              self.cfg.getUploadConfig("VEL_DATATYPE")
+              self.cfg.getUploadConfig("VEL_DATATYPE"),
+              version
             )
-            self.uploadSolution(dataType,self.getSolutionParametersTS(os.path.join(currDir,allTSFiles[0])))
-            currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
-            for file in allTSFiles:
-              currFile = os.path.join(currDir,file)
-              timeseriesFileID = self.uploadTimeseriesFile(
-                currFile,
-                self.getPBOFormatVersion(currFile)
-              )
-              self.saveEstimatedCoordinatesToFile(
-                currFile,
-                currentSolutionID,
-                timeseriesFileID
-              )
-            self.uploadEstimatedCoordinates()
-            self.eraseEstimatedCoordinatesTmpFile()
+            if not isUpdate:
+              self.uploadSolution(dataType,self.getSolutionParametersTS(os.path.join(currDir,allTSFiles[0])))
+              currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
+              for file in allTSFiles:
+                currFile = os.path.join(currDir,file)
+                timeseriesFileID = self.uploadTimeseriesFile(
+                  currFile,
+                  self.getPBOFormatVersion(currFile)
+                )
+                self.saveEstimatedCoordinatesToFile(
+                  currFile,
+                  currentSolutionID,
+                  timeseriesFileID
+                )
+              self.uploadEstimatedCoordinates()
+              self.eraseEstimatedCoordinatesTmpFile()
+            else:
+              previousFiles = os.listdir(f"{publicDir}/{dataType}/{version}")
+              newFiles      = [file for file in allTSFiles if file not in previousFiles]
+              updatedFiles  = [file for file in allTSFiles if file in previousFiles]
+              currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
+              for file in newFiles:
+                currFile = os.path.join(currDir,file)
+                timeseriesFileID = self.uploadTimeseriesFile(
+                  currFile,
+                  self.getPBOFormatVersion(currFile)
+                )
+                self.saveEstimatedCoordinatesToFile(
+                  currFile,
+                  currentSolutionID,
+                  timeseriesFileID
+                )
+              self.uploadEstimatedCoordinates()
+              self.eraseEstimatedCoordinatesTmpFile()
+              # handle updated files
+              for file in updatedFiles:
+                with open(f"{publicDir}/{dataType}/{version}/{file}","r") as f:
+                  with open(f"{provBucketDir}/{dataType}/{version}/{file}","r") as f2:
+                    oldLines = f.readlines()
+                    newLines = f2.readlines()
+                    updatedLines = self._getUpdatedLines(
+                      oldLines,
+                      newLines
+                    )
+                    for line in updatedLines:
+                      self.updateEstimatedCoordinates(line)
             self.cursor.execute("COMMIT TRANSACTION;")
             self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
     except UploadError as err:
@@ -106,7 +138,7 @@ class DatabaseUpload:
     """
     return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
   
-  def handlePreviousSolution(self,ac,dataType,tsDatatype,velDatatype):
+  def handlePreviousSolution(self,ac,dataType,tsDatatype,velDatatype,version = None):
     """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its associated timeseries files and estimated coordinates.
     
     Parameters
@@ -119,19 +151,33 @@ class DatabaseUpload:
       The timeseries data type
     velDatatype : str
       The velocity data type
+    version     : str
+      The release version of the solution
     """
     solutionIDInDB = self.checkSolutionAlreadyInDB(ac,dataType)
-    if(len(solutionIDInDB) > 0):
-      for solutionID in solutionIDInDB:
-        if dataType == tsDatatype:
-          timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
-          for timeseriesFileID in timeseriesFilesIDInDB:
-            self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)
-        elif dataType == velDatatype:
-          velocityFilesInDB = self._getVelocityFilesID(solutionID)
-          for velocityFileID in velocityFilesInDB:
-            self._erasePreviousVelocityFilesFromDB(velocityFileID)
-      self._erasePreviousSolutionFromDB(ac,dataType)
+    if ac == "UGA-CNRS" and dataType == tsDatatype:
+      if(len(solutionIDInDB) > 0):
+        for solutionID in solutionIDInDB:
+          if version != self.getVersionFromSolution(solutionID):
+            timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
+            for timeseriesFileID in timeseriesFilesIDInDB:
+              self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)  
+            self._erasePreviousSolutionFromDB(ac,dataType)
+          else:
+            return True
+    else:
+      if(len(solutionIDInDB) > 0):
+        for solutionID in solutionIDInDB:
+          if dataType == tsDatatype:
+            timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
+            for timeseriesFileID in timeseriesFilesIDInDB:
+              self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)
+          elif dataType == velDatatype:
+            velocityFilesInDB = self._getVelocityFilesID(solutionID)
+            for velocityFileID in velocityFilesInDB:
+              self._erasePreviousVelocityFilesFromDB(velocityFileID)
+        self._erasePreviousSolutionFromDB(ac,dataType)
+    return False
   
   def checkSolutionAlreadyInDB(self,ac,dataType):
     """Check if a solution is already in the database.
@@ -150,6 +196,10 @@ class DatabaseUpload:
     """
     self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
     return [item[0] for item in self.cursor.fetchall()]
+
+  def getVersionFromSolution(self,solutionID):
+    self.cursor.execute("SELECT release_version FROM solution WHERE id = %s",(solutionID,))
+    return [item[0] for item in self.cursor.fetchall()][0]
   
   def _erasePreviousSolutionFromDB(self,ac,dataType):
     """Erase a previous solution from the database.
@@ -449,6 +499,44 @@ class DatabaseUpload:
     tempPath = os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
     if os.path.exists(tempPath):
       os.remove(tempPath)
+  
+  def _getUpdatedLines(self,oldLines,newLines):
+    oldLines     = [line.strip() for line in oldLines]
+    newLines     = [line.strip() for line in newLines]
+    updatedLines = []
+    for line in oldLines:
+      match [part.strip() for part in (" ".join(line.split())).split(" ")]:
+        case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
+          for line2 in newLines:
+            match [part.strip() for part in (" ".join(line2.split())).split(" ")]:
+              case [YYYYMMDD2,HHMMSS2,JJJJJ_JJJJ2,X2,Y2,Z2,Sx2,Sy2,Sz2,Rxy2,Rxz2,Ryz2,NLat2,Elong2,Height2,dN2,dE2,dU2,Sn2,Se2,Su2,Rne2,Rnu2,Reu2,Soln2] if YYYYMMDD2[0] != "*":
+                if YYYYMMDD == YYYYMMDD2 and HHMMSS == HHMMSS2:
+                  updatedLines.append(line2)
+    return updatedLines
+  
+  
+  def updateEstimatedCoordinates(self,line):
+    """Bulk upload the estimated coordinates from the temporary file to the database.
+    
+    Raises
+    ------
+    UploadError
+      If the estimated coordinates could not be uploaded to the database
+    """
+    try:
+      line = [part.strip() for part in (" ".join(line.split())).split(" ")]
+      with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csvFile:
+        self.cursor.execute(
+          f"""
+          UPDATE estimated_coordinates
+          SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
+          WHERE epoch = %s;
+          """,
+          (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1])
+        )
+    except Exception as err:
+      raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
+    
   
   def uploadAllProviderVel(self,provBucketDir,publicDir):
     """Upload all velocity files from a provider bucket directory to the database.

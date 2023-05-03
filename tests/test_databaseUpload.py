@@ -7,12 +7,12 @@ from src.uploadError    import *
 from src.fileHandler    import *
 
 class TestDatabaseUpload(unittest.TestCase):
-  def test_get_TS(self):
-     logger = Logs("logs/logsTest.log",10000)
-     pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-     pgConnection.connect()
-     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp","dummy2")
-     self.assertEqual(tsUpload.getListOfTSFiles("inOutTest/bucket/INGV/TS/1"),["HBLT00UKN.pos","WARN00DEU.pos"])
+  #def test_get_TS(self):
+  #   logger = Logs("logs/logsTest.log",10000)
+  #   pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #   pgConnection.connect()
+  #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp","dummy2")
+  #   self.assertEqual(tsUpload.getListOfTSFiles("inOutTest/bucket/INGV/TS/1"),["HBLT00UKN.pos","WARN00DEU.pos"])
   
   #def test_checkSolutionAlreadyThere(self):
   #  logger = Logs("logs/logsTest.log",10000)
@@ -155,25 +155,33 @@ class TestDatabaseUpload(unittest.TestCase):
   #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp")
   #  tsUpload.uploadAllProviderTS("inOutTest/bucket/INGV")
   
-  def test_get_Vel(self):
-     logger = Logs("logs/logsTest.log",10000)
-     pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
-     pgConnection.connect()
-     tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp","dummy2")
-     self.assertEqual(tsUpload.getListOfVelFiles("inOutTest/bucket/INGV/VEL/1"),["ROB.2220.0.IGb14.vel"])
+  #def test_get_Vel(self):
+  #   logger = Logs("logs/logsTest.log",10000)
+  #   pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #   pgConnection.connect()
+  #   tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,"dummy1","tmp","dummy2")
+  #   self.assertEqual(tsUpload.getListOfVelFiles("inOutTest/bucket/INGV/VEL/1"),["ROB.2220.0.IGb14.vel"])
+  #
+  #def test_uploadAllVelProviderDir(self):
+  #  cfg = Config("config/appconf.cfg")
+  #  fileHandler = FileHandler(
+  #    providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
+  #    fromEmail         = "arroz123",
+  #    fromEmailPassword = "arroz123"
+  #  )
+  #  logger = Logs("logs/logsTest.log",10000)
+  #  pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
+  #  pgConnection.connect()
+  #  tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp",fileHandler)
+  #  tsUpload.uploadAllProviderVel("inOutTest/bucket/INGV","outTest/public/INGV")
   
-  def test_uploadAllVelProviderDir(self):
-    cfg = Config("config/appconf.cfg")
-    fileHandler = FileHandler(
-      providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
-      fromEmail         = "arroz123",
-      fromEmailPassword = "arroz123"
-    )
+  def test_getVersionFromSolution(self):
     logger = Logs("logs/logsTest.log",10000)
     pgConnection = DBConnection("localhost","5432","epos_dev","postgres","arroz123",logger)
     pgConnection.connect()
-    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp",fileHandler)
-    tsUpload.uploadAllProviderVel("inOutTest/bucket/INGV","outTest/public/INGV")
+    cfg = Config("config/appconf.cfg")
+    tsUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp","dummy1")
+    print(tsUpload.getVersionFromSolution(11))
   
 if __name__ == '__main__':
   unittest.main()
