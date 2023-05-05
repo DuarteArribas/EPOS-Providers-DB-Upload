@@ -4,9 +4,13 @@ import shutil
 import gzip
 import os
 from email.mime.text import MIMEText
+from src.utils.config import *
 
 class FileHandler:
   """Handle provider files."""
+  
+  # Attributes
+  CONFIG_FILE = "config/appconf.cfg"
   
   # == Methods ==
   def __init__(self,providersDir,fromEmail,fromEmailPassword,con = None):
@@ -33,6 +37,7 @@ class FileHandler:
     self.fromEmail         = fromEmail
     self.fromEmailPassword = fromEmailPassword
     self.con               = con
+    self.cfg = Config(FileHandler.CONFIG_FILE)
   
   def getListOfHashesChanged(self):
     """Get the list of hashes changed.
@@ -92,6 +97,7 @@ class FileHandler:
       msg = MIMEText(body)
       msg["Subject"] = subject
       server.sendmail(self.fromEmail,toEmail,msg.as_string())
+      server.sendmail(self.fromEmail,self.cfg.getEmailConfig('SEGAL_EMAIL'),msg.as_string())
       server.quit()
     except Exception as err:
       print(err)
