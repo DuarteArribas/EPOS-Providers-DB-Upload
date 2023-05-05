@@ -88,27 +88,28 @@ class DatabaseUpload:
               self.uploadEstimatedCoordinates()
               self.eraseEstimatedCoordinatesTmpFile()
             else:
-              previousFiles = os.listdir(f"{publicDir}/{dataType}/{version}")
+              previousFiles = os.listdir(f"{publicDir}/TS/{version}")
               newFiles      = [file for file in allTSFiles if file not in previousFiles]
               updatedFiles  = [file for file in allTSFiles if file in previousFiles]
               currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
-              for file in newFiles:
-                currFile = os.path.join(currDir,file)
-                timeseriesFileID = self.uploadTimeseriesFile(
-                  currFile,
-                  self.getPBOFormatVersion(currFile)
-                )
-                self.saveEstimatedCoordinatesToFile(
-                  currFile,
-                  currentSolutionID,
-                  timeseriesFileID
-                )
-              self.uploadEstimatedCoordinates()
-              self.eraseEstimatedCoordinatesTmpFile()
+              if len(newFiles) > 0:
+                for file in newFiles:
+                  currFile = os.path.join(currDir,file)
+                  timeseriesFileID = self.uploadTimeseriesFile(
+                    currFile,
+                    self.getPBOFormatVersion(currFile)
+                  )
+                  self.saveEstimatedCoordinatesToFile(
+                    currFile,
+                    currentSolutionID,
+                    timeseriesFileID
+                  )
+                self.uploadEstimatedCoordinates()
+                self.eraseEstimatedCoordinatesTmpFile()
               # handle updated files
               for file in updatedFiles:
-                with open(f"{publicDir}/{dataType}/{version}/{file}","r") as f:
-                  with open(f"{provBucketDir}/{dataType}/{version}/{file}","r") as f2:
+                with open(f"{publicDir}/TS/{version}/{file}","r") as f:
+                  with open(f"{provBucketDir}/TS/{version}/{file}","r") as f2:
                     oldLines = f.readlines()
                     newLines = f2.readlines()
                     updatedLines = self._getUpdatedLines(
@@ -118,6 +119,8 @@ class DatabaseUpload:
                     for line in updatedLines:
                       self.updateEstimatedCoordinates(line)
             self.cursor.execute("COMMIT TRANSACTION;")
+            print(publicDir)
+            print(currDir)
             self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
@@ -510,7 +513,9 @@ class DatabaseUpload:
           for line2 in newLines:
             match [part.strip() for part in (" ".join(line2.split())).split(" ")]:
               case [YYYYMMDD2,HHMMSS2,JJJJJ_JJJJ2,X2,Y2,Z2,Sx2,Sy2,Sz2,Rxy2,Rxz2,Ryz2,NLat2,Elong2,Height2,dN2,dE2,dU2,Sn2,Se2,Su2,Rne2,Rnu2,Reu2,Soln2] if YYYYMMDD2[0] != "*":
-                if YYYYMMDD == YYYYMMDD2 and HHMMSS == HHMMSS2:
+                if (YYYYMMDD == YYYYMMDD2 and HHMMSS == HHMMSS2) and (
+                  JJJJJ_JJJJ != JJJJJ_JJJJ2 or X != X2 or Y != Y2 or Z != Z2 or Sx != Sx2 or Sy != Sy2 or Sz != Sz2 or Rxy != Rxy2 or Rxz != Rxz2 or Ryz != Ryz2 or NLat != NLat2 or Elong != Elong2 or Height != Height2 or dN != dN2 or dE != dE2 or dU != dU2 or Sn != Sn2 or Se != Se2 or Su != Su2 or Rne != Rne2 or Rnu != Rnu2 or Reu != Reu2 or Soln != Soln2
+                ):
                   updatedLines.append(line2)
     return updatedLines
   
@@ -525,16 +530,18 @@ class DatabaseUpload:
     """
     try:
       line = [part.strip() for part in (" ".join(line.split())).split(" ")]
-      with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csvFile:
-        self.cursor.execute(
-          f"""
-          UPDATE estimated_coordinates
-          SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
-          WHERE epoch = %s;
-          """,
-          (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1])
-        )
+      print(line[3])
+      print(self._formatDate(line[0],line[1]))
+      self.cursor.execute(
+        f"""
+        UPDATE estimated_coordinates
+        SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
+        WHERE epoch = %s;
+        """,
+        (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._formatDate(line[0],line[1]))
+      ) 
     except Exception as err:
+      print("arroz")
       raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
     
   

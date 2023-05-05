@@ -139,7 +139,8 @@ class FileHandler:
       pathToMove = f"{bucketDir}/{filetype}/{version}"
       if not os.path.exists(pathToMove):
         os.makedirs(pathToMove)
-      shutil.move(pboFile,pathToMove)
+      shutil.copy(pboFile,pathToMove)
+      os.remove(pboFile)
     except Exception as err:
       print(err)
   
@@ -155,10 +156,15 @@ class FileHandler:
     fileType    : str
       The type of the file (TS or VEL)
     """
-    try:
+    try: #TODO
       pathToMove = f"{publicDir}/{filetype}"
       if not os.path.exists(pathToMove):
         os.makedirs(pathToMove)
-      shutil.move(solutionDir,pathToMove)
+      if not os.path.exists(os.path.join(pathToMove,solutionDir.split("/")[-1])):
+        os.makedirs(os.path.join(pathToMove,solutionDir.split("/")[-1]))
+      for file in os.listdir(solutionDir):
+        shutil.copy(os.path.join(solutionDir,file),os.path.join(pathToMove,solutionDir.split("/")[-1]))
+        os.remove(os.path.join(solutionDir,file))
     except Exception as err:
+      print('arropz')
       print(err)

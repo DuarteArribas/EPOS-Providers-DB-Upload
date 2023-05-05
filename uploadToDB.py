@@ -32,8 +32,8 @@ def uploadAllTS(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,file
   """
   databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"),fileHandler)
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
-    provider  = list(publicDirs.keys())[count]
-    publicDir = list(publicDirs.items())[count][1]
+    provider  = providerBucketDir.split("-")[0]
+    publicDir = publicDirs[providerBucketDir.split("-")[0]]
     try:
       databaseUpload.uploadAllProviderTS(os.path.join(bucketDir,providerBucketDir),publicDir)
     except UploadError as err:
@@ -65,8 +65,8 @@ def uploadAllVel(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,fil
   """
   databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"),fileHandler)
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
-    provider  = list(publicDirs.keys())[count]
-    publicDir = list(publicDirs.items())[count][1]
+    provider  = providerBucketDir.split("-")[0]
+    publicDir = publicDirs[providerBucketDir.split("-")[0]]
     try:
       databaseUpload.uploadAllProviderVel(os.path.join(bucketDir,providerBucketDir),publicDir)
     except UploadError as err:
