@@ -70,25 +70,25 @@ def main():
   )
   # Upload, bucket and public directories
   providersDir = {
-    "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",
-    "ROB"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_rob/uploads",
-    "SGO"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ltk/uploads",
-    "UGA"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_uga-cnrs/uploads",
-    "WUT"  : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_wut/uploads"
+    "INGV" : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('INGV_UPLOAD_DIR')),
+    "ROB"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('ROB_UPLOAD_DIR')),
+    "SGO"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('SGO_UPLOAD_DIR')),
+    "UGA"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('UGA_UPLOAD_DIR')),
+    "WUT"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('WUT_UPLOAD_DIR'))
   }
   bucketDirs = {
-    "INGV" : f"{cfg.getAppConfig('BUCKET_DIR')}/INGV",
-    "ROB"  : f"{cfg.getAppConfig('BUCKET_DIR')}/ROB-EUREF",
-    "SGO"  : f"{cfg.getAppConfig('BUCKET_DIR')}/SGO-EPND",
-    "UGA"  : f"{cfg.getAppConfig('BUCKET_DIR')}/UGA-CNRS",
-    "WUT"  : f"{cfg.getAppConfig('BUCKET_DIR')}/WUT-EUREF"
+    "INGV" : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('INGV_BUCKET_DIR')),
+    "ROB"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('ROB_BUCKET_DIR')),
+    "SGO"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('SGO_BUCKET_DIR')),
+    "UGA"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('UGA_BUCKET_DIR')),
+    "WUT"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('WUT_BUCKET_DIR'))
   }
   publicDirs = {
-    "INGV" : f"{cfg.getAppConfig('PUBLIC_DIR')}/INGV",
-    "ROB"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/ROB-EUREF",
-    "SGO"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/SGO-EPND",
-    "UGA"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/UGA-CNRS",
-    "WUT"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/WUT-EUREF"
+    "INGV" : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('INGV_PUBLIC_DIR')),
+    "ROB"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('ROB_PUBLIC_DIR')),
+    "SGO"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('SGO_PUBLIC_DIR')),
+    "UGA"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('UGA_PUBLIC_DIR')),
+    "WUT"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('WUT_PUBLIC_DIR'))
   }
   # Provider emails
   providerEmails = {
