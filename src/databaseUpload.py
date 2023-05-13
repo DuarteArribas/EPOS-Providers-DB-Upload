@@ -119,8 +119,6 @@ class DatabaseUpload:
                     for line in updatedLines:
                       self.updateEstimatedCoordinates(line)
             self.cursor.execute("COMMIT TRANSACTION;")
-            print(publicDir)
-            print(currDir)
             self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")

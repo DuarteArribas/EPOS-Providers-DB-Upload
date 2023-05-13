@@ -64,7 +64,10 @@ def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
   # Logger
-  logger = Logs(f"{os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('VALIDATE_LOGS'))}",cfg.getLogsConfig("MAX_LOGS"))
+  logger = Logs(
+    f"{os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('VALIDATE_LOGS'))}",
+    cfg.getLogsConfig("MAX_LOGS")
+  )
   # Upload, bucket and public directories
   providersDir = {
     "INGV" : f"{cfg.getAppConfig('PROVIDERS_DIR')}/providers_ingv/uploads",

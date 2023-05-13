@@ -107,3 +107,18 @@ class Config:
       The corresponding configuration
     """
     return self.config.get("UPLOAD",key)
+  
+  def getProvidersConfig(self,key):
+    """Get a config from the PROVIDERS section on the config file.
+    
+    Parameters
+    ----------
+    key : str
+      The key corresponding to the wanted configuration
+      
+    Returns
+    ----------
+    str
+      The corresponding configuration
+    """
+    return self.config.get("PROVIDERS",key)
