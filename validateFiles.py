@@ -106,7 +106,10 @@ def main():
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    PasswordHandler.getPwdFromFolder(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34),
+    PasswordHandler.getPwdFromFolder(
+      cfg.getEPOSDBConfig("PWD_PATH"),
+      sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34
+    ),
     logger
   )
   pgConnection.connect()
@@ -114,13 +117,26 @@ def main():
   fileHandler = FileHandler(
     providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
     fromEmail         = cfg.getEmailConfig("FROM_EMAIL"),
-    fromEmailPassword = PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34),
+    fromEmailPassword = PasswordHandler.getPwdFromFolder(
+      cfg.getEmailConfig("PWD_PATH"),
+      sum(ord(c) for c in cfg.getEmailConfig("TOKEN")) - 34
+    ),
     con               = con
   )
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfHashesChanged()
   # Move the files to the corresponding public folder or email the providers if an error occurred
-  handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged,cfg,pgConnection.conn,pgConnection.cursor,providerEmails)
+  handleProviders(
+    fileHandler,
+    providersDir,
+    publicDirs,
+    bucketDirs,
+    hashesChanged,
+    cfg,
+    pgConnection.conn,
+    pgConnection.cursor,
+    providerEmails
+  )
   
 if __name__ == '__main__':
   main()
