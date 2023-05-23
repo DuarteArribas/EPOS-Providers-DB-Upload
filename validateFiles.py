@@ -64,8 +64,9 @@ def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
   # Logger
-  logger = Logs(
-    f"{os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('VALIDATE_LOGS'))}",
+  logsFile = os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('VALIDATE_LOGS'))
+  logger   = Logs(
+    logsFile,
     cfg.getLogsConfig("MAX_LOGS")
   )
   # Upload, bucket and public directories
@@ -98,30 +99,32 @@ def main():
     "UGA"  : f"{cfg.getEmailConfig('UDA_EMAIL')}",
     "WUT"  : f"{cfg.getEmailConfig('WUT_EMAIL')}"
   }
-  # Get a connection to the local database
+  # Get a connection to the local database (used to store the hashes of the files, so we can check if they changed)
   con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
   # Get a connection to the EPOS database
+  eposDBPswd = PasswordHandler.getPwdFromFolder(
+    cfg.getEPOSDBConfig("PWD_PATH"),
+    sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34
+  )
   pgConnection = DBConnection(
     cfg.getEPOSDBConfig("IP"),
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    PasswordHandler.getPwdFromFolder(
-      cfg.getEPOSDBConfig("PWD_PATH"),
-      sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34
-    ),
+    eposDBPswd,
     logger
   )
   pgConnection.connect()
   # Get a file handler object
+  emailPswd = PasswordHandler.getPwdFromFolder(
+    cfg.getEmailConfig("PWD_PATH"),
+    sum(ord(c) for c in cfg.getEmailConfig("TOKEN")) - 34
+  )
   fileHandler = FileHandler(
-    providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
-    fromEmail         = cfg.getEmailConfig("FROM_EMAIL"),
-    fromEmailPassword = PasswordHandler.getPwdFromFolder(
-      cfg.getEmailConfig("PWD_PATH"),
-      sum(ord(c) for c in cfg.getEmailConfig("TOKEN")) - 34
-    ),
-    con               = con
+    cfg.getAppConfig("PROVIDERS_DIR"),
+    cfg.getEmailConfig("FROM_EMAIL"),
+    emailPswd,
+    con
   )
   # Get list of the hashes changed of each provider
   hashesChanged = fileHandler.getListOfHashesChanged()

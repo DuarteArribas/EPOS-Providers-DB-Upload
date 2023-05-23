@@ -69,7 +69,7 @@ class DatabaseUpload:
               dataType,
               self.cfg.getUploadConfig("TS_DATATYPE"),
               self.cfg.getUploadConfig("VEL_DATATYPE"),
-              version
+              version 
             )
             if not isUpdate:
               self.uploadSolution(dataType,self.getSolutionParametersTS(os.path.join(currDir,allTSFiles[0])))
