@@ -49,7 +49,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
           errors.append(str(err))
       # Unknown file
       else:
-        errors.append(f"File '{os.path.basename(file)}' with path '{file}' is neither a snx or pbo file!")
+        fileHandler
     # If there were any errors email them
     if len(errors) != 0:
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]

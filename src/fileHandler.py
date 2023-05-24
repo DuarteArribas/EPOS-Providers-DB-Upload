@@ -102,6 +102,30 @@ class FileHandler:
     except Exception as err:
       print(err)
   
+  def sendEmailToSegal(self,subject,body):
+    """Email errors to Segal.
+
+    Parameters
+    ----------
+    subject : str
+      The email subject
+    body    : str
+      The email body
+    """
+    try:
+      server = smtplib.SMTP("smtp.gmail.com",587)
+      server.connect("smtp.gmail.com",587)
+      server.ehlo()
+      server.starttls()
+      server.ehlo()    
+      server.login(self.fromEmail,self.fromEmailPassword)
+      msg = MIMEText(body)
+      msg["Subject"] = subject
+      server.sendmail(self.fromEmail,self.cfg.getEmailConfig('SEGAL_EMAIL'),msg.as_string())
+      server.quit()
+    except Exception as err:
+      print(err)
+  
   def moveSnxFileToPublic(self,snxFile,publicDir):
     """Move an snx file to the public directory, according to {publicDir}/Coor/{version}/{snxFile}
 
