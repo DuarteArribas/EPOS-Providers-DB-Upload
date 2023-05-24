@@ -16,10 +16,12 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
     if not hashesChanged[i]:
       continue
     errors                    = []
-    previousTSMetadataValues  = [None,None,None,None,None,None,None,None]
-    previousVelMetadataValues = [None,None,None,None,None,None,None,None]
+    previousTSMetadataValues  = [None,None,None,None,None,None,None]
+    previousVelMetadataValues = [None,None,None,None,None,None]
     validatedTSFiles          = []
     validatedVelFiles         = []
+    validatedTSEqualMetadata  = True
+    validatedVelEqualMetadata = True
     provider                  = list(providersDir.keys())[i]
     providerDir               = list(providersDir.items())[i][1]
     publicDir                 = list(publicDirs.items())[i][1]
@@ -41,41 +43,63 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
       elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
-          if len([value for value in validator.tsMetadataValues if value == None]) <= 0:
-            if validator.tsMetadataValues != previousTSMetadataValues:
+          if not any(value is None for value in previousTSMetadataValues):
+            if any(value for value in range(len(validator.tsMetadataValues)) if validator.tsMetadataValues[value] != previousTSMetadataValues[value]):
               fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
-              break
+              validatedTSEqualMetadata = False
             else:
-              previousTSMetadataValues = validator.tsMetadataValues
+              previousTSMetadataValues = validator.tsMetadataValues.copy()
               validatedTSFiles.append((file,validator.version))
           else:
-            previousTSMetadataValues = validator.tsMetadataValues  
+            previousTSMetadataValues = validator.tsMetadataValues.copy()
+            validatedTSFiles.append((file,validator.version))
         except ValidationError as err:
           errors.append(str(err))
       # Check vel
       elif extensionWithoutGzip == ".vel":
         try:
           validator.validateVel(file)
-          if len([value for value in validator.velMetadataValues if value == None]) <= 0:
-            if validator.velMetadataValues != previousVelMetadataValues:
+          if not any(value is None for value in previousVelMetadataValues):
+            if any(value for value in range(len(validator.velMetadataValues)) if validator.velMetadataValues[value] != previousVelMetadataValues[value]):
               fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
-              break
+              validatedVelEqualMetadata = False
             else:
-              previousVelMetadataValues = validator.velMetadataValues
+              previousVelMetadataValues = validator.velMetadataValues.copy()
               validatedVelFiles.append((file,validator.version))
           else:
-            previousVelMetadataValues = validator.velMetadataValues  
+            previousVelMetadataValues = validator.velMetadataValues.copy()
+            validatedVelFiles.append((file,validator.version))
         except ValidationError as err:
           errors.append(str(err))
       # Unknown file
       else:
         fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}.")
         break
-    # If there are validated files, move them to the bucket if all their metadate is the same
-    for file,version in validatedTSFiles:
-      fileHandler.movePboFileToBucket(file,bucketDir,"TS",version)
-    for file,version in validatedVelFiles:
-      fileHandler.movePboFileToBucket(file,bucketDir,"Vel",version)
+    # If there are validated files, move them to the bucket and email them if all their metadata is the same
+    if validatedTSEqualMetadata:
+      for file,version in validatedTSFiles:
+        fileHandler.movePboFileToBucket(file,bucketDir,"TS",version)
+    if validatedVelEqualMetadata:
+      for file,version in validatedVelFiles:
+        fileHandler.movePboFileToBucket(file,bucketDir,"Vel",version)
+    if len(validatedTSFiles) > 0 and len(validatedVelFiles) > 0:
+      fileHandler.sendEmail(
+        f"File validation for {provider} was successful!",
+        f"{len(validatedTSFiles)} new {'files were' if len(validatedTSFiles) > 1 else 'file was'} validated and {len(validatedVelFiles)} new {'files were' if len(validatedVelFiles) > 1 else 'file was'} validated for {provider}.",
+        providerEmails[provider]
+      )
+    elif len(validatedTSFiles) > 0:
+      fileHandler.sendEmail(
+        f"File validation for {provider} was successful!",
+        f"{len(validatedTSFiles)} new {'files were' if len(validatedTSFiles) > 1 else 'file was'} validated for {provider}.",
+        providerEmails[provider]
+      )
+    elif len(validatedVelFiles) > 0:
+      fileHandler.sendEmail(
+        f"File validation for {provider} was successful!",
+        f"{len(validatedVelFiles)} new {'files were' if len(validatedVelFiles) > 1 else 'file was'} validated for {provider}.",
+        providerEmails[provider]
+      )
     # If there were any errors email them
     if len(errors) != 0:
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]

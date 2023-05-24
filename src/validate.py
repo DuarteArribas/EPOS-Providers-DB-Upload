@@ -41,7 +41,7 @@ class Validator:
     self.cfg               = cfg
     self.conn              = conn
     self.cursor            = cursor
-    self.tsMetadataValues  = [None,None,None,None,None,None,None,None]
+    self.tsMetadataValues  = [None,None,None,None,None,None,None]
     self.velMetadataValues = [None,None,None,None,None,None]
 
   def validateSnx(self,snxFile):
@@ -551,43 +551,42 @@ class Validator:
     match [part.strip() for part in line.split(":",1)]:
       case ["9-character ID",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[0] = value
         if value not in self._getAllowed9characterIDValues():
           raise ValidationError(f"Wrong 9-character ID value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[1] = value
+        self.tsMetadataValues[0] = value
         if value not in self._getAllowedAnalysisCentreValues():
           raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Software",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[2] = value
+        self.tsMetadataValues[1] = value
         if value not in self.cfg.getValidationConfig("SOFTWARE_VALUES").split("|"):
           raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[3] = value
+        self.tsMetadataValues[2] = value
         if requests.get(value).status_code != Validator.FOUND:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[4] = value
+        self.tsMetadataValues[3] = value
         if value != "unknown" and not self._validateDoi(value):
           raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["CreationDate",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[5] = value
+        self.tsMetadataValues[4] = value
         if not self._validateDate(value):
           raise ValidationError(f"Wrong CreationDate format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["ReleaseVersion",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[6] = value
+        self.tsMetadataValues[5] = value
         if not value:
           raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
         self.version = value
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[7] = value
+        self.tsMetadataValues[6] = value
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
 
