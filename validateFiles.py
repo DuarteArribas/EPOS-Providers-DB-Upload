@@ -15,13 +15,15 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
   for i in range(5):
     if not hashesChanged[i]:
       continue
-    errors = []
-    provider    = list(providersDir.keys())[i]
-    providerDir = list(providersDir.items())[i][1]
-    publicDir   = list(publicDirs.items())[i][1]
-    bucketDir   = list(bucketDirs.items())[i][1]
-    validator   = Validator(cfg,conn,cursor)
-    allFiles    = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
+    errors            = []
+    validatedTSFiles  = []
+    validatedVelFiles = []
+    provider          = list(providersDir.keys())[i]
+    providerDir       = list(providersDir.items())[i][1]
+    publicDir         = list(publicDirs.items())[i][1]
+    bucketDir         = list(bucketDirs.items())[i][1]
+    validator         = Validator(cfg,conn,cursor)
+    allFiles          = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
     for file in allFiles:
       extensionWithGzip    = os.path.splitext(os.path.splitext(file)[0])[1].lower()
@@ -37,20 +39,25 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
       elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
-          fileHandler.movePboFileToBucket(file,bucketDir,"TS",validator.version)
+          validatedTSFiles.append((file,validator.version))
         except ValidationError as err:
           errors.append(str(err))
       # Check vel
       elif extensionWithoutGzip == ".vel":
         try:
           validator.validateVel(file)
-          fileHandler.movePboFileToBucket(file,bucketDir,"Vel",validator.version)
+          validatedVelFiles.append((file,validator.version))
         except ValidationError as err:
           errors.append(str(err))
       # Unknown file
       else:
         fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}")
         break
+    # If there are validated files, move them to the bucket
+    for file,version in validatedTSFiles:
+      fileHandler.movePboFileToBucket(file,bucketDir,"TS",version)
+    for file,version in validatedVelFiles:
+      fileHandler.movePboFileToBucket(file,bucketDir,"Vel",version)
     # If there were any errors email them
     if len(errors) != 0:
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]
