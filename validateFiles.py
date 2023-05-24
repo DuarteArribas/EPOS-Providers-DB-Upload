@@ -15,15 +15,17 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
   for i in range(5):
     if not hashesChanged[i]:
       continue
-    errors            = []
-    validatedTSFiles  = []
-    validatedVelFiles = []
-    provider          = list(providersDir.keys())[i]
-    providerDir       = list(providersDir.items())[i][1]
-    publicDir         = list(publicDirs.items())[i][1]
-    bucketDir         = list(bucketDirs.items())[i][1]
-    validator         = Validator(cfg,conn,cursor)
-    allFiles          = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
+    errors                    = []
+    previousTSMetadataValues  = [None,None,None,None,None,None,None,None]
+    previousVelMetadataValues = [None,None,None,None,None,None,None,None]
+    validatedTSFiles          = []
+    validatedVelFiles         = []
+    provider                  = list(providersDir.keys())[i]
+    providerDir               = list(providersDir.items())[i][1]
+    publicDir                 = list(publicDirs.items())[i][1]
+    bucketDir                 = list(bucketDirs.items())[i][1]
+    validator                 = Validator(cfg,conn,cursor)
+    allFiles                  = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
     for file in allFiles:
       extensionWithGzip    = os.path.splitext(os.path.splitext(file)[0])[1].lower()
@@ -39,21 +41,37 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
       elif extensionWithoutGzip == ".pos":
         try:
           validator.validatePos(file)
-          validatedTSFiles.append((file,validator.version))
+          if len([value for value in validator.tsMetadataValues if value == None]) <= 0:
+            if validator.tsMetadataValues != previousTSMetadataValues:
+              fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
+              break
+            else:
+              previousTSMetadataValues = validator.tsMetadataValues
+              validatedTSFiles.append((file,validator.version))
+          else:
+            previousTSMetadataValues = validator.tsMetadataValues  
         except ValidationError as err:
           errors.append(str(err))
       # Check vel
       elif extensionWithoutGzip == ".vel":
         try:
           validator.validateVel(file)
-          validatedVelFiles.append((file,validator.version))
+          if len([value for value in validator.velMetadataValues if value == None]) <= 0:
+            if validator.velMetadataValues != previousVelMetadataValues:
+              fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
+              break
+            else:
+              previousVelMetadataValues = validator.velMetadataValues
+              validatedVelFiles.append((file,validator.version))
+          else:
+            previousVelMetadataValues = validator.velMetadataValues  
         except ValidationError as err:
           errors.append(str(err))
       # Unknown file
       else:
-        fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}")
+        fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}.")
         break
-    # If there are validated files, move them to the bucket
+    # If there are validated files, move them to the bucket if all their metadate is the same
     for file,version in validatedTSFiles:
       fileHandler.movePboFileToBucket(file,bucketDir,"TS",version)
     for file,version in validatedVelFiles:
