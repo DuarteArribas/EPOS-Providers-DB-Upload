@@ -49,7 +49,8 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
           errors.append(str(err))
       # Unknown file
       else:
-        fileHandler
+        fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}")
+        break
     # If there were any errors email them
     if len(errors) != 0:
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]
