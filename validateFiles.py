@@ -16,7 +16,7 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
     if not hashesChanged[i]:
       continue
     errors                    = []
-    previousTSMetadataValues  = [None,None,None,None,None,None,None]
+    previousTSMetadataValues  = [None,None,None,None,None,None]
     previousVelMetadataValues = [None,None,None,None,None,None]
     validatedTSFiles          = []
     validatedVelFiles         = []
@@ -82,19 +82,19 @@ def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged
     if validatedVelEqualMetadata:
       for file,version in validatedVelFiles:
         fileHandler.movePboFileToBucket(file,bucketDir,"Vel",version)
-    if len(validatedTSFiles) > 0 and len(validatedVelFiles) > 0:
+    if len(validatedTSFiles) > 0 and len(validatedVelFiles) > 0 and validatedTSEqualMetadata and validatedVelEqualMetadata:
       fileHandler.sendEmail(
         f"File validation for {provider} was successful!",
         f"{len(validatedTSFiles)} new {'files were' if len(validatedTSFiles) > 1 else 'file was'} validated and {len(validatedVelFiles)} new {'files were' if len(validatedVelFiles) > 1 else 'file was'} validated for {provider}.",
         providerEmails[provider]
       )
-    elif len(validatedTSFiles) > 0:
+    elif len(validatedTSFiles) > 0 and validatedTSEqualMetadata:
       fileHandler.sendEmail(
         f"File validation for {provider} was successful!",
         f"{len(validatedTSFiles)} new {'files were' if len(validatedTSFiles) > 1 else 'file was'} validated for {provider}.",
         providerEmails[provider]
       )
-    elif len(validatedVelFiles) > 0:
+    elif len(validatedVelFiles) > 0 and validatedVelEqualMetadata:
       fileHandler.sendEmail(
         f"File validation for {provider} was successful!",
         f"{len(validatedVelFiles)} new {'files were' if len(validatedVelFiles) > 1 else 'file was'} validated for {provider}.",
@@ -190,6 +190,8 @@ def main():
     pgConnection.cursor,
     providerEmails
   )
+  # Update the directory hashes
+  fileHandler.updateHashes()
   
 if __name__ == '__main__':
   main()

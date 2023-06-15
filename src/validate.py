@@ -41,7 +41,7 @@ class Validator:
     self.cfg               = cfg
     self.conn              = conn
     self.cursor            = cursor
-    self.tsMetadataValues  = [None,None,None,None,None,None,None]
+    self.tsMetadataValues  = [None,None,None,None,None,None]
     self.velMetadataValues = [None,None,None,None,None,None]
 
   def validateSnx(self,snxFile):
@@ -575,18 +575,17 @@ class Validator:
           raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["CreationDate",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[4] = value
         if not self._validateDate(value):
           raise ValidationError(f"Wrong CreationDate format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["ReleaseVersion",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[5] = value
+        self.tsMetadataValues[4] = value
         if not value:
           raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
         self.version = value
       case ["SamplingPeriod",*values]:
         value = " ".join(values)
-        self.tsMetadataValues[6] = value
+        self.tsMetadataValues[5] = value
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
 

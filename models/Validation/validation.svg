@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='36 135 1032 2472' xmlns:xlink='http://www.w3.org/1999/xlink' width='1032.0px' font-size='13' font-family='Arial, LiberationSans' version='1.1' height='2472.0px'>
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='-30 135 1098 2472' xmlns:xlink='http://www.w3.org/1999/xlink' width='1098.0px' font-size='13' font-family='Arial, LiberationSans' version='1.1' height='2472.0px'>
   <defs>
 <style type='text/css'><![CDATA[svg text {text-rendering: geometricPrecision;}]]></style>  </defs>
   <desc>ActivityDiagram</desc>
@@ -192,9 +192,11 @@
   <g transform='translate(66.0,1874.0)' id='_xW-MIdPXEDu-gdyaUpwwWQ'>
     <rect rx='10.0' ry='10.0' x='0.0' width='190.0px' y='0.0' fill='rgb(250, 222, 194)' stroke='rgb(203, 159, 114)' look='allInOne' height='70.0px'/>
     <g transform='translate(0.0,0.0)'>
-      <text text-anchor='middle' x='95.0' y='26.5' font-size='13' fill='rgb(51, 51, 51)'>If there are validated files, move</text>
-      <text text-anchor='middle' x='95.0' y='39.5' font-size='13' fill='rgb(51, 51, 51)'>them to the public dir of the</text>
-      <text text-anchor='middle' x='95.0' y='52.5' font-size='13' fill='rgb(51, 51, 51)'>respective provider</text>
+      <text text-anchor='middle' x='95.0' y='13.5' font-size='13' fill='rgb(51, 51, 51)'>If there are validated files, move</text>
+      <text text-anchor='middle' x='95.0' y='26.5' font-size='13' fill='rgb(51, 51, 51)'>them to the public dir of the</text>
+      <text text-anchor='middle' x='95.0' y='39.5' font-size='13' fill='rgb(51, 51, 51)'>respective provider and email</text>
+      <text text-anchor='middle' x='95.0' y='52.5' font-size='13' fill='rgb(51, 51, 51)'>the respective provider and</text>
+      <text text-anchor='middle' x='95.0' y='65.5' font-size='13' fill='rgb(51, 51, 51)'>SEGAL</text>
     </g>
   </g>
   <g transform='translate(292.0,1874.0)' id='_2hGHodPXEDu-gdyaUpwwWQ'>
@@ -257,9 +259,11 @@
   <g transform='translate(191.0,2408.0)' id='_pyqbQdPZEDu-gdyaUpwwWQ'>
     <rect rx='10.0' ry='10.0' x='0.0' width='190.0px' y='0.0' fill='rgb(250, 222, 194)' stroke='rgb(203, 159, 114)' look='allInOne' height='70.0px'/>
     <g transform='translate(0.0,0.0)'>
-      <text text-anchor='middle' x='95.0' y='26.5' font-size='13' fill='rgb(51, 51, 51)'>If there are validated files, move</text>
-      <text text-anchor='middle' x='95.0' y='39.5' font-size='13' fill='rgb(51, 51, 51)'>them to the bucket dir of the</text>
-      <text text-anchor='middle' x='95.0' y='52.5' font-size='13' fill='rgb(51, 51, 51)'>respective provider</text>
+      <text text-anchor='middle' x='95.0' y='13.5' font-size='13' fill='rgb(51, 51, 51)'>If there are validated files, move</text>
+      <text text-anchor='middle' x='95.0' y='26.5' font-size='13' fill='rgb(51, 51, 51)'>them to the bucket dir of the</text>
+      <text text-anchor='middle' x='95.0' y='39.5' font-size='13' fill='rgb(51, 51, 51)'>respective provider and email</text>
+      <text text-anchor='middle' x='95.0' y='52.5' font-size='13' fill='rgb(51, 51, 51)'>the respective provider and</text>
+      <text text-anchor='middle' x='95.0' y='65.5' font-size='13' fill='rgb(51, 51, 51)'>SEGAL</text>
     </g>
   </g>
   <g transform='translate(417.0,2408.0)' id='_qGTI8dPZEDu-gdyaUpwwWQ'>
@@ -298,6 +302,42 @@
     <g transform='translate(0.0,0.0)'>
       <text text-anchor='middle' x='65.0' y='18.0' font-size='13' fill='rgb(51, 51, 51)'>Stop execution for</text>
       <text text-anchor='middle' x='65.0' y='31.0' font-size='13' fill='rgb(51, 51, 51)'>that provider</text>
+    </g>
+  </g>
+  <g transform='translate(696.0,467.0)' id='_yOkq0Oz3EDuI_9zt61hgiA'>
+    <polygon stroke-width='0.5' fill='rgb(255, 255, 255)' stroke='rgb(107, 107, 107)' look='allInOne' points='0.0,0.0 0.0,60.0 220.0,60.0 220.0,15.0 205.0,0.0'/>
+    <polygon stroke-width='1.0' fill='rgb(107, 107, 107)' look='border' stroke='rgb(107, 107, 107)' points='205.0,1.0 205.0,15.0 219.0,15.0'/>
+    <clipPath id='clip_yOkq0Oz3EDuI_9zt61hgiA'>
+      <rect x='5.0' width='195.0px' y='5.0' height='50.0px'/>
+    </clipPath>
+    <g transform='translate(0.0,0.0)'>
+      <text clip-path='url(#clip_yOkq0Oz3EDuI_9zt61hgiA)' x='5.0' y='18.0' font-size='13' fill='rgb(45, 45, 45)'>Please check</text>
+      <text clip-path='url(#clip_yOkq0Oz3EDuI_9zt61hgiA)' x='5.0' y='31.0' font-size='13' fill='rgb(45, 45, 45)'>checkFileChanges.svg model for</text>
+      <text clip-path='url(#clip_yOkq0Oz3EDuI_9zt61hgiA)' x='5.0' y='44.0' font-size='13' fill='rgb(45, 45, 45)'>more information</text>
+    </g>
+  </g>
+  <g transform='translate(0.0,1596.0)' id='_3hTIsOz3EDuI_9zt61hgiA'>
+    <polygon stroke-width='0.5' fill='rgb(255, 255, 255)' stroke='rgb(107, 107, 107)' look='allInOne' points='0.0,0.0 0.0,60.0 170.0,60.0 170.0,15.0 155.0,0.0'/>
+    <polygon stroke-width='1.0' fill='rgb(107, 107, 107)' look='border' stroke='rgb(107, 107, 107)' points='155.0,1.0 155.0,15.0 169.0,15.0'/>
+    <clipPath id='clip_3hTIsOz3EDuI_9zt61hgiA'>
+      <rect x='5.0' width='145.0px' y='5.0' height='50.0px'/>
+    </clipPath>
+    <g transform='translate(0.0,0.0)'>
+      <text clip-path='url(#clip_3hTIsOz3EDuI_9zt61hgiA)' x='5.0' y='18.0' font-size='13' fill='rgb(45, 45, 45)'>Please check</text>
+      <text clip-path='url(#clip_3hTIsOz3EDuI_9zt61hgiA)' x='5.0' y='31.0' font-size='13' fill='rgb(45, 45, 45)'>validateTS.svg model</text>
+      <text clip-path='url(#clip_3hTIsOz3EDuI_9zt61hgiA)' x='5.0' y='44.0' font-size='13' fill='rgb(45, 45, 45)'>for more information</text>
+    </g>
+  </g>
+  <g transform='translate(750.0,1596.0)' id='__ZAr0Oz3EDuI_9zt61hgiA'>
+    <polygon stroke-width='0.5' fill='rgb(255, 255, 255)' stroke='rgb(107, 107, 107)' look='allInOne' points='0.0,0.0 0.0,60.0 170.0,60.0 170.0,15.0 155.0,0.0'/>
+    <polygon stroke-width='1.0' fill='rgb(107, 107, 107)' look='border' stroke='rgb(107, 107, 107)' points='155.0,1.0 155.0,15.0 169.0,15.0'/>
+    <clipPath id='clip__ZAr0Oz3EDuI_9zt61hgiA'>
+      <rect x='5.0' width='145.0px' y='5.0' height='50.0px'/>
+    </clipPath>
+    <g transform='translate(0.0,0.0)'>
+      <text clip-path='url(#clip__ZAr0Oz3EDuI_9zt61hgiA)' x='5.0' y='18.0' font-size='13' fill='rgb(45, 45, 45)'>Please check</text>
+      <text clip-path='url(#clip__ZAr0Oz3EDuI_9zt61hgiA)' x='5.0' y='31.0' font-size='13' fill='rgb(45, 45, 45)'>validateVel.svg model</text>
+      <text clip-path='url(#clip__ZAr0Oz3EDuI_9zt61hgiA)' x='5.0' y='44.0' font-size='13' fill='rgb(45, 45, 45)'>for more information</text>
     </g>
   </g>
   <text x='256.0' y='684.0' fill='rgb(0, 0, 0)'></text>
@@ -1059,4 +1099,7 @@
     <line y1='2476.0' x1='957.0' y2='2504.0' x2='957.0' id='_4DbbMdwpEDuyqOnVagj5_A' stroke-width='1.0' fill='none' stroke='rgb(0, 0, 0)'/>
     <polyline transform='translate(957.0,2504.0) rotate(-180.0)' stroke-width='1.0' fill='none' stroke='rgb(0, 0, 0)' points='-5.0,10.0 0.0,0.0 5.0,10.0'/>
   </g>
+  <line y1='497.0' x1='651.0' y2='497.0' x2='696.0' stroke-dasharray='1, 2' id='_1500kuz3EDuI_9zt61hgiA' stroke-width='1.0' fill='none' stroke='rgb(0, 0, 0)'/>
+  <line y1='1626.0' x1='373.0' y2='1626.0' x2='170.0' stroke-dasharray='1, 2' id='_-O-hoez3EDuI_9zt61hgiA' stroke-width='1.0' fill='none' stroke='rgb(0, 0, 0)'/>
+  <line y1='1626.0' x1='734.0' y2='1626.0' x2='750.0' stroke-dasharray='1, 2' id='_AmGKAuz4EDuI_9zt61hgiA' stroke-width='1.0' fill='none' stroke='rgb(0, 0, 0)'/>
 </svg>

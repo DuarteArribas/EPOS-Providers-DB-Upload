@@ -56,8 +56,6 @@ class FileHandler:
       previousHash = res.fetchall()
       if providerHashes[i] != previousHash[0][0]:
         hashesChanged[i] = True
-        cur.execute(f"UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE '{providerList[i]}'",(providerHashes[i],))
-        self.con.commit()
     return hashesChanged
   
   def _getHashOfDir(self,dir):
@@ -74,6 +72,14 @@ class FileHandler:
       The hash of the directory
     """
     return checksumdir.dirhash(dir)
+
+  def updateHashes(self):
+    """Update the hashes in the database."""
+    cur = self.con.cursor()
+    for provider,providerDir in self.providerDir.items():
+      newFileHash = self._getHashOfDir(providerDir)
+      cur.execute(f"UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE ?",(newFileHash,provider))
+      self.con.commit()
   
   def sendEmail(self,subject,body,toEmail):
     """Email errors to providers.

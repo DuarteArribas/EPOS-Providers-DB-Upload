@@ -1,9 +1,0 @@
-1 - ACS for vel: ING,UGA,ROB,SGO?
-
-2 - Velocities_files in BD: file_type vs data_type?
-
-3 - CreationDate in velocities
-
-
-
-DATES Change in case of MM-YYYY
