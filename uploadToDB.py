@@ -81,14 +81,18 @@ def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
   # Logger
-  logger = Logs(f"{os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('UPLOADING_LOGS'))}",cfg.getLogsConfig("MAX_LOGS"))
+  logsFile = os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('UPLOADING_LOGS'))
+  logger   = Logs(
+    logsFile,
+    cfg.getLogsConfig("MAX_LOGS")
+  )
   # Public directories
   publicDirs = {
-    "INGV" : f"{cfg.getAppConfig('PUBLIC_DIR')}/INGV",
-    "ROB"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/ROB-EUREF",
-    "SGO"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/SGO-EPND",
-    "UGA"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/UGA-CNRS",
-    "WUT"  : f"{cfg.getAppConfig('PUBLIC_DIR')}/WUT-EUREF"
+    "INGV" : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('INGV_PUBLIC_DIR')),
+    "ROB"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('ROB_PUBLIC_DIR')),
+    "SGO"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('SGO_PUBLIC_DIR')),
+    "UGA"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('UGA_PUBLIC_DIR')),
+    "WUT"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('WUT_PUBLIC_DIR'))
   }
   # Provider emails
   providerEmails = {
@@ -99,20 +103,29 @@ def main():
     "WUT"  : f"{cfg.getEmailConfig('WUT_EMAIL')}"
   }
   # Get a connection to the EPOS database
+  eposDBPswd = PasswordHandler.getPwdFromFolder(
+    cfg.getEPOSDBConfig("PWD_PATH"),
+    sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34
+  )
   pgConnection = DBConnection(
     cfg.getEPOSDBConfig("IP"),
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    PasswordHandler.getPwdFromFolder(cfg.getEPOSDBConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34),
+    eposDBPswd,
     logger
   )
   pgConnection.connect()
   # Get a file handler object
+  emailPswd = PasswordHandler.getPwdFromFolder(
+    cfg.getEmailConfig("PWD_PATH"),
+    sum(ord(c) for c in cfg.getEmailConfig("TOKEN")) - 34
+  )
   fileHandler = FileHandler(
-    providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
-    fromEmail         = cfg.getEmailConfig("FROM_EMAIL"),
-    fromEmailPassword = PasswordHandler.getPwdFromFolder(cfg.getEmailConfig("PWD_PATH"),sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34)
+    cfg.getAppConfig("PROVIDERS_DIR"),
+    cfg.getEmailConfig("FROM_EMAIL"),
+    emailPswd,
+    "dummy"
   )
   # Upload all ts files
   uploadAllTS(
