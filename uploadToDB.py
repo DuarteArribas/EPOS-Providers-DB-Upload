@@ -30,7 +30,14 @@ def uploadAllTS(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,file
   fileHandler    : FileHandler
     The file handler object.
   """
-  databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"),fileHandler)
+  databaseUpload = DatabaseUpload(
+    pgConnection.conn,
+    pgConnection.cursor,
+    logger,
+    cfg,
+    cfg.getAppConfig("TMP_DIR"),
+    fileHandler
+  )
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
     provider  = providerBucketDir.split("-")[0]
     publicDir = publicDirs[providerBucketDir.split("-")[0]]
@@ -63,7 +70,14 @@ def uploadAllVel(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,fil
   fileHandler    : FileHandler
     The file handler object.
   """
-  databaseUpload = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,cfg.getAppConfig("TMP_DIR"),fileHandler)
+  databaseUpload = DatabaseUpload(
+    pgConnection.conn,
+    pgConnection.cursor,
+    logger,
+    cfg,
+    cfg.getAppConfig("TMP_DIR"),
+    fileHandler
+  )
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
     provider  = providerBucketDir.split("-")[0]
     publicDir = publicDirs[providerBucketDir.split("-")[0]]

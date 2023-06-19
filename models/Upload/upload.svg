@@ -158,9 +158,7 @@
       <text clip-path='url(#clip_Wqd0QO5lEDummJ7zTXXKCA)' x='5.0' y='31.0' font-size='13' fill='rgb(45, 45, 45)'>with the file, as it has been previously</text>
       <text clip-path='url(#clip_Wqd0QO5lEDummJ7zTXXKCA)' x='5.0' y='44.0' font-size='13' fill='rgb(45, 45, 45)'>validated; however, in case there is an error, it</text>
       <text clip-path='url(#clip_Wqd0QO5lEDummJ7zTXXKCA)' x='5.0' y='57.0' font-size='13' fill='rgb(45, 45, 45)'>is caught here before actually being</text>
-      <text clip-path='url(#clip_Wqd0QO5lEDummJ7zTXXKCA)' x='5.0' y='70.0' font-size='13' fill='rgb(45, 45, 45)'>uploaded--this includes non not expectable</text>
-      <text clip-path='url(#clip_Wqd0QO5lEDummJ7zTXXKCA)' x='5.0' y='83.0' font-size='13' fill='rgb(45, 45, 45)'>errors, such as when the files are actually</text>
-      <text clip-path='url(#clip_Wqd0QO5lEDummJ7zTXXKCA)' x='5.0' y='96.0' font-size='13' fill='rgb(45, 45, 45)'>uploaded to the database.</text>
+      <text clip-path='url(#clip_Wqd0QO5lEDummJ7zTXXKCA)' x='5.0' y='70.0' font-size='13' fill='rgb(45, 45, 45)'>uploaded--this includes non expectable errors.</text>
     </g>
   </g>
   <g transform='translate(310.0,1230.0)' id='_ooTS0O5lEDummJ7zTXXKCA'>
