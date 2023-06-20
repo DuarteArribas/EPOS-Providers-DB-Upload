@@ -112,7 +112,7 @@ class DatabaseUpload:
                   with open(f"{provBucketDir}/TS/{version}/{file}","r") as f2:
                     oldLines = f.readlines()
                     newLines = f2.readlines()
-                    updatedLines = self._getUpdatedLines(
+                    updatedLines,newDifferentLines = self._getUpdatedLines(
                       oldLines,
                       newLines
                     )
@@ -156,7 +156,7 @@ class DatabaseUpload:
       The release version of the solution
     """
     solutionIDInDB = self.checkSolutionAlreadyInDB(ac,dataType)
-    if ac == "UGA-CNRS" and dataType == tsDatatype:
+    if dataType == tsDatatype:
       if(len(solutionIDInDB) > 0):
         for solutionID in solutionIDInDB:
           if version != self.getVersionFromSolution(solutionID):
