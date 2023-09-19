@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>src.fileHandler &#8212; arroz  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.fileHandler</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">checksumdir</span>
+<span class="kn">import</span> <span class="nn">smtplib</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">email.mime.text</span> <span class="kn">import</span> <span class="n">MIMEText</span>
+<span class="kn">from</span> <span class="nn">src.utils.config</span> <span class="kn">import</span> <span class="o">*</span>
+
+<div class="viewcode-block" id="FileHandler"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler">[docs]</a><span class="k">class</span> <span class="nc">FileHandler</span><span class="p">:</span>
+<span class="w">  </span><span class="sd">&quot;&quot;&quot;Handle provider files.&quot;&quot;&quot;</span>
+  
+  <span class="c1"># Attributes</span>
+  <span class="n">CONFIG_FILE</span> <span class="o">=</span> <span class="s2">&quot;config/appconf.cfg&quot;</span>
+  
+  <span class="c1"># == Methods ==</span>
+  <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">providersDir</span><span class="p">,</span><span class="n">fromEmail</span><span class="p">,</span><span class="n">fromEmailPassword</span><span class="p">,</span><span class="n">con</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get default parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    providersDir      : str</span>
+<span class="sd">      The default directory for the providers</span>
+<span class="sd">    fromEmail         : str</span>
+<span class="sd">      The email address to send the email from</span>
+<span class="sd">    fromEmailPassword : str</span>
+<span class="sd">      The password of the , which is sending the email</span>
+<span class="sd">    con               : Connection</span>
+<span class="sd">      A connection object to the local database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">providerDir</span>       <span class="o">=</span> <span class="p">{</span>
+      <span class="s2">&quot;INGV&quot;</span> <span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">providersDir</span><span class="si">}</span><span class="s2">/providers_ingv/uploads&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ROB&quot;</span>  <span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">providersDir</span><span class="si">}</span><span class="s2">/providers_rob/uploads&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;SGO&quot;</span>  <span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">providersDir</span><span class="si">}</span><span class="s2">/providers_ltk/uploads&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;UGA&quot;</span>  <span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">providersDir</span><span class="si">}</span><span class="s2">/providers_uga-cnrs/uploads&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;WUT&quot;</span>  <span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">providersDir</span><span class="si">}</span><span class="s2">/providers_wut/uploads&quot;</span>
+    <span class="p">}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fromEmail</span>         <span class="o">=</span> <span class="n">fromEmail</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fromEmailPassword</span> <span class="o">=</span> <span class="n">fromEmailPassword</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">con</span>               <span class="o">=</span> <span class="n">con</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">FileHandler</span><span class="o">.</span><span class="n">CONFIG_FILE</span><span class="p">)</span>
+  
+<div class="viewcode-block" id="FileHandler.getListOfHashesChanged"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler.getListOfHashesChanged">[docs]</a>  <span class="k">def</span> <span class="nf">getListOfHashesChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the list of hashes changed.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list containing a boolean for each provider, indicating if their hash was changed (True) or not (False)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cur</span>            <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">providerList</span>   <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">providerDir</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">providerHashes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_getHashOfDir</span><span class="p">(</span><span class="n">providerDir</span><span class="p">)</span> <span class="k">for</span> <span class="n">provider</span><span class="p">,</span><span class="n">providerDir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">providerDir</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+    <span class="n">hashesChanged</span>  <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">providerList</span><span class="p">)):</span>
+      <span class="n">res</span>          <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELECT fileHash FROM previousFiles WHERE fileName LIKE &#39;</span><span class="si">{</span><span class="n">providerList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+      <span class="n">previousHash</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+      <span class="k">if</span> <span class="n">providerHashes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">previousHash</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">hashesChanged</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">hashesChanged</span></div>
+  
+  <span class="k">def</span> <span class="nf">_getHashOfDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get checksum hash from a directory recursively.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dir : str</span>
+<span class="sd">      The directory from which to get the hash</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">      The hash of the directory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">checksumdir</span><span class="o">.</span><span class="n">dirhash</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FileHandler.updateHashes"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler.updateHashes">[docs]</a>  <span class="k">def</span> <span class="nf">updateHashes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the hashes in the database.&quot;&quot;&quot;</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">provider</span><span class="p">,</span><span class="n">providerDir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">providerDir</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+      <span class="n">newFileHash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getHashOfDir</span><span class="p">(</span><span class="n">providerDir</span><span class="p">)</span>
+      <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE ?&quot;</span><span class="p">,(</span><span class="n">newFileHash</span><span class="p">,</span><span class="n">provider</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+  
+<div class="viewcode-block" id="FileHandler.sendEmail"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler.sendEmail">[docs]</a>  <span class="k">def</span> <span class="nf">sendEmail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">subject</span><span class="p">,</span><span class="n">body</span><span class="p">,</span><span class="n">toEmail</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Email errors to providers.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : str</span>
+<span class="sd">      The email subject</span>
+<span class="sd">    body    : str</span>
+<span class="sd">      The email body</span>
+<span class="sd">    toEmail : str</span>
+<span class="sd">      The provider&#39;s email address</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">server</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">(</span><span class="s2">&quot;smtp.gmail.com&quot;</span><span class="p">,</span><span class="mi">587</span><span class="p">)</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;smtp.gmail.com&quot;</span><span class="p">,</span><span class="mi">587</span><span class="p">)</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">ehlo</span><span class="p">()</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">starttls</span><span class="p">()</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">ehlo</span><span class="p">()</span>    
+      <span class="n">server</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fromEmail</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">fromEmailPassword</span><span class="p">)</span>
+      <span class="n">msg</span> <span class="o">=</span> <span class="n">MIMEText</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+      <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;Subject&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">sendmail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fromEmail</span><span class="p">,</span><span class="n">toEmail</span><span class="p">,</span><span class="n">msg</span><span class="o">.</span><span class="n">as_string</span><span class="p">())</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">sendmail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fromEmail</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getEmailConfig</span><span class="p">(</span><span class="s1">&#39;SEGAL_EMAIL&#39;</span><span class="p">),</span><span class="n">msg</span><span class="o">.</span><span class="n">as_string</span><span class="p">())</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="FileHandler.sendEmailToSegal"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler.sendEmailToSegal">[docs]</a>  <span class="k">def</span> <span class="nf">sendEmailToSegal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">subject</span><span class="p">,</span><span class="n">body</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Email errors to Segal.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : str</span>
+<span class="sd">      The email subject</span>
+<span class="sd">    body    : str</span>
+<span class="sd">      The email body</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">server</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">(</span><span class="s2">&quot;smtp.gmail.com&quot;</span><span class="p">,</span><span class="mi">587</span><span class="p">)</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;smtp.gmail.com&quot;</span><span class="p">,</span><span class="mi">587</span><span class="p">)</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">ehlo</span><span class="p">()</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">starttls</span><span class="p">()</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">ehlo</span><span class="p">()</span>    
+      <span class="n">server</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fromEmail</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">fromEmailPassword</span><span class="p">)</span>
+      <span class="n">msg</span> <span class="o">=</span> <span class="n">MIMEText</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+      <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;Subject&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">sendmail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fromEmail</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getEmailConfig</span><span class="p">(</span><span class="s1">&#39;SEGAL_EMAIL&#39;</span><span class="p">),</span><span class="n">msg</span><span class="o">.</span><span class="n">as_string</span><span class="p">())</span>
+      <span class="n">server</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="FileHandler.moveSnxFileToPublic"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler.moveSnxFileToPublic">[docs]</a>  <span class="k">def</span> <span class="nf">moveSnxFileToPublic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">publicDir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Move an snx file to the public directory, according to {publicDir}/Coor/{version}/{snxFile}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile   : str</span>
+<span class="sd">      The snx file to move</span>
+<span class="sd">    publicDir : str</span>
+<span class="sd">      The public directory of the correspondent provider</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;+FILE/COMMENT&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;-FILE/COMMENT&quot;</span><span class="p">)]:</span>
+          <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;ReleaseVersion&quot;</span><span class="p">:</span>
+            <span class="n">version</span>    <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="n">pathToMove</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">publicDir</span><span class="si">}</span><span class="s2">/Coor/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">):</span>
+              <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">pathToMove</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></div>
+    
+  
+<div class="viewcode-block" id="FileHandler.movePboFileToBucket"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler.movePboFileToBucket">[docs]</a>  <span class="k">def</span> <span class="nf">movePboFileToBucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">pboFile</span><span class="p">,</span><span class="n">bucketDir</span><span class="p">,</span><span class="n">filetype</span><span class="p">,</span><span class="n">version</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Move a pbo file to the bucket directory, according to {bucketDir}/TS/{version}/{pboFile}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pboFile   : str</span>
+<span class="sd">      The pbo file to move</span>
+<span class="sd">    bucketDir : str</span>
+<span class="sd">      The bucket directory of the correspondent provider</span>
+<span class="sd">    fileType  : str</span>
+<span class="sd">      The type of the file (TS or VEL)</span>
+<span class="sd">    version   : str</span>
+<span class="sd">      The release number</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">pathToMove</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bucketDir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">filetype</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">)</span>
+      <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">pboFile</span><span class="p">,</span><span class="n">pathToMove</span><span class="p">)</span>
+      <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">pboFile</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="FileHandler.moveSolutionToPublic"><a class="viewcode-back" href="../../src.html#src.fileHandler.FileHandler.moveSolutionToPublic">[docs]</a>  <span class="k">def</span> <span class="nf">moveSolutionToPublic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">solutionDir</span><span class="p">,</span><span class="n">publicDir</span><span class="p">,</span><span class="n">filetype</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Move a solution directory to the public directory, according to {publicDir}/{filetype}/{solutionDir}.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    solutionDir : str</span>
+<span class="sd">      The solution directory to move</span>
+<span class="sd">    publicDir   : str</span>
+<span class="sd">      The public directory of the correspondent provider</span>
+<span class="sd">    fileType    : str</span>
+<span class="sd">      The type of the file (TS or VEL)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span> <span class="c1">#TODO</span>
+      <span class="n">pathToMove</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">publicDir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">filetype</span><span class="si">}</span><span class="s2">&quot;</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">,</span><span class="n">solutionDir</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">,</span><span class="n">solutionDir</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+      <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">solutionDir</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">solutionDir</span><span class="p">,</span><span class="n">file</span><span class="p">),</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathToMove</span><span class="p">,</span><span class="n">solutionDir</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">solutionDir</span><span class="p">,</span><span class="n">file</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;arropz&#39;</span><span class="p">)</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">arroz</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, arroz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

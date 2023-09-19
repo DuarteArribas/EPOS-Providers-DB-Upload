@@ -1,0 +1,914 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>src.databaseUpload &#8212; arroz  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.databaseUpload</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">src.utils.constants</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">src.utils.logs</span>      <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">src.uploadError</span>     <span class="kn">import</span> <span class="o">*</span>
+
+<div class="viewcode-block" id="DatabaseUpload"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload">[docs]</a><span class="k">class</span> <span class="nc">DatabaseUpload</span><span class="p">:</span>
+<span class="w">  </span><span class="sd">&quot;&quot;&quot;Upload data to the database.&quot;&quot;&quot;</span>
+  
+  <span class="c1"># == Class variables ==</span>
+  <span class="n">ESTIMATED_COORDINATES_TEMP</span>         <span class="o">=</span> <span class="s2">&quot;estimatedCoordinatesTemp.csv&quot;</span>
+  <span class="n">REFERENCE_POSITION_VELOCITIES_TEMP</span> <span class="o">=</span> <span class="s2">&quot;referencePositionVelocitiesTemp.csv&quot;</span>
+  
+  <span class="c1"># == Methods ==</span>
+  <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">conn</span><span class="p">,</span><span class="n">cursor</span><span class="p">,</span><span class="n">logger</span><span class="p">,</span><span class="n">cfg</span><span class="p">,</span><span class="n">tmp</span><span class="p">,</span><span class="n">fileHandler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize needed variables for a database upload.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    conn   : Connection</span>
+<span class="sd">      A connection object to the database</span>
+<span class="sd">    cursor : Cursor</span>
+<span class="sd">      A cursor object to the database</span>
+<span class="sd">    logger : Logs</span>
+<span class="sd">      A logging object to which logs can be written</span>
+<span class="sd">    cfg    : Config</span>
+<span class="sd">      A configuration object to which configuration parameters can be read</span>
+<span class="sd">    tmp    : str</span>
+<span class="sd">      A directory to which temporary files used for bulk database insertion (optimization) will be saved to</span>
+<span class="sd">    fileHandler : FileHandler</span>
+<span class="sd">      A file handler object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">conn</span>   <span class="o">=</span> <span class="n">conn</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span> <span class="o">=</span> <span class="n">cursor</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>    <span class="o">=</span> <span class="n">cfg</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span> <span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="k">if</span> <span class="n">tmp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span> <span class="k">else</span> <span class="n">tmp</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">):</span>
+      <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fileHandler</span> <span class="o">=</span> <span class="n">fileHandler</span>
+  
+<div class="viewcode-block" id="DatabaseUpload.uploadAllProviderTS"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.uploadAllProviderTS">[docs]</a>  <span class="k">def</span> <span class="nf">uploadAllProviderTS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">provBucketDir</span><span class="p">,</span><span class="n">publicDir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upload all timeseries files from a provider bucket directory to the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    provBucketDir : str</span>
+<span class="sd">      The path to the provider bucket directory</span>
+<span class="sd">    publicDir     : str</span>
+<span class="sd">      The path to the provider&#39;s public directory</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    UploadError</span>
+<span class="sd">      If the upload was unsuccessful</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;START TRANSACTION;&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">ac</span>       <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">)</span>
+      <span class="n">dataType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getUploadConfig</span><span class="p">(</span><span class="s2">&quot;TS_DATATYPE&quot;</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">filetype</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filetype</span> <span class="o">==</span> <span class="s2">&quot;TS&quot;</span><span class="p">:</span>
+          <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">,</span><span class="n">filetype</span><span class="p">)):</span>
+            <span class="n">currDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">,</span><span class="n">filetype</span><span class="p">),</span><span class="n">version</span><span class="p">)</span>
+            <span class="n">allTSFiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getListOfTSFiles</span><span class="p">(</span><span class="n">currDir</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">allTSFiles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+              <span class="k">break</span>
+            <span class="n">isUpdate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlePreviousSolution</span><span class="p">(</span>
+              <span class="n">ac</span><span class="p">,</span>
+              <span class="n">dataType</span><span class="p">,</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getUploadConfig</span><span class="p">(</span><span class="s2">&quot;TS_DATATYPE&quot;</span><span class="p">),</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getUploadConfig</span><span class="p">(</span><span class="s2">&quot;VEL_DATATYPE&quot;</span><span class="p">),</span>
+              <span class="n">version</span> 
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">isUpdate</span><span class="p">:</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">uploadSolution</span><span class="p">(</span><span class="n">dataType</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">getSolutionParametersTS</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">currDir</span><span class="p">,</span><span class="n">allTSFiles</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+              <span class="n">currentSolutionID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkSolutionAlreadyInDB</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+              <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">allTSFiles</span><span class="p">:</span>
+                <span class="n">currFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">currDir</span><span class="p">,</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">timeseriesFileID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uploadTimeseriesFile</span><span class="p">(</span>
+                  <span class="n">currFile</span><span class="p">,</span>
+                  <span class="bp">self</span><span class="o">.</span><span class="n">getPBOFormatVersion</span><span class="p">(</span><span class="n">currFile</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">saveEstimatedCoordinatesToFile</span><span class="p">(</span>
+                  <span class="n">currFile</span><span class="p">,</span>
+                  <span class="n">currentSolutionID</span><span class="p">,</span>
+                  <span class="n">timeseriesFileID</span>
+                <span class="p">)</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">uploadEstimatedCoordinates</span><span class="p">()</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">eraseEstimatedCoordinatesTmpFile</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+              <span class="n">previousFiles</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">publicDir</span><span class="si">}</span><span class="s2">/TS/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+              <span class="n">newFiles</span>      <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">allTSFiles</span> <span class="k">if</span> <span class="n">file</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">previousFiles</span><span class="p">]</span>
+              <span class="n">updatedFiles</span>  <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">allTSFiles</span> <span class="k">if</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">previousFiles</span><span class="p">]</span>
+              <span class="n">currentSolutionID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkSolutionAlreadyInDB</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+              <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">newFiles</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">newFiles</span><span class="p">:</span>
+                  <span class="n">currFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">currDir</span><span class="p">,</span><span class="n">file</span><span class="p">)</span>
+                  <span class="n">timeseriesFileID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uploadTimeseriesFile</span><span class="p">(</span>
+                    <span class="n">currFile</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">getPBOFormatVersion</span><span class="p">(</span><span class="n">currFile</span><span class="p">)</span>
+                  <span class="p">)</span>
+                  <span class="bp">self</span><span class="o">.</span><span class="n">saveEstimatedCoordinatesToFile</span><span class="p">(</span>
+                    <span class="n">currFile</span><span class="p">,</span>
+                    <span class="n">currentSolutionID</span><span class="p">,</span>
+                    <span class="n">timeseriesFileID</span>
+                  <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uploadEstimatedCoordinates</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">eraseEstimatedCoordinatesTmpFile</span><span class="p">()</span>
+              <span class="c1"># handle updated files</span>
+              <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">updatedFiles</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">publicDir</span><span class="si">}</span><span class="s2">/TS/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                  <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">provBucketDir</span><span class="si">}</span><span class="s2">/TS/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f2</span><span class="p">:</span>
+                    <span class="n">oldLines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                    <span class="n">newLines</span> <span class="o">=</span> <span class="n">f2</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                    <span class="n">updatedLines</span><span class="p">,</span><span class="n">newDifferentLines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getUpdatedLines</span><span class="p">(</span>
+                      <span class="n">oldLines</span><span class="p">,</span>
+                      <span class="n">newLines</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">updatedLines</span><span class="p">:</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">updateEstimatedCoordinates</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT TRANSACTION;&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fileHandler</span><span class="o">.</span><span class="n">moveSolutionToPublic</span><span class="p">(</span><span class="n">currDir</span><span class="p">,</span><span class="n">publicDir</span><span class="p">,</span><span class="s2">&quot;TS&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">UploadError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK TRANSACTION&quot;</span><span class="p">)</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.getListOfTSFiles"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.getListOfTSFiles">[docs]</a>  <span class="k">def</span> <span class="nf">getListOfTSFiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">bucketDir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a list of all timeseries files in a directory.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bucketDir : str</span>
+<span class="sd">      The bucket directory to search for timeseries files</span>
+<span class="sd">      </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list of all timeseries files in the directory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">bucketDir</span><span class="p">)</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.pos&quot;</span><span class="p">]</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.handlePreviousSolution"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.handlePreviousSolution">[docs]</a>  <span class="k">def</span> <span class="nf">handlePreviousSolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">,</span><span class="n">tsDatatype</span><span class="p">,</span><span class="n">velDatatype</span><span class="p">,</span><span class="n">version</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its associated timeseries files and estimated coordinates.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ac          : str</span>
+<span class="sd">      The analysis centre acronym</span>
+<span class="sd">    dataType    : str</span>
+<span class="sd">      The data type of the solution (timeseries or velocity)</span>
+<span class="sd">    tsDatatype  : str</span>
+<span class="sd">      The timeseries data type</span>
+<span class="sd">    velDatatype : str</span>
+<span class="sd">      The velocity data type</span>
+<span class="sd">    version     : str</span>
+<span class="sd">      The release version of the solution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">solutionIDInDB</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkSolutionAlreadyInDB</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dataType</span> <span class="o">==</span> <span class="n">tsDatatype</span><span class="p">:</span>
+      <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">solutionIDInDB</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">solutionID</span> <span class="ow">in</span> <span class="n">solutionIDInDB</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">version</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getVersionFromSolution</span><span class="p">(</span><span class="n">solutionID</span><span class="p">):</span>
+            <span class="n">timeseriesFilesIDInDB</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getTimeseriesFilesID</span><span class="p">(</span><span class="n">solutionID</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">timeseriesFileID</span> <span class="ow">in</span> <span class="n">timeseriesFilesIDInDB</span><span class="p">:</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">_erasePreviousTimeseriesFilesFromDB</span><span class="p">(</span><span class="n">timeseriesFileID</span><span class="p">)</span>  
+            <span class="bp">self</span><span class="o">.</span><span class="n">_erasePreviousSolutionFromDB</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">)</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">solutionIDInDB</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">solutionID</span> <span class="ow">in</span> <span class="n">solutionIDInDB</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">dataType</span> <span class="o">==</span> <span class="n">tsDatatype</span><span class="p">:</span>
+            <span class="n">timeseriesFilesIDInDB</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getTimeseriesFilesID</span><span class="p">(</span><span class="n">solutionID</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">timeseriesFileID</span> <span class="ow">in</span> <span class="n">timeseriesFilesIDInDB</span><span class="p">:</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">_erasePreviousTimeseriesFilesFromDB</span><span class="p">(</span><span class="n">timeseriesFileID</span><span class="p">)</span>
+          <span class="k">elif</span> <span class="n">dataType</span> <span class="o">==</span> <span class="n">velDatatype</span><span class="p">:</span>
+            <span class="n">velocityFilesInDB</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getVelocityFilesID</span><span class="p">(</span><span class="n">solutionID</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">velocityFileID</span> <span class="ow">in</span> <span class="n">velocityFilesInDB</span><span class="p">:</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">_erasePreviousVelocityFilesFromDB</span><span class="p">(</span><span class="n">velocityFileID</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_erasePreviousSolutionFromDB</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.checkSolutionAlreadyInDB"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.checkSolutionAlreadyInDB">[docs]</a>  <span class="k">def</span> <span class="nf">checkSolutionAlreadyInDB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a solution is already in the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ac       : str</span>
+<span class="sd">      The analysis centre acronym</span>
+<span class="sd">    dataType : str</span>
+<span class="sd">      The data type of the solution (timeseries or velocity)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list of solution IDs if the solution is already in the database or an empty list otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id FROM solution WHERE ac_acronym = </span><span class="si">%s</span><span class="s2"> AND data_type = </span><span class="si">%s</span><span class="s2">;&quot;</span><span class="p">,(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()]</span></div>
+
+<div class="viewcode-block" id="DatabaseUpload.getVersionFromSolution"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.getVersionFromSolution">[docs]</a>  <span class="k">def</span> <span class="nf">getVersionFromSolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">solutionID</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT release_version FROM solution WHERE id = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,(</span><span class="n">solutionID</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()][</span><span class="mi">0</span><span class="p">]</span></div>
+  
+  <span class="k">def</span> <span class="nf">_erasePreviousSolutionFromDB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Erase a previous solution from the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ac       : str</span>
+<span class="sd">      The analysis centre acronym</span>
+<span class="sd">    dataType : str</span>
+<span class="sd">      The data type of the solution (timeseries or velocity)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM solution WHERE ac_acronym = </span><span class="si">%s</span><span class="s2"> AND data_type = </span><span class="si">%s</span><span class="s2">;&quot;</span><span class="p">,(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">))</span>
+  
+  <span class="k">def</span> <span class="nf">_getTimeseriesFilesID</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">solutionID</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the timeseries files ID from the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    solutionID : int</span>
+<span class="sd">      The solution ID</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list of timeseries files IDs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id_timeseries_files FROM estimated_coordinates WHERE id_solution = </span><span class="si">%s</span><span class="s2"> GROUP BY id_timeseries_files;&quot;</span><span class="p">,(</span><span class="n">solutionID</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()]</span>
+  
+  <span class="k">def</span> <span class="nf">_erasePreviousTimeseriesFilesFromDB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">timeseriesFilesID</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Erase a previous timeseries file from the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    timeseriesFilesID : int</span>
+<span class="sd">      The timeseries files ID to remove</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM timeseries_files WHERE id = </span><span class="si">%s</span><span class="s2">;&quot;</span><span class="p">,(</span><span class="n">timeseriesFilesID</span><span class="p">,))</span>
+  
+<div class="viewcode-block" id="DatabaseUpload.uploadSolution"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.uploadSolution">[docs]</a>  <span class="k">def</span> <span class="nf">uploadSolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dataType</span><span class="p">,</span><span class="n">solutionParameters</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upload a solution to the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataType           : str</span>
+<span class="sd">      The data type of the solution (timeseries or velocity)</span>
+<span class="sd">    solutionParameters : dict</span>
+<span class="sd">      The solution parameters</span>
+<span class="sd">        </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    UploadError</span>
+<span class="sd">      If the solution could not be uploaded to the database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        INSERT INTO solution(</span>
+<span class="s2">          creation_date,</span>
+<span class="s2">          release_version,</span>
+<span class="s2">          data_type,</span>
+<span class="s2">          sampling_period,</span>
+<span class="s2">          software,</span>
+<span class="s2">          doi,</span>
+<span class="s2">          processing_parameters_url,</span>
+<span class="s2">          ac_acronym,</span>
+<span class="s2">          reference_frame</span>
+<span class="s2">        )</span>
+<span class="s2">        VALUES(</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;creation_date&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;release_version&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">dataType</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;sampling_period&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;software&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;doi&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;processing_parameters_url&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;ac_acronym&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;reference_frame&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;</span>
+<span class="s2">        );</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+      <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not upload solution to database. Error: </span><span class="si">{</span><span class="n">UploadError</span><span class="o">.</span><span class="n">formatError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.getSolutionParametersTS"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.getSolutionParametersTS">[docs]</a>  <span class="k">def</span> <span class="nf">getSolutionParametersTS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">posFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the solution parameters from a POS file.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    posFile : str</span>
+<span class="sd">      The path to the POS file</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">      The solution parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">posFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+      <span class="n">solutionParameters</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;reference_frame&quot;</span> <span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+      <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;%Begin EPOS metadata&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%E</span><span class="s2">nd EPOS metadata&quot;</span><span class="p">)]:</span>
+        <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;AnalysisCentre&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;ac_acronym&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Software&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;software&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Method-url&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;processing_parameters_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;DOI&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;doi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;CreationDate&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;creation_date&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;creation_date&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;creation_date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;ReleaseVersion&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;release_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;SamplingPeriod&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;sampling_period&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+      <span class="k">return</span> <span class="n">solutionParameters</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.uploadTimeseriesFile"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.uploadTimeseriesFile">[docs]</a>  <span class="k">def</span> <span class="nf">uploadTimeseriesFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">posFile</span><span class="p">,</span><span class="n">posFormatVersion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upload a time series file to the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    posFile           : str</span>
+<span class="sd">      The path to the time series file on the bucket directory</span>
+<span class="sd">    posFormatVersion  : str</span>
+<span class="sd">      The version of the POS format used</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    UploadError</span>
+<span class="sd">      If the time series file could not be uploaded to the database</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list, containing the ID of the uploaded time series file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        INSERT INTO timeseries_files(</span>
+<span class="s2">          url,</span>
+<span class="s2">          version,</span>
+<span class="s2">          file_type</span>
+<span class="s2">        )</span>
+<span class="s2">        VALUES(</span>
+<span class="s2">          &#39;public/</span><span class="si">{</span><span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">posFile</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">4</span><span class="p">:])</span><span class="si">}</span><span class="s2">&#39;, </span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">posFormatVersion</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;pos&#39;</span>
+<span class="s2">        )</span>
+<span class="s2">        RETURNING id;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+      <span class="p">)</span>
+      <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not upload time series file to database. Error: </span><span class="si">{</span><span class="n">UploadError</span><span class="o">.</span><span class="n">formatError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.getPBOFormatVersion"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.getPBOFormatVersion">[docs]</a>  <span class="k">def</span> <span class="nf">getPBOFormatVersion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">pboFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the version of the PBO format used. (e.g. 1.1.1)</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pboFile : str</span>
+<span class="sd">      The path to the PBO file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pboFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+      <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Format Version&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">value</span></div>
+            
+<div class="viewcode-block" id="DatabaseUpload.saveEstimatedCoordinatesToFile"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.saveEstimatedCoordinatesToFile">[docs]</a>  <span class="k">def</span> <span class="nf">saveEstimatedCoordinatesToFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">posFile</span><span class="p">,</span><span class="n">idSolution</span><span class="p">,</span><span class="n">idTimeseriesFiles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save the estimated coordinates to a temporary file for bulk upload.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    posFile           : str</span>
+<span class="sd">      The path to the POS file</span>
+<span class="sd">    idSolution        : int</span>
+<span class="sd">      The ID of the solution</span>
+<span class="sd">    idTimeseriesFiles : int</span>
+<span class="sd">      The ID of the time series file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">posFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+      <span class="n">stationName</span> <span class="o">=</span> <span class="kc">None</span>
+      <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;%Begin EPOS metadata&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%E</span><span class="s2">nd EPOS metadata&quot;</span><span class="p">)]:</span>
+        <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;9-character ID&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">stationName</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+      <span class="n">station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getStationID</span><span class="p">(</span><span class="n">stationName</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]:</span>
+          <span class="k">case</span> <span class="p">[</span><span class="n">YYYYMMDD</span><span class="p">,</span><span class="n">HHMMSS</span><span class="p">,</span><span class="n">JJJJJ_JJJJ</span><span class="p">,</span><span class="n">X</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="n">Z</span><span class="p">,</span><span class="n">Sx</span><span class="p">,</span><span class="n">Sy</span><span class="p">,</span><span class="n">Sz</span><span class="p">,</span><span class="n">Rxy</span><span class="p">,</span><span class="n">Rxz</span><span class="p">,</span><span class="n">Ryz</span><span class="p">,</span><span class="n">NLat</span><span class="p">,</span><span class="n">Elong</span><span class="p">,</span><span class="n">Height</span><span class="p">,</span><span class="n">dN</span><span class="p">,</span><span class="n">dE</span><span class="p">,</span><span class="n">dU</span><span class="p">,</span><span class="n">Sn</span><span class="p">,</span><span class="n">Se</span><span class="p">,</span><span class="n">Su</span><span class="p">,</span><span class="n">Rne</span><span class="p">,</span><span class="n">Rnu</span><span class="p">,</span><span class="n">Reu</span><span class="p">,</span><span class="n">Soln</span><span class="p">]</span> <span class="k">if</span> <span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;*&quot;</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="n">DatabaseUpload</span><span class="o">.</span><span class="n">ESTIMATED_COORDINATES_TEMP</span><span class="p">),</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+              <span class="n">tmp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">station</span><span class="p">)</span>                           <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>                                 <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>                                 <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>                                 <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Sx</span><span class="p">)</span>                                <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Sy</span><span class="p">)</span>                                <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Sz</span><span class="p">)</span>                                <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Rxy</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Rxz</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Ryz</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">Soln</span> <span class="o">==</span> <span class="s2">&quot;outlier&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>     <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_formatDate</span><span class="p">(</span><span class="n">YYYYMMDD</span><span class="p">,</span><span class="n">HHMMSS</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Soln</span><span class="p">)</span>                              <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">idSolution</span><span class="p">)</span>                        <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">idTimeseriesFiles</span><span class="p">)</span>                 <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>      
+              <span class="p">)</span></div>
+  
+  <span class="k">def</span> <span class="nf">_getStationID</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">stationName</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the ID of a station.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    stationName : str</span>
+<span class="sd">      The long marker name of the station</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">      The ID of the correspondent station</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id FROM station WHERE marker = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,(</span><span class="n">stationName</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()][</span><span class="mi">0</span><span class="p">]</span>
+  
+  <span class="k">def</span> <span class="nf">_formatDate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">YYYYMMDD</span><span class="p">,</span><span class="n">HHMMSS</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a date in the format YYYYMMDD HHMMSS to YYYY-MM-DD HH:MM:SS.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    YYYYMMDD  : str</span>
+<span class="sd">      The date in the format YYYYMMDD</span>
+<span class="sd">    HHMMSS    : str</span>
+<span class="sd">      The time in the format HHMMSS</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">      The date in the format YYYY-MM-DD HH:MM:SS </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">HHMMSS</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">HHMMSS</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">HHMMSS</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+  
+<div class="viewcode-block" id="DatabaseUpload.uploadEstimatedCoordinates"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.uploadEstimatedCoordinates">[docs]</a>  <span class="k">def</span> <span class="nf">uploadEstimatedCoordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bulk upload the estimated coordinates from the temporary file to the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    UploadError</span>
+<span class="sd">      If the estimated coordinates could not be uploaded to the database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="n">DatabaseUpload</span><span class="o">.</span><span class="n">ESTIMATED_COORDINATES_TEMP</span><span class="p">),</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvFile</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">copy_expert</span><span class="p">(</span>
+          <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">          COPY estimated_coordinates(</span>
+<span class="s2">            id_station,</span>
+<span class="s2">            x,</span>
+<span class="s2">            y,</span>
+<span class="s2">            z,</span>
+<span class="s2">            var_xx,</span>
+<span class="s2">            var_yy,</span>
+<span class="s2">            var_zz,</span>
+<span class="s2">            var_xy,</span>
+<span class="s2">            var_xz,</span>
+<span class="s2">            var_yz,</span>
+<span class="s2">            outlier,</span>
+<span class="s2">            epoch,</span>
+<span class="s2">            sol_type,</span>
+<span class="s2">            id_solution,</span>
+<span class="s2">            id_timeseries_files</span>
+<span class="s2">          )</span>
+<span class="s2">          FROM STDIN</span>
+<span class="s2">          WITH (FORMAT CSV,HEADER FALSE);</span>
+<span class="s2">          &quot;&quot;&quot;</span><span class="p">,</span>
+          <span class="n">csvFile</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not upload estimated coordinates to database. Error: </span><span class="si">{</span><span class="n">UploadError</span><span class="o">.</span><span class="n">formatError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.eraseEstimatedCoordinatesTmpFile"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.eraseEstimatedCoordinatesTmpFile">[docs]</a>  <span class="k">def</span> <span class="nf">eraseEstimatedCoordinatesTmpFile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Erase the temporary file containing the previous estimated coordinates.&quot;&quot;&quot;</span>
+    <span class="n">tempPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="n">DatabaseUpload</span><span class="o">.</span><span class="n">ESTIMATED_COORDINATES_TEMP</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">tempPath</span><span class="p">):</span>
+      <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tempPath</span><span class="p">)</span></div>
+  
+  <span class="k">def</span> <span class="nf">_getUpdatedLines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">oldLines</span><span class="p">,</span><span class="n">newLines</span><span class="p">):</span>
+    <span class="n">oldLines</span>     <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">oldLines</span><span class="p">]</span>
+    <span class="n">newLines</span>     <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">newLines</span><span class="p">]</span>
+    <span class="n">updatedLines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">oldLines</span><span class="p">:</span>
+      <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]:</span>
+        <span class="k">case</span> <span class="p">[</span><span class="n">YYYYMMDD</span><span class="p">,</span><span class="n">HHMMSS</span><span class="p">,</span><span class="n">JJJJJ_JJJJ</span><span class="p">,</span><span class="n">X</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="n">Z</span><span class="p">,</span><span class="n">Sx</span><span class="p">,</span><span class="n">Sy</span><span class="p">,</span><span class="n">Sz</span><span class="p">,</span><span class="n">Rxy</span><span class="p">,</span><span class="n">Rxz</span><span class="p">,</span><span class="n">Ryz</span><span class="p">,</span><span class="n">NLat</span><span class="p">,</span><span class="n">Elong</span><span class="p">,</span><span class="n">Height</span><span class="p">,</span><span class="n">dN</span><span class="p">,</span><span class="n">dE</span><span class="p">,</span><span class="n">dU</span><span class="p">,</span><span class="n">Sn</span><span class="p">,</span><span class="n">Se</span><span class="p">,</span><span class="n">Su</span><span class="p">,</span><span class="n">Rne</span><span class="p">,</span><span class="n">Rnu</span><span class="p">,</span><span class="n">Reu</span><span class="p">,</span><span class="n">Soln</span><span class="p">]</span> <span class="k">if</span> <span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;*&quot;</span><span class="p">:</span>
+          <span class="k">for</span> <span class="n">line2</span> <span class="ow">in</span> <span class="n">newLines</span><span class="p">:</span>
+            <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line2</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]:</span>
+              <span class="k">case</span> <span class="p">[</span><span class="n">YYYYMMDD2</span><span class="p">,</span><span class="n">HHMMSS2</span><span class="p">,</span><span class="n">JJJJJ_JJJJ2</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">Y2</span><span class="p">,</span><span class="n">Z2</span><span class="p">,</span><span class="n">Sx2</span><span class="p">,</span><span class="n">Sy2</span><span class="p">,</span><span class="n">Sz2</span><span class="p">,</span><span class="n">Rxy2</span><span class="p">,</span><span class="n">Rxz2</span><span class="p">,</span><span class="n">Ryz2</span><span class="p">,</span><span class="n">NLat2</span><span class="p">,</span><span class="n">Elong2</span><span class="p">,</span><span class="n">Height2</span><span class="p">,</span><span class="n">dN2</span><span class="p">,</span><span class="n">dE2</span><span class="p">,</span><span class="n">dU2</span><span class="p">,</span><span class="n">Sn2</span><span class="p">,</span><span class="n">Se2</span><span class="p">,</span><span class="n">Su2</span><span class="p">,</span><span class="n">Rne2</span><span class="p">,</span><span class="n">Rnu2</span><span class="p">,</span><span class="n">Reu2</span><span class="p">,</span><span class="n">Soln2</span><span class="p">]</span> <span class="k">if</span> <span class="n">YYYYMMDD2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;*&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">YYYYMMDD</span> <span class="o">==</span> <span class="n">YYYYMMDD2</span> <span class="ow">and</span> <span class="n">HHMMSS</span> <span class="o">==</span> <span class="n">HHMMSS2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                  <span class="n">JJJJJ_JJJJ</span> <span class="o">!=</span> <span class="n">JJJJJ_JJJJ2</span> <span class="ow">or</span> <span class="n">X</span> <span class="o">!=</span> <span class="n">X2</span> <span class="ow">or</span> <span class="n">Y</span> <span class="o">!=</span> <span class="n">Y2</span> <span class="ow">or</span> <span class="n">Z</span> <span class="o">!=</span> <span class="n">Z2</span> <span class="ow">or</span> <span class="n">Sx</span> <span class="o">!=</span> <span class="n">Sx2</span> <span class="ow">or</span> <span class="n">Sy</span> <span class="o">!=</span> <span class="n">Sy2</span> <span class="ow">or</span> <span class="n">Sz</span> <span class="o">!=</span> <span class="n">Sz2</span> <span class="ow">or</span> <span class="n">Rxy</span> <span class="o">!=</span> <span class="n">Rxy2</span> <span class="ow">or</span> <span class="n">Rxz</span> <span class="o">!=</span> <span class="n">Rxz2</span> <span class="ow">or</span> <span class="n">Ryz</span> <span class="o">!=</span> <span class="n">Ryz2</span> <span class="ow">or</span> <span class="n">NLat</span> <span class="o">!=</span> <span class="n">NLat2</span> <span class="ow">or</span> <span class="n">Elong</span> <span class="o">!=</span> <span class="n">Elong2</span> <span class="ow">or</span> <span class="n">Height</span> <span class="o">!=</span> <span class="n">Height2</span> <span class="ow">or</span> <span class="n">dN</span> <span class="o">!=</span> <span class="n">dN2</span> <span class="ow">or</span> <span class="n">dE</span> <span class="o">!=</span> <span class="n">dE2</span> <span class="ow">or</span> <span class="n">dU</span> <span class="o">!=</span> <span class="n">dU2</span> <span class="ow">or</span> <span class="n">Sn</span> <span class="o">!=</span> <span class="n">Sn2</span> <span class="ow">or</span> <span class="n">Se</span> <span class="o">!=</span> <span class="n">Se2</span> <span class="ow">or</span> <span class="n">Su</span> <span class="o">!=</span> <span class="n">Su2</span> <span class="ow">or</span> <span class="n">Rne</span> <span class="o">!=</span> <span class="n">Rne2</span> <span class="ow">or</span> <span class="n">Rnu</span> <span class="o">!=</span> <span class="n">Rnu2</span> <span class="ow">or</span> <span class="n">Reu</span> <span class="o">!=</span> <span class="n">Reu2</span> <span class="ow">or</span> <span class="n">Soln</span> <span class="o">!=</span> <span class="n">Soln2</span>
+                <span class="p">):</span>
+                  <span class="n">updatedLines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">updatedLines</span>
+  
+  
+<div class="viewcode-block" id="DatabaseUpload.updateEstimatedCoordinates"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.updateEstimatedCoordinates">[docs]</a>  <span class="k">def</span> <span class="nf">updateEstimatedCoordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">line</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bulk upload the estimated coordinates from the temporary file to the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    UploadError</span>
+<span class="sd">      If the estimated coordinates could not be uploaded to the database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+      <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_formatDate</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        UPDATE estimated_coordinates</span>
+<span class="s2">        SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s</span>
+<span class="s2">        WHERE epoch = %s;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">9</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span><span class="mi">1</span> <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;outlier&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span><span class="n">line</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">_formatDate</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+      <span class="p">)</span> 
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;arroz&quot;</span><span class="p">)</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not upload estimated coordinates to database. Error: </span><span class="si">{</span><span class="n">UploadError</span><span class="o">.</span><span class="n">formatError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+    
+  
+<div class="viewcode-block" id="DatabaseUpload.uploadAllProviderVel"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.uploadAllProviderVel">[docs]</a>  <span class="k">def</span> <span class="nf">uploadAllProviderVel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">provBucketDir</span><span class="p">,</span><span class="n">publicDir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upload all velocity files from a provider bucket directory to the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    provBucketDir : str</span>
+<span class="sd">      The path to the provider bucket directory</span>
+<span class="sd">    publicDir     : str</span>
+<span class="sd">      The path to the provider&#39;s public directory</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    UploadError</span>
+<span class="sd">      If the upload was unsuccessful</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;START TRANSACTION;&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">ac</span>       <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">)</span>
+      <span class="n">dataType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getUploadConfig</span><span class="p">(</span><span class="s2">&quot;VEL_DATATYPE&quot;</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">filetype</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filetype</span> <span class="o">==</span> <span class="s2">&quot;Vel&quot;</span><span class="p">:</span>
+          <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">,</span><span class="n">filetype</span><span class="p">)):</span>
+            <span class="n">currDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">provBucketDir</span><span class="p">,</span><span class="n">filetype</span><span class="p">),</span><span class="n">version</span><span class="p">)</span>
+            <span class="n">allVelFiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getListOfVelFiles</span><span class="p">(</span><span class="n">currDir</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">allVelFiles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+              <span class="k">break</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handlePreviousSolution</span><span class="p">(</span>
+              <span class="n">ac</span><span class="p">,</span>
+              <span class="n">dataType</span><span class="p">,</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getUploadConfig</span><span class="p">(</span><span class="s2">&quot;TS_DATATYPE&quot;</span><span class="p">),</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getUploadConfig</span><span class="p">(</span><span class="s2">&quot;VEL_DATATYPE&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uploadSolution</span><span class="p">(</span><span class="n">dataType</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">getSolutionParametersVel</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">currDir</span><span class="p">,</span><span class="n">allVelFiles</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+            <span class="n">currentSolutionID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkSolutionAlreadyInDB</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span><span class="n">dataType</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">allVelFiles</span><span class="p">:</span>
+              <span class="n">currFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">currDir</span><span class="p">,</span><span class="n">file</span><span class="p">)</span>
+              <span class="n">velocityFileID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uploadVelocityFile</span><span class="p">(</span>
+                <span class="n">currFile</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">getPBOFormatVersion</span><span class="p">(</span><span class="n">currFile</span><span class="p">)</span>
+              <span class="p">)</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">saveReferencePositionVelocitiesToFile</span><span class="p">(</span>
+                <span class="n">currFile</span><span class="p">,</span>
+                <span class="n">currentSolutionID</span><span class="p">,</span>
+                <span class="n">velocityFileID</span>
+              <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uploadReferencePositionVelocities</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eraseReferencePositionVelocitiesTmpFile</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT TRANSACTION;&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fileHandler</span><span class="o">.</span><span class="n">moveSolutionToPublic</span><span class="p">(</span><span class="n">currDir</span><span class="p">,</span><span class="n">publicDir</span><span class="p">,</span><span class="s2">&quot;Vel&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">UploadError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK TRANSACTION&quot;</span><span class="p">)</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.getListOfVelFiles"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.getListOfVelFiles">[docs]</a>  <span class="k">def</span> <span class="nf">getListOfVelFiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">bucketDir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a list of all velocity files in a directory.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bucketDir : str</span>
+<span class="sd">      The bucket directory to search for velocity files</span>
+<span class="sd">      </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list of all velocity files in the directory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">bucketDir</span><span class="p">)</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.vel&quot;</span><span class="p">]</span></div>
+  
+  <span class="k">def</span> <span class="nf">_getVelocityFilesID</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">solutionID</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the velocity files ID from the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    solutionID : int</span>
+<span class="sd">      The solution ID</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list of velocity files IDs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id_velocities_files FROM reference_position_velocities WHERE id_solution = </span><span class="si">%s</span><span class="s2"> GROUP BY id_velocities_files;&quot;</span><span class="p">,(</span><span class="n">solutionID</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()]</span>
+  
+  <span class="k">def</span> <span class="nf">_erasePreviousVelocityFilesFromDB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velocityFilesID</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Erase a previous velocity file from the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velocityFilesID : int</span>
+<span class="sd">      The velocity files ID to remove</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM velocities_files WHERE id = </span><span class="si">%s</span><span class="s2">;&quot;</span><span class="p">,(</span><span class="n">velocityFilesID</span><span class="p">,))</span>
+  
+<div class="viewcode-block" id="DatabaseUpload.getSolutionParametersVel"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.getSolutionParametersVel">[docs]</a>  <span class="k">def</span> <span class="nf">getSolutionParametersVel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the solution parameters from a Vel file.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile : str</span>
+<span class="sd">      The path to the Vel file</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">      The solution parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+      <span class="n">solutionParameters</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;reference_frame&quot;</span> <span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+      <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;creation_date&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;2011-01-01 00:00:00&quot;</span> <span class="c1">#TODO: Change this</span>
+      <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;%Begin EPOS metadata&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%E</span><span class="s2">nd EPOS metadata&quot;</span><span class="p">)]:</span>
+        <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;AnalysisCentre&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;ac_acronym&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Software&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;software&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Method-url&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;processing_parameters_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;DOI&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;doi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;ReleaseVersion&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;release_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+          <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;SamplingPeriod&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">solutionParameters</span><span class="p">[</span><span class="s2">&quot;sampling_period&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+      <span class="k">return</span> <span class="n">solutionParameters</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.uploadVelocityFile"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.uploadVelocityFile">[docs]</a>  <span class="k">def</span> <span class="nf">uploadVelocityFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFormatVersion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upload a velocity file to the database.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        INSERT INTO velocities_files(</span>
+<span class="s2">          url,</span>
+<span class="s2">          epoch,</span>
+<span class="s2">          version,</span>
+<span class="s2">          file_type,</span>
+<span class="s2">          data_type</span>
+<span class="s2">        )</span>
+<span class="s2">        VALUES(</span>
+<span class="s2">          &#39;public/</span><span class="si">{</span><span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">velFile</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">4</span><span class="p">:])</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;2011-01-01 00:00:00&#39;,</span>
+<span class="s2">          &#39;</span><span class="si">{</span><span class="n">velFormatVersion</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">          &#39;vel&#39;,</span>
+<span class="s2">          &#39;velocities&#39;</span>
+<span class="s2">        )</span>
+<span class="s2">        RETURNING id;</span>
+<span class="s2">        &quot;&quot;&quot;</span> <span class="c1">#TODO: Mudar epoch aqui!!!!!!!!!!!!</span>
+      <span class="p">)</span>
+      <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not upload velocity file to database. Error: </span><span class="si">{</span><span class="n">UploadError</span><span class="o">.</span><span class="n">formatError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.saveReferencePositionVelocitiesToFile"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.saveReferencePositionVelocitiesToFile">[docs]</a>  <span class="k">def</span> <span class="nf">saveReferencePositionVelocitiesToFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">,</span><span class="n">idSolution</span><span class="p">,</span><span class="n">idVelocityFiles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save the reference position velocities to a temporary file for bulk upload.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile           : str</span>
+<span class="sd">      The path to the Vel file</span>
+<span class="sd">    idSolution        : int</span>
+<span class="sd">      The ID of the solution</span>
+<span class="sd">    idVelocityFiles    : int</span>
+<span class="sd">      The ID of the velocities file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+      <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]:</span>
+          <span class="k">case</span> <span class="p">[</span><span class="n">Dot</span><span class="p">,</span><span class="n">Name</span><span class="p">,</span><span class="n">Ref_epoch</span><span class="p">,</span><span class="n">Ref_jday</span><span class="p">,</span><span class="n">Ref_X</span><span class="p">,</span><span class="n">Ref_Y</span><span class="p">,</span><span class="n">Ref_Z</span><span class="p">,</span><span class="n">Ref_Nlat</span><span class="p">,</span><span class="n">Ref_Elong</span><span class="p">,</span><span class="n">Ref_Up</span><span class="p">,</span><span class="n">dXDt</span><span class="p">,</span><span class="n">dYDt</span><span class="p">,</span><span class="n">dZDt</span><span class="p">,</span><span class="n">SXd</span><span class="p">,</span><span class="n">SYd</span><span class="p">,</span><span class="n">SZd</span><span class="p">,</span><span class="n">Rxy</span><span class="p">,</span><span class="n">Rxz</span><span class="p">,</span><span class="n">Rzy</span><span class="p">,</span><span class="n">dNDt</span><span class="p">,</span><span class="n">dEDt</span><span class="p">,</span><span class="n">dUDt</span><span class="p">,</span><span class="n">SNd</span><span class="p">,</span><span class="n">SEd</span><span class="p">,</span><span class="n">SUd</span><span class="p">,</span><span class="n">Rne</span><span class="p">,</span><span class="n">Rnu</span><span class="p">,</span><span class="n">Reu</span><span class="p">,</span><span class="n">first_epoch</span><span class="p">,</span><span class="n">last_epoch</span><span class="p">]</span> <span class="k">if</span> <span class="n">Dot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;*&quot;</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="n">DatabaseUpload</span><span class="o">.</span><span class="n">REFERENCE_POSITION_VELOCITIES_TEMP</span><span class="p">),</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+              <span class="n">tmp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_getStationID</span><span class="p">(</span><span class="n">Name</span><span class="p">))</span>          <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">dXDt</span><span class="p">)</span>                              <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">dYDt</span><span class="p">)</span>                              <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">dZDt</span><span class="p">)</span>                              <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">SXd</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">SYd</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">SZd</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Rxy</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Rxz</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Rzy</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">dNDt</span><span class="p">)</span>                              <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">dEDt</span><span class="p">)</span>                              <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">dUDt</span><span class="p">)</span>                              <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">SNd</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">SEd</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">SUd</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Rne</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Rnu</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">Reu</span><span class="p">)</span>                               <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_formatOnlyDate</span><span class="p">(</span><span class="n">first_epoch</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_formatOnlyDate</span><span class="p">(</span><span class="n">last_epoch</span><span class="p">))</span>  <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_formatOnlyDate</span><span class="p">(</span><span class="n">Ref_epoch</span><span class="p">))</span>   <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">idVelocityFiles</span><span class="p">)</span>                   <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span>   
+                <span class="nb">str</span><span class="p">(</span><span class="n">idSolution</span><span class="p">)</span>                        <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+              <span class="p">)</span></div>
+  
+  <span class="k">def</span> <span class="nf">_formatOnlyDate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">YYYYMMDD</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a date in the format YYYYMMDD to YYYY-MM-DD.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    YYYYMMDD  : str</span>
+<span class="sd">      The date in the format YYYYMMDD</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">      The date in the format YYYY-MM-DD</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">YYYYMMDD</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+       
+<div class="viewcode-block" id="DatabaseUpload.uploadReferencePositionVelocities"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.uploadReferencePositionVelocities">[docs]</a>  <span class="k">def</span> <span class="nf">uploadReferencePositionVelocities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bulk upload the reference position velocities from the temporary file to the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    UploadError</span>
+<span class="sd">      If the reference position velocities could not be uploaded to the database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="n">DatabaseUpload</span><span class="o">.</span><span class="n">REFERENCE_POSITION_VELOCITIES_TEMP</span><span class="p">),</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvFile</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">copy_expert</span><span class="p">(</span>
+          <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">          COPY reference_position_velocities(</span>
+<span class="s2">            id_station,</span>
+<span class="s2">            velx,</span>
+<span class="s2">            vely,</span>
+<span class="s2">            velz,</span>
+<span class="s2">            velx_sigma,</span>
+<span class="s2">            vely_sigma,</span>
+<span class="s2">            velz_sigma,</span>
+<span class="s2">            vel_rho_xy,</span>
+<span class="s2">            vel_rho_xz,</span>
+<span class="s2">            vel_rho_yz,</span>
+<span class="s2">            reference_position_x,</span>
+<span class="s2">            reference_position_y,</span>
+<span class="s2">            reference_position_z,</span>
+<span class="s2">            reference_position_x_sigma,</span>
+<span class="s2">            reference_position_y_sigma,</span>
+<span class="s2">            reference_position_z_sigma,</span>
+<span class="s2">            reference_position_rho_xy,</span>
+<span class="s2">            reference_position_rho_xz,</span>
+<span class="s2">            reference_position_rho_yz,</span>
+<span class="s2">            start_epoch,</span>
+<span class="s2">            end_epoch,</span>
+<span class="s2">            ref_epoch,</span>
+<span class="s2">            id_velocities_files,</span>
+<span class="s2">            id_solution</span>
+<span class="s2">          )</span>
+<span class="s2">          FROM STDIN</span>
+<span class="s2">          WITH (FORMAT CSV,HEADER FALSE);</span>
+<span class="s2">          &quot;&quot;&quot;</span><span class="p">,</span>
+          <span class="n">csvFile</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">UploadError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not upload reference position velocities to database. Error: </span><span class="si">{</span><span class="n">UploadError</span><span class="o">.</span><span class="n">formatError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+  
+<div class="viewcode-block" id="DatabaseUpload.eraseReferencePositionVelocitiesTmpFile"><a class="viewcode-back" href="../../src.html#src.databaseUpload.DatabaseUpload.eraseReferencePositionVelocitiesTmpFile">[docs]</a>  <span class="k">def</span> <span class="nf">eraseReferencePositionVelocitiesTmpFile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Erase the temporary file containing the previous reference position velocities.&quot;&quot;&quot;</span>
+    <span class="n">tempPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="n">DatabaseUpload</span><span class="o">.</span><span class="n">REFERENCE_POSITION_VELOCITIES_TEMP</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">tempPath</span><span class="p">):</span>
+      <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tempPath</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">arroz</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, arroz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,914 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>src.validate &#8212; arroz  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.validate</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">doi</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">datetime</span>            <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">src.utils.config</span>    <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">src.validationError</span> <span class="kn">import</span> <span class="o">*</span>
+
+<div class="viewcode-block" id="Validator"><a class="viewcode-back" href="../../src.html#src.validate.Validator">[docs]</a><span class="k">class</span> <span class="nc">Validator</span><span class="p">:</span>
+<span class="w">  </span><span class="sd">&quot;&quot;&quot;Validate provider files before handling them.&quot;&quot;&quot;</span>
+  
+  <span class="c1"># == Class variables ==</span>
+  <span class="n">DEFAULT_SNX_FILENAME_LENGTH</span>       <span class="o">=</span> <span class="mi">41</span>
+  
+  <span class="n">DEFAULT_POS_FILENAME_LENGTH</span>       <span class="o">=</span> <span class="mi">13</span>
+  
+  <span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Please make sure that the filename conforms to the long filename specification &quot;</span>
+  <span class="s2">&quot;of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the &quot;</span>
+  <span class="s2">&quot;version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly).&quot;</span><span class="p">)</span>
+  
+  <span class="n">FILENAME_CONVENTION_ERROR_MSG_POS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Please make sure that the filename conforms to the long filename specification &quot;</span>
+  <span class="s2">&quot;of {{XXXX}}{{00}}{{CCC}}.pos, where XXXX00CCC is the Station Long Marker.&quot;</span><span class="p">)</span>
+  
+  <span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Please make sure that the filename conforms to the long filename specification &quot;</span>
+  <span class="s2">&quot;of {{XXX}}.{{version}}.{{refframe}}.vel, where XXX is the provider abbreviation, version is the ReleaseVersion and refframe is the reference frame.&quot;</span><span class="p">)</span>
+  
+  <span class="n">FOUND</span>                             <span class="o">=</span> <span class="mi">200</span>
+  <span class="c1"># == Methods ==</span>
+  <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cfg</span><span class="p">,</span><span class="n">conn</span><span class="p">,</span><span class="n">cursor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get default parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cfg    : Config</span>
+<span class="sd">      A config object</span>
+<span class="sd">    conn   : psycopg2.extensions.connection</span>
+<span class="sd">      A connection object to the EPOS db</span>
+<span class="sd">    cursor : psycopg2.extensions.cursor</span>
+<span class="sd">      A cursor object to the EPOS db</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>               <span class="o">=</span> <span class="n">cfg</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">conn</span>              <span class="o">=</span> <span class="n">conn</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span>            <span class="o">=</span> <span class="n">cursor</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tsMetadataValues</span>  <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">velMetadataValues</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Validator.validateSnx"><a class="viewcode-back" href="../../src.html#src.validate.Validator.validateSnx">[docs]</a>  <span class="k">def</span> <span class="nf">validateSnx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a specific snx file.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile : str</span>
+<span class="sd">      The snx file to validate</span>
+<span class="sd">      </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If there was an error validating the snx file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxLongFilename</span><span class="p">(</span><span class="n">snxFile</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">metadataLines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;+FILE/COMMENT&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;-FILE/COMMENT&quot;</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No metadata block &#39;+FILE/COMMENT&#39;/&#39;-FILE/COMMENT&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">snxFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="n">mandatorySnxHeaders</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;MANDATORY_SNX_HEADERS&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+        <span class="n">countMatchingMandatoryHeaders</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="n">mandatorySnxHeaders</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">countMatchingMandatoryHeaders</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mandatorySnxHeaders</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing mandatory metadata parameters or duplicated metadata parameters in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">snxFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">_validateMetadataLineSnx</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="n">snxFile</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+    <span class="k">except</span><span class="p">(</span><span class="ne">OSError</span><span class="p">,</span><span class="ne">ValueError</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">snxFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; is not a valid gzipped file.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;An unknown error occurred when validating file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">snxFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxLongFilename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate an snx file&#39;s long filename according to 20220906UploadGuidelines_v2.5 guidelines.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile : str</span>
+<span class="sd">      The full path of the snx file</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the name doesn&#39;t conform to the one specified by the guidelines</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">snxFilename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">snxFile</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">snxFilename</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Validator</span><span class="o">.</span><span class="n">DEFAULT_SNX_FILENAME_LENGTH</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Incorrect length &#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">snxFilename</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameAbbr</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;COOR_ACS&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameVersion</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameConstant</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameYear</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameDayOfYear</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameConstant2</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameSamplePeriod</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameConstant3</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameSamplePeriod2</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameConstant4</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameExtension</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateSnxFilenameCompressExtension</span><span class="p">(</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameAbbr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">,</span><span class="n">allowedAC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s abbreviation according to the allowed analysis centers.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+<span class="sd">    allowedAC   : list</span>
+<span class="sd">      The allowed analysis centers&#39; abbreviations in the long file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the abbreviation doesn&#39;t conform</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="ow">in</span> <span class="n">allowedAC</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong abbreviation &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameVersion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s version (0-9).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the version is an incorrect value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)]:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong version &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameConstant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s constant (must be OPSSNX_).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the constant is an incorrect value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">11</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;OPSSNX_&quot;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file constant &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">11</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+      
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameYear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s year (four digits).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the year is not a four digit value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">11</span><span class="p">:</span><span class="mi">15</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1994</span><span class="p">,</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file year &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">11</span><span class="p">:</span><span class="mi">15</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+      
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameDayOfYear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s day of year (1-365/366).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the day of year is incorrect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">numOfDaysInYear</span> <span class="o">=</span> <span class="mi">366</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_isLeapYear</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">11</span><span class="p">:</span><span class="mi">15</span><span class="p">]))</span> <span class="k">else</span> <span class="mi">365</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="mi">18</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">numOfDaysInYear</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx day of the year &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="mi">18</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_isLeapYear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">year</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if year is a leap year.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    year : int</span>
+<span class="sd">      The year to check</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">      True if the year is a leap year and False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">year</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">year</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">year</span> <span class="o">%</span> <span class="mi">400</span> <span class="o">==</span> <span class="mi">0</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameConstant2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s second constant value (must be 0000_).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the constant value is incorrect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">18</span><span class="p">:</span><span class="mi">23</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;0000_&quot;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file constant 2 - &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">18</span><span class="p">:</span><span class="mi">23</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameSamplePeriod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s sample period (01 or 07).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the sample period is incorrect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">23</span><span class="p">:</span><span class="mi">25</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;01&quot;</span> <span class="ow">or</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">23</span><span class="p">:</span><span class="mi">25</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;07&quot;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file sample period - &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">23</span><span class="p">:</span><span class="mi">25</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameConstant3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s third constant value (must be D_).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the constant value is incorrect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">25</span><span class="p">:</span><span class="mi">27</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;D_&quot;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file constant 3 - &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">25</span><span class="p">:</span><span class="mi">27</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameSamplePeriod2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s second sample period (01 or 07).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the sample period is incorrect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">27</span><span class="p">:</span><span class="mi">29</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;01&quot;</span> <span class="ow">or</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">27</span><span class="p">:</span><span class="mi">29</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;07&quot;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file sample period 2 - &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">27</span><span class="p">:</span><span class="mi">29</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameConstant4</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s fourth constant value (must be D_SOL).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the constant value is incorrect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">29</span><span class="p">:</span><span class="mi">34</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;D_SOL&quot;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file constant 4 - &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">29</span><span class="p">:</span><span class="mi">34</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameExtension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s extension (should be .snx).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file.</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the extension is incorrect.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">34</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span> <span class="ow">and</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">35</span><span class="p">:</span><span class="mi">38</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;snx&quot;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file extension - &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">34</span><span class="p">:</span><span class="mi">38</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateSnxFilenameCompressExtension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">snxFile</span><span class="p">,</span><span class="n">snxFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the snx filename&#39;s compressed extension (should be .gz).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snxFile     : str</span>
+<span class="sd">      The full path of the snx file.</span>
+<span class="sd">    snxFilename : str</span>
+<span class="sd">      The snx file name.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the extension is incorrect.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">38</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span> <span class="ow">and</span> <span class="n">snxFilename</span><span class="p">[</span><span class="mi">39</span><span class="p">:</span><span class="mi">41</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;gz&quot;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for snx file &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">snxFile</span><span class="si">}</span><span class="s2">&#39; - Wrong snx file compress extension - &#39;</span><span class="si">{</span><span class="n">snxFilename</span><span class="p">[</span><span class="mi">38</span><span class="p">:</span><span class="mi">41</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_SNX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateMetadataLineSnx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">line</span><span class="p">,</span><span class="n">file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    line : str</span>
+<span class="sd">      The specific snx metadata line to validate</span>
+<span class="sd">    file : str</span>
+<span class="sd">      The file to which the metadata line belongs to</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the metadata line is invalid</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;AnalysisCentre&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getAllowedAnalysisCentreValues</span><span class="p">():</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong AnalysisCentre value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Software&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;SOFTWARE_VALUES&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong Software value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Method-url&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="n">Validator</span><span class="o">.</span><span class="n">FOUND</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong method-url value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;DOI&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="s2">&quot;unknown&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validateDoi</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong DOI value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;CreationDate&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validateDate</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong CreationDate format &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;ReleaseVersion&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong ReleaseVersion format &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;SamplingPeriod&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;SAMPLINGPERIOD_VALUES&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong SamplingPeriod value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_getAllowedAnalysisCentreValues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get analysis centers from the EPOS db.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      A list of all the analysis centers&#39; abbreviations that are in the EPOS db</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT acronym FROM analysis_centers;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()]</span>
+
+  <span class="k">def</span> <span class="nf">_validateDate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">date</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a data according to the format `dd/mm/yyyy hh:mm:ss`, making sure that it is less than today.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    date : str</span>
+<span class="sd">      The date to validate</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">      True if the date is according to the format or False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">comparison</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+      <span class="k">return</span> <span class="n">comparison</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+      <span class="k">return</span> <span class="kc">False</span>
+    
+  <span class="k">def</span> <span class="nf">_validateDoi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">doiValue</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a DOI value.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    doiValue : str</span>
+<span class="sd">      The DOI value to validate</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">      True if the DOI value is valid and False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">doi</span><span class="o">.</span><span class="n">validate_doi</span><span class="p">(</span><span class="n">doiValue</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+      <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="Validator.validatePos"><a class="viewcode-back" href="../../src.html#src.validate.Validator.validatePos">[docs]</a>  <span class="k">def</span> <span class="nf">validatePos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">posFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a specific pos file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    posFile : str</span>
+<span class="sd">      The pos file to validate</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If there was an error validating the pos file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validatePosFilename</span><span class="p">(</span><span class="n">posFile</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">posFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">metadataLines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;%Begin EPOS metadata&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%E</span><span class="s2">nd EPOS metadata&quot;</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No metadata block &#39;%Begin EPOS metadata&#39;/&#39;%End EPOS metadata&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">posFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="n">mandatoryPosHeaders</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;MANDATORY_POS_HEADERS&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+        <span class="n">countMatchingMandatoryHeaders</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="n">mandatoryPosHeaders</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">countMatchingMandatoryHeaders</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mandatoryPosHeaders</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing mandatory metadata parameters or duplicated metadata parameters in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">posFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">_validateMetadataLinePos</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="n">posFile</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot read file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">posFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;An unknown error occurred when validating file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">posFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
+  
+  <span class="k">def</span> <span class="nf">_validatePosFilename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">posFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a pos file&#39;s filename according to 20220906UploadGuidelines_v2.5 guidelines.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    posFile : str</span>
+<span class="sd">      The full path of the pos file</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the name doesn&#39;t conform to the one specified by the guidelines</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">posFilename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">posFile</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">posFilename</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Validator</span><span class="o">.</span><span class="n">DEFAULT_POS_FILENAME_LENGTH</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for pos file &#39;</span><span class="si">{</span><span class="n">posFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39; - Incorrect length &#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">posFilename</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_POS</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validatePosFilename9characterID</span><span class="p">(</span><span class="n">posFile</span><span class="p">,</span><span class="n">posFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validatePosFilenameExtension</span><span class="p">(</span><span class="n">posFile</span><span class="p">,</span><span class="n">posFilename</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">_validatePosFilename9characterID</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">posFile</span><span class="p">,</span><span class="n">posFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the pos filename&#39;s 9 character ID (must conform to the marker inside of the file).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    posFile     : str</span>
+<span class="sd">      The full path of the pos file</span>
+<span class="sd">    posFilename : str</span>
+<span class="sd">      The filename of the pos file</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the 9 character ID doesn&#39;t conform to the long marker inside the file&#39;s metadata</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">posFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="n">metadataLines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;%Begin EPOS metadata&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%E</span><span class="s2">nd EPOS metadata&quot;</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">:</span>
+          <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+            <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;9-character ID&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+              <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+              <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">posFilename</span><span class="p">[:</span><span class="mi">9</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for pos file &#39;</span><span class="si">{</span><span class="n">posFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39; - Pos file long marker name &#39;</span><span class="si">{</span><span class="n">posFilename</span><span class="p">[:</span><span class="mi">9</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; does not match the metadata file long marker name of </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_POS</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot read file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">posFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">_validatePosFilenameExtension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">posFile</span><span class="p">,</span><span class="n">posFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the pos filename&#39;s extension (should be .pos).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    posFile     : str</span>
+<span class="sd">      The full path of the pos file.</span>
+<span class="sd">    posFilename : str</span>
+<span class="sd">      The pos file name.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the extension is incorrect.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">posFilename</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span> <span class="ow">and</span> <span class="n">posFilename</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">13</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;pos&quot;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for pos file &#39;</span><span class="si">{</span><span class="n">posFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">posFile</span><span class="si">}</span><span class="s2">&#39; - Wrong pos file extension - &#39;</span><span class="si">{</span><span class="n">posFilename</span><span class="p">[</span><span class="mi">9</span><span class="p">:</span><span class="mi">13</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_POS</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateMetadataLinePos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">line</span><span class="p">,</span><span class="n">file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a specific metadata line from a pos file (according to 20220906UploadGuidelines_v2.5)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    line : str</span>
+<span class="sd">      The specific pos metadata line to validate</span>
+<span class="sd">    file : str</span>
+<span class="sd">      The file to which the metadata line belongs to</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the metadata line is invalid</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;9-character ID&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getAllowed9characterIDValues</span><span class="p">():</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong 9-character ID value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;AnalysisCentre&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsMetadataValues</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getAllowedAnalysisCentreValues</span><span class="p">():</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong AnalysisCentre value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Software&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsMetadataValues</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;SOFTWARE_VALUES&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong Software value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Method-url&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsMetadataValues</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="n">Validator</span><span class="o">.</span><span class="n">FOUND</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong method-url value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;DOI&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsMetadataValues</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="s2">&quot;unknown&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validateDoi</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong DOI value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;CreationDate&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validateDate</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong CreationDate format &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;ReleaseVersion&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsMetadataValues</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong ReleaseVersion format &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">value</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;SamplingPeriod&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsMetadataValues</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;SAMPLINGPERIOD_VALUES&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong SamplingPeriod value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">_getAllowed9characterIDValues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get all the 9 character ID markers from the EPOS db.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      All the 9 character ID markers available in the EPOS db</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT marker FROM station;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()]</span>
+  
+<div class="viewcode-block" id="Validator.validateVel"><a class="viewcode-back" href="../../src.html#src.validate.Validator.validateVel">[docs]</a>  <span class="k">def</span> <span class="nf">validateVel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a specific vel file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile : str</span>
+<span class="sd">      The vel file to validate</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If there was an error validating the vel file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateVelFilename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getAllowedReferenceFrameValues</span><span class="p">():</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong reference frame value &#39;</span><span class="si">{</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">metadataLines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;%Begin EPOS metadata&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%E</span><span class="s2">nd EPOS metadata&quot;</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No metadata block &#39;%Begin EPOS metadata&#39;/&#39;%End EPOS metadata&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="n">mandatoryVelHeaders</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;MANDATORY_VEL_HEADERS&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+        <span class="n">countMatchingMandatoryHeaders</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="n">mandatoryVelHeaders</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">countMatchingMandatoryHeaders</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mandatoryVelHeaders</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing mandatory metadata parameters or duplicated metadata parameters in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">_validateMetadataLineVel</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="n">velFile</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot read file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;An unknown error occurred when validating file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
+  
+  <span class="k">def</span> <span class="nf">_validateVelFilename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a vel file&#39;s filename according to 20220906UploadGuidelines_v2.5 guidelines.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile : str</span>
+<span class="sd">      The full path of the vel file</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the name doesn&#39;t conform to the one specified by the guidelines</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">velFilename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateVelFilenameAbbr</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;VEL_ACS&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateVelFilenameVersion</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateVelFilenameReferenceFrame</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_validateVelFilenameExtension</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">)</span>
+  
+  
+  <span class="k">def</span> <span class="nf">_validateVelFilenameAbbr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">,</span><span class="n">allowedAC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the vel filename&#39;s abbreviation according to the allowed analysis centers.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile     : str</span>
+<span class="sd">      The full path of the vel file</span>
+<span class="sd">    velFilename : str</span>
+<span class="sd">      The vel file name</span>
+<span class="sd">    allowedAC   : list</span>
+<span class="sd">      The allowed analysis centers&#39; abbreviations in the long file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the abbreviation doesn&#39;t conform</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">velFilename</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="ow">in</span> <span class="n">allowedAC</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Wrong abbreviation &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Wrong vel file abbreviation for file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateVelFilenameVersion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the vel filename&#39;s version (should be the same as the ReleaseVersion).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile     : str</span>
+<span class="sd">      The full path of the vel file</span>
+<span class="sd">    velFilename : str</span>
+<span class="sd">      The vel file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the version is not equal to the ReleaseNumber of the file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="n">metadataLines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;%Begin EPOS metadata&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%E</span><span class="s2">nd EPOS metadata&quot;</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">metadataLines</span><span class="p">:</span>
+          <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+            <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;ReleaseVersion&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+              <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+              <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">velFilename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Vel file version &#39;</span><span class="si">{</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">velFilename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span><span class="si">}</span><span class="s2">&#39; does not match the metadata file ReleaseVersion of </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot read file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Wrong vel file version for file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateVelFilenameReferenceFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the vel filename&#39;s reference frame (should bt the same as the reference frame of the file).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile     : str</span>
+<span class="sd">      The full path of the vel file</span>
+<span class="sd">    velFilename : str</span>
+<span class="sd">      The vel file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the reference frame is not equal to the reference frame of the file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">velFile</span><span class="p">,</span><span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="n">velFilename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Vel file reference frame &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; does not match the metadata file reference frame of </span><span class="si">{</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot read file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">velFile</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Wrong vel file reference frame for file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_validateVelFilenameExtension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">velFile</span><span class="p">,</span><span class="n">velFilename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the vel filename&#39;s extension (should be .vel).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velFile     : str</span>
+<span class="sd">      The full path of the vel file</span>
+<span class="sd">    velFilename : str</span>
+<span class="sd">      The vel file name</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the extension is incorrect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">velFilename</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span> <span class="ow">and</span> <span class="n">velFilename</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;vel&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Wrong vel file extension - &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong filename format for vel file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39; with path &#39;</span><span class="si">{</span><span class="n">velFile</span><span class="si">}</span><span class="s2">&#39; - Wrong vel file extension for file &#39;</span><span class="si">{</span><span class="n">velFilename</span><span class="si">}</span><span class="s2">&#39;. </span><span class="si">{</span><span class="n">Validator</span><span class="o">.</span><span class="n">FILENAME_CONVENTION_ERROR_MSG_VEL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  
+  <span class="k">def</span> <span class="nf">_getAllowedReferenceFrameValues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the allowed reference frame values from the database.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">      The allowed reference frame values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT name FROM reference_frame;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()]</span>
+  
+  <span class="k">def</span> <span class="nf">_validateMetadataLineVel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">line</span><span class="p">,</span><span class="n">file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a specific metadata line from a vel file (according to 20220906UploadGuidelines_v2.5)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    line : str</span>
+<span class="sd">      The specific vel metadata line to validate</span>
+<span class="sd">    file : str</span>
+<span class="sd">      The file to which the metadata line belongs to</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">      If the metadata line is invalid</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">match</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)]:</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;AnalysisCentre&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velMetadataValues</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getAllowedAnalysisCentreValues</span><span class="p">():</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong AnalysisCentre value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Software&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velMetadataValues</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;SOFTWARE_VALUES&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong Software value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;Method-url&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velMetadataValues</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="n">Validator</span><span class="o">.</span><span class="n">FOUND</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong method-url value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;DOI&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velMetadataValues</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="s2">&quot;unknown&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validateDoi</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong DOI value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;ReleaseVersion&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velMetadataValues</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong ReleaseVersion format &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">value</span>
+      <span class="k">case</span> <span class="p">[</span><span class="s2">&quot;SamplingPeriod&quot;</span><span class="p">,</span><span class="o">*</span><span class="n">values</span><span class="p">]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velMetadataValues</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">getValidationConfig</span><span class="p">(</span><span class="s2">&quot;SAMPLINGPERIOD_VALUES&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">):</span>
+          <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrong SamplingPeriod value &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; in file &#39;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;, with path: &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">arroz</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, arroz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
