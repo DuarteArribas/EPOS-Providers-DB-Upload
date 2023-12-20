@@ -356,7 +356,7 @@ class DatabaseUpload:
           file_type
         )
         VALUES(
-          'public/{"/".join(posFile.split("/")[-4:])}', 
+          'https://gnssproducts.epos.ubi.pt/file-manager/download?disk=sftp&path={"/".join(posFile.split("/")[-4:])}', 
           '{posFormatVersion}',
           'pos'
         )
