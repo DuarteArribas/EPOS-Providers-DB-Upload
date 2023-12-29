@@ -13,6 +13,7 @@ CONFIG_FILE = "config/appconf.cfg"
 # Functions
 def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged,cfg,conn,cursor,providerEmails):
   for i in range(5):
+    # If the hashes of the files of the provider didn't change, skip it
     if not hashesChanged[i]:
       continue
     errors                    = []

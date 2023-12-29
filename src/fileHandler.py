@@ -30,7 +30,7 @@ class FileHandler:
     self.providerDir       = {
       "INGV" : f"{providersDir}/providers_ingv/uploads",
       "ROB"  : f"{providersDir}/providers_rob/uploads",
-      "SGO"  : f"{providersDir}/providers_ltk/uploads",
+      "SGO"  : f"{providersDir}/providers_sgo/uploads", #TODO hardcoded?
       "UGA"  : f"{providersDir}/providers_uga-cnrs/uploads",
       "WUT"  : f"{providersDir}/providers_wut/uploads"
     }

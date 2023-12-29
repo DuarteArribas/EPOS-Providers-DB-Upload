@@ -15,8 +15,8 @@ class Validator:
   DEFAULT_POS_FILENAME_LENGTH       = 13
   
   FILENAME_CONVENTION_ERROR_MSG_SNX = ("Please make sure that the filename conforms to the long filename specification "
-  "of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, and v is the "
-  "version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01 for daily, 07 for weekly).")
+  "of {{XXX}}{{v}}OPSSNX_{{yyyy}}{{ddd}}0000_{{pp}}D_{{pp}}D_SOL.SNX.gz, where XXX is the provider abbreviation, v is the "
+  "version (0-9), yyyy is the year, ddd is the day of the year, and pp is the sample period (01D for daily, 01W for weekly).")
   
   FILENAME_CONVENTION_ERROR_MSG_POS = ("Please make sure that the filename conforms to the long filename specification "
   "of {{XXXX}}{{00}}{{CCC}}.pos, where XXXX00CCC is the Station Long Marker.")
@@ -79,7 +79,7 @@ class Validator:
       raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
   
   def _validateSnxLongFilename(self,snxFile):
-    """Validate an snx file's long filename according to 20220906UploadGuidelines_v2.5 guidelines.
+    """Validate an snx file's long filename according to 20230707UploadGuidelines_v2.6 guidelines.
 
     Parameters
     ----------
@@ -248,7 +248,7 @@ class Validator:
     ValidationError
       If the sample period is incorrect
     """
-    if not (snxFilename[23:25] == "01" or snxFilename[23:25] == "07"):
+    if not snxFilename[23:25] == "01":
       raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file sample period - '{snxFilename[23:25]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameConstant3(self,snxFile,snxFilename):
@@ -266,7 +266,7 @@ class Validator:
     ValidationError
       If the constant value is incorrect
     """
-    if not snxFilename[25:27] == "D_":
+    if not (snxFilename[25:27] == "D_" or snxFilename[25:27] == "W_"):
       raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file constant 3 - '{snxFilename[25:27]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameSamplePeriod2(self,snxFile,snxFilename):
@@ -284,7 +284,7 @@ class Validator:
     ValidationError
       If the sample period is incorrect
     """
-    if not (snxFilename[27:29] == "01" or snxFilename[27:29] == "07"):
+    if not snxFilename[27:29] == "01":
       raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file sample period 2 - '{snxFilename[27:29]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameConstant4(self,snxFile,snxFilename):
@@ -302,7 +302,7 @@ class Validator:
     ValidationError
       If the constant value is incorrect
     """
-    if not snxFilename[29:34] == "D_SOL":
+    if not (snxFilename[29:34] == "D_SOL"or snxFilename[29:34] == "W_SOL"):
       raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file constant 4 - '{snxFilename[29:34]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateSnxFilenameExtension(self,snxFile,snxFilename):
@@ -342,7 +342,7 @@ class Validator:
       raise ValidationError(f"Wrong filename format for snx file '{snxFilename}' with path '{snxFile}' - Wrong snx file compress extension - '{snxFilename[38:41]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_SNX}")
   
   def _validateMetadataLineSnx(self,line,file):
-    """Validate a specific metadata line from an snx file (according to 20220906UploadGuidelines_v2.5).
+    """Validate a specific metadata line from an snx file (according to 20230707UploadGuidelines_v2.6).
 
     Parameters
     ----------
@@ -469,7 +469,7 @@ class Validator:
       raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(posFile)}' with path '{posFile}'.")
   
   def _validatePosFilename(self,posFile):
-    """Validate a pos file's filename according to 20220906UploadGuidelines_v2.5 guidelines.
+    """Validate a pos file's filename according to 20230707UploadGuidelines_v2.6 guidelines.
 
     Parameters
     ----------
@@ -534,7 +534,7 @@ class Validator:
       raise ValidationError(f"Wrong filename format for pos file '{posFilename}' with path '{posFile}' - Wrong pos file extension - '{posFilename[9:13]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
   
   def _validateMetadataLinePos(self,line,file):
-    """Validate a specific metadata line from a pos file (according to 20220906UploadGuidelines_v2.5)
+    """Validate a specific metadata line from a pos file (according to 20230707UploadGuidelines_v2.6)
 
     Parameters
     ----------
@@ -637,7 +637,7 @@ class Validator:
       raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(velFile)}' with path '{velFile}'.")
   
   def _validateVelFilename(self,velFile):
-    """Validate a vel file's filename according to 20220906UploadGuidelines_v2.5 guidelines.
+    """Validate a vel file's filename according to 20230707UploadGuidelines_v2.6 guidelines.
 
     Parameters
     ----------
@@ -767,7 +767,7 @@ class Validator:
     return [item[0] for item in self.cursor.fetchall()]
   
   def _validateMetadataLineVel(self,line,file):
-    """Validate a specific metadata line from a vel file (according to 20220906UploadGuidelines_v2.5)
+    """Validate a specific metadata line from a vel file (according to 20230707UploadGuidelines_v2.6)
 
     Parameters
     ----------
