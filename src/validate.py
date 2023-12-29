@@ -22,7 +22,7 @@ class Validator:
   "of {{AAA}}_{{XXXX00CCC}}_{{SMP}}.pos, where AAA is the provider abbreviation, XXXX00CCC is the Station Long Marker and SMP is the sample period (01D for daily, 01W for weekly).")
   
   FILENAME_CONVENTION_ERROR_MSG_VEL = ("Please make sure that the filename conforms to the long filename specification "
-  "of {{AAA}}.{{version}}.{{refframe}}.vel, where AAA is the provider abbreviation, version is the ReleaseVersion and refframe is the reference frame.")
+  "of {{AAA}}_{{version}}_{{refframe}}.vel, where AAA is the provider abbreviation, version is the ReleaseVersion and refframe is the reference frame.")
   
   FOUND                             = 200
   # == Methods ==
