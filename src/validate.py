@@ -367,7 +367,7 @@ class Validator:
           raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
-        if requests.get(value).status_code != Validator.FOUND:
+        if requests.get(value).status_code != Validator.FOUND or self.cfg.getValidationConfig("METHOD_URL_START") not in value:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
@@ -625,7 +625,7 @@ class Validator:
       case ["Method-url",*values]:
         value = " ".join(values)
         self.tsMetadataValues[2] = value
-        if requests.get(value).status_code != Validator.FOUND:
+        if requests.get(value).status_code != Validator.FOUND or self.cfg.getValidationConfig("METHOD_URL_START") not in value:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
@@ -854,7 +854,7 @@ class Validator:
       case ["Method-url",*values]:
         value = " ".join(values)
         self.velMetadataValues[2] = value
-        if requests.get(value).status_code != Validator.FOUND:
+        if requests.get(value).status_code != Validator.FOUND or self.cfg.getValidationConfig("METHOD_URL_START") not in value:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
