@@ -66,7 +66,7 @@ class TestValidation(unittest.TestCase):
     validator._validateMetadataLineSnx("SamplingPeriod            daily      ","data/in/test/validation/right/rightSamplingPeriod/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
     validator._validateMetadataLineSnx("SamplingPeriod            daily      ","data/in/test/validation/right/rightSamplingPeriod/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
   
-  def test_validateSn(self):
+  def test_validateSnx(self):
     cfg          = Config("config/appconf.cfg")
     logger       = Logs("logs/logsTest.log",1000)
     pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
@@ -85,5 +85,34 @@ class TestValidation(unittest.TestCase):
       validator.validateSnx("data/in/test/validation/wrong/wrongFile/1/NG1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
       validator.validateSnx("data/in/test/validation/wrong/wrongFile/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
     validator.validateSnx("data/in/test/validation/right/rightFile/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    
+  def test_validateTSFilename(self):
+    cfg          = Config("config/appconf.cfg")
+    logger       = Logs("logs/logsTest.log",1000)
+    pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
+    pgConnection.connect()
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator._validatePosFilenameAbbr("path/ARR_ANK200UKN_01D.pos","ARR_ANK200UKN_01D.pos",["ING","WUT","ROB"])
+      validator._validatePosFilenameAbbr("path/ING_ANK200UKN_01D.pos","ARR_ANK200UKN_01D.pos",["WUT","ROB"])
+      validator._validatePosFilenameConstant("path/ING1ANK200UKN_01D.pos","ING1ANK200UKN_01D.pos")
+      validator._validatePosFilenameSamplingPeriod("path/ING_ANK200UKN_01F.pos","ING_ANK200UKN_01F.pos")
+      validator._validatePosFilenameSamplingPeriod("path/ING_ANK200UKN_02D.pos","ING_ANK200UKN_02D.pos")
+      validator._validatePosFilenameExtension("path/ING_ANK200UKN_01D.pbo","ING_ANK200UKN_01D.pbo")
+      validator._validatePosFilename("data/in/test/validation/wrong/wrongTS/INGV_ANK200UKN_01D.pos")
+    validator._validatePosFilenameAbbr("path/ING_ANK200UKN_01D.pos","ING_ANK200UKN_01D.pos",["ING","WUT","ROB"])
+    validator._validatePosFilenameSamplingPeriod("ING_ANK200UKN_01D.pos","ING_ANK200UKN_01D.pos")
+    validator._validatePosFilenameExtension("path/ING_ANK200UKN_01D.pos","ING_ANK200UKN_01D.pos")
+    validator._validatePosFilename("data/in/test/validation/wrong/wrongTS/ING_ANK200UKN_01D.pos")
+  
+  def test_validateTSLine(self):
+    cfg          = Config("config/appconf.cfg")
+    logger       = Logs("logs/logsTest.log",1000)
+    pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
+    pgConnection.connect()
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator._validateMetadataLinePos("AnalysisCentre: INGV","data/in/test/validation/wrong/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    
 if __name__ == '__main__':
   unittest.main()
