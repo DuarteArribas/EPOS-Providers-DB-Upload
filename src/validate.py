@@ -66,7 +66,7 @@ class Validator:
         except Exception:
           raise ValidationError(f"No metadata block '+FILE/COMMENT'/'-FILE/COMMENT' in file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
         mandatorySnxHeaders = self.cfg.getValidationConfig("MANDATORY_SNX_HEADERS").split("|")
-        countMatchingMandatoryHeaders = sum([header.split(":")[0].strip() in mandatorySnxHeaders for header in metadataLines])
+        countMatchingMandatoryHeaders = sum([header.split(" ")[0].strip() in mandatorySnxHeaders for header in metadataLines])
         if countMatchingMandatoryHeaders != len(mandatorySnxHeaders):
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(snxFile)}' with path '{snxFile}'.")
         for line in metadataLines:
