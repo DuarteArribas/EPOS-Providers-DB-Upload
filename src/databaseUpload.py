@@ -79,7 +79,7 @@ class DatabaseUpload:
                 self.saveEstimatedCoordinatesToFile(
                   currFile,
                   currentSolutionID,
-                  timeseriesFileID
+                  file
                 )
               self.uploadEstimatedCoordinates()
               self.eraseEstimatedCoordinatesTmpFile()
@@ -379,7 +379,7 @@ class DatabaseUpload:
             epoch,
             sol_type,
             id_solution,
-            id_timeseries_files
+            timeseries_file_url
           )
           FROM STDIN
           WITH (FORMAT CSV,HEADER FALSE);
