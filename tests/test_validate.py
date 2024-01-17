@@ -7,7 +7,7 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxFilename(self):
     cfg          = Config("config/appconf.cfg")
     logger       = Logs("logs/logsTest.log",1000)
-    pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
@@ -45,7 +45,7 @@ class TestValidation(unittest.TestCase):
   def test_validateSnxLine(self):
     cfg          = Config("config/appconf.cfg")
     logger       = Logs("logs/logsTest.log",1000)
-    pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
@@ -69,7 +69,7 @@ class TestValidation(unittest.TestCase):
   def test_validateSnx(self):
     cfg          = Config("config/appconf.cfg")
     logger       = Logs("logs/logsTest.log",1000)
-    pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
@@ -89,7 +89,7 @@ class TestValidation(unittest.TestCase):
   def test_validateTSFilename(self):
     cfg          = Config("config/appconf.cfg")
     logger       = Logs("logs/logsTest.log",1000)
-    pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
@@ -108,11 +108,11 @@ class TestValidation(unittest.TestCase):
   def test_validateTSLine(self):
     cfg          = Config("config/appconf.cfg")
     logger       = Logs("logs/logsTest.log",1000)
-    pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
-      validator._validateMetadataLinePos("AnalysisCentre: INGV","data/in/test/validation/wrong/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator._validateMetadataLinePos("AnalysisCentre: ARRR","data/in/test/validation/wrong/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
     
 if __name__ == '__main__':
   unittest.main()

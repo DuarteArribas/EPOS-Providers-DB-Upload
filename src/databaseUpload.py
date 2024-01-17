@@ -96,6 +96,8 @@ class DatabaseUpload:
                     currentSolutionID,
                     file
                   )
+                self.uploadEstimatedCoordinates()
+                self.eraseEstimatedCoordinatesTmpFile()
               # handle updated files
               for file in updatedFiles:
                 with open(f"{publicDir}/TS/{version}/{file}","r") as f:
@@ -108,15 +110,16 @@ class DatabaseUpload:
                     )
                     for line in updatedLines:
                       self.updateEstimatedCoordinates(line)
-                    for line in newDifferentLines:
-                      currFile = os.path.join(currDir,file)
-                      self.saveEstimatedCoordinatesToFile(
-                        currFile,
-                        currentSolutionID,
-                        file
-                      )
-              self.uploadEstimatedCoordinates()
-              self.eraseEstimatedCoordinatesTmpFile()       
+                    if newDifferentLines:
+                      for line in newDifferentLines:
+                        currFile = os.path.join(currDir,file)
+                        self.saveEstimatedCoordinatesToFile(
+                          currFile,
+                          currentSolutionID,
+                          file
+                        )
+                      self.uploadEstimatedCoordinates()
+                      self.eraseEstimatedCoordinatesTmpFile()       
             self.cursor.execute("COMMIT TRANSACTION;")
             self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
     except UploadError as err:
@@ -400,7 +403,9 @@ class DatabaseUpload:
   
   def _getUpdatedAndNewLines(self,oldLines,newLines):
     oldLines           = [line.strip() for line in oldLines]
+    oldLines           = oldLines[oldLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
     newLines           = [line.strip() for line in newLines]
+    newLines           = newLines[newLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
     keys               = ["YYYYMMDD","HHMMSS","JJJJJ_JJJJ","X","Y","Z","Sx","Sy","Sz","Rxy","Rxz","Ryz","NLat","Elong","Height","dN","dE","dU","Sn","Se","Su","Rne","Rnu","Reu","Soln"]
     oldLinesDict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in oldLines]
     newLinesDict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in newLines]
@@ -436,7 +441,7 @@ class DatabaseUpload:
         WHERE epoch = %s;
         """,
         (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._formatDate(line[0],line[1]))
-      ) 
+      )
     except Exception as err:
       raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
     
