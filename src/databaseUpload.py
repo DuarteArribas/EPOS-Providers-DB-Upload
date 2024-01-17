@@ -91,14 +91,10 @@ class DatabaseUpload:
               if len(newFiles) > 0:
                 for file in newFiles:
                   currFile = os.path.join(currDir,file)
-                  timeseriesFileID = self.uploadTimeseriesFile(
-                    currFile,
-                    self.getPBOFormatVersion(currFile)
-                  )
                   self.saveEstimatedCoordinatesToFile(
                     currFile,
                     currentSolutionID,
-                    timeseriesFileID
+                    file
                   )
                 self.uploadEstimatedCoordinates()
                 self.eraseEstimatedCoordinatesTmpFile()
@@ -108,7 +104,7 @@ class DatabaseUpload:
                   with open(f"{provBucketDir}/TS/{version}/{file}","r") as f2:
                     oldLines = f.readlines()
                     newLines = f2.readlines()
-                    updatedLines,newDifferentLines = self._getUpdatedLines(
+                    updatedLines,newDifferentLines = self._getUpdatedAndNewLines(
                       oldLines,
                       newLines
                     )
@@ -395,21 +391,26 @@ class DatabaseUpload:
     if os.path.exists(tempPath):
       os.remove(tempPath)
   
-  def _getUpdatedLines(self,oldLines,newLines):
-    oldLines     = [line.strip() for line in oldLines]
-    newLines     = [line.strip() for line in newLines]
-    updatedLines = []
-    for line in oldLines:
-      match [part.strip() for part in (" ".join(line.split())).split(" ")]:
-        case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
-          for line2 in newLines:
-            match [part.strip() for part in (" ".join(line2.split())).split(" ")]:
-              case [YYYYMMDD2,HHMMSS2,JJJJJ_JJJJ2,X2,Y2,Z2,Sx2,Sy2,Sz2,Rxy2,Rxz2,Ryz2,NLat2,Elong2,Height2,dN2,dE2,dU2,Sn2,Se2,Su2,Rne2,Rnu2,Reu2,Soln2] if YYYYMMDD2[0] != "*":
-                if (YYYYMMDD == YYYYMMDD2 and HHMMSS == HHMMSS2) and (
-                  JJJJJ_JJJJ != JJJJJ_JJJJ2 or X != X2 or Y != Y2 or Z != Z2 or Sx != Sx2 or Sy != Sy2 or Sz != Sz2 or Rxy != Rxy2 or Rxz != Rxz2 or Ryz != Ryz2 or NLat != NLat2 or Elong != Elong2 or Height != Height2 or dN != dN2 or dE != dE2 or dU != dU2 or Sn != Sn2 or Se != Se2 or Su != Su2 or Rne != Rne2 or Rnu != Rnu2 or Reu != Reu2 or Soln != Soln2
-                ):
-                  updatedLines.append(line2)
-    return updatedLines
+  def _getUpdatedAndNewLines(self,oldLines,newLines):
+    oldLines           = [line.strip() for line in oldLines]
+    newLines           = [line.strip() for line in newLines]
+    keys               = ["YYYYMMDD","HHMMSS","JJJJJ_JJJJ","X","Y","Z","Sx","Sy","Sz","Rxy","Rxz","Ryz","NLat","Elong","Height","dN","dE","dU","Sn","Se","Su","Rne","Rnu","Reu","Soln"]
+    oldLinesDict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in oldLines]
+    newLinesDict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in newLines]
+    uniqueDateHoursSet = {(line['YYYYMMDD'],line['HHMMSS']) for line in oldLinesDict}
+    matchingLines      = []
+    newLines           = []
+    for line in newLinesDict:
+      dateHours = (line['YYYYMMDD'],line['HHMMSS'])
+      if dateHours in uniqueDateHoursSet:
+        matchingLineInList1 = next(
+          (l for l in oldLinesDict if l['YYYYMMDD'] == line['YYYYMMDD'] and l['HHMMSS'] == line['HHMMSS']), None
+        )
+        if matchingLineInList1 and (matchingLineInList1['X'] != line['X'] or matchingLineInList1['Y'] != line['Y'] or matchingLineInList1['Z'] != line['Z'] or matchingLineInList1['Sx'] != line['Sx'] or matchingLineInList1['Sy'] != line['Sy'] or matchingLineInList1['Sz'] != line['Sz'] or matchingLineInList1['Rxy'] != line['Rxy'] or matchingLineInList1['Rxz'] != line['Rxz'] or matchingLineInList1['Ryz'] != line['Ryz'] or matchingLineInList1['NLat'] != line['NLat'] or matchingLineInList1['Elong'] != line['Elong'] or matchingLineInList1['Height'] != line['Height'] or matchingLineInList1['dN'] != line['dN'] or matchingLineInList1['dE'] != line['dE'] or matchingLineInList1['dU'] != line['dU'] or matchingLineInList1['Sn'] != line['Sn'] or matchingLineInList1['Se'] != line['Se'] or matchingLineInList1['Su'] != line['Su'] or matchingLineInList1['Rne'] != line['Rne'] or matchingLineInList1['Rnu'] != line['Rnu'] or matchingLineInList1['Reu'] != line['Reu'] or matchingLineInList1['Soln'] != line['Soln']):
+          matchingLines.append(line)
+      else:
+        newLines.append(line)
+    return [[line[key] for key in keys] for line in matchingLines],[[line[key] for key in keys] for line in newLines]
   
   
   def updateEstimatedCoordinates(self,line):
@@ -421,9 +422,6 @@ class DatabaseUpload:
       If the estimated coordinates could not be uploaded to the database
     """
     try:
-      line = [part.strip() for part in (" ".join(line.split())).split(" ")]
-      print(line[3])
-      print(self._formatDate(line[0],line[1]))
       self.cursor.execute(
         f"""
         UPDATE estimated_coordinates
@@ -433,7 +431,6 @@ class DatabaseUpload:
         (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._formatDate(line[0],line[1]))
       ) 
     except Exception as err:
-      print("arroz")
       raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
     
   
