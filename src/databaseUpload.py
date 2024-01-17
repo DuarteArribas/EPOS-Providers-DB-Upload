@@ -96,8 +96,6 @@ class DatabaseUpload:
                     currentSolutionID,
                     file
                   )
-                self.uploadEstimatedCoordinates()
-                self.eraseEstimatedCoordinatesTmpFile()
               # handle updated files
               for file in updatedFiles:
                 with open(f"{publicDir}/TS/{version}/{file}","r") as f:
@@ -110,6 +108,15 @@ class DatabaseUpload:
                     )
                     for line in updatedLines:
                       self.updateEstimatedCoordinates(line)
+                    for line in newDifferentLines:
+                      currFile = os.path.join(currDir,file)
+                      self.saveEstimatedCoordinatesToFile(
+                        currFile,
+                        currentSolutionID,
+                        file
+                      )
+              self.uploadEstimatedCoordinates()
+              self.eraseEstimatedCoordinatesTmpFile()       
             self.cursor.execute("COMMIT TRANSACTION;")
             self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
     except UploadError as err:
