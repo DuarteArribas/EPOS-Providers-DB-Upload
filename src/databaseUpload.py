@@ -159,10 +159,7 @@ class DatabaseUpload:
     if dataType == tsDatatype:
       if(len(solutionIDInDB) > 0):
         for solutionID in solutionIDInDB:
-          if version != self.getVersionFromSolution(solutionID):
-            timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
-            for timeseriesFileID in timeseriesFilesIDInDB:
-              self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)  
+          if version != self.getVersionFromSolution(solutionID): 
             self._erasePreviousSolutionFromDB(ac,dataType)
           else:
             return True
@@ -213,32 +210,6 @@ class DatabaseUpload:
       The data type of the solution (timeseries or velocity)
     """
     self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
-  
-  def _getTimeseriesFilesID(self,solutionID):
-    """Get the timeseries files ID from the database.
-    
-    Parameters
-    ----------
-    solutionID : int
-      The solution ID
-    
-    Returns
-    -------
-    list
-      A list of timeseries files IDs
-    """
-    self.cursor.execute("SELECT id_timeseries_files FROM estimated_coordinates WHERE id_solution = %s GROUP BY id_timeseries_files;",(solutionID,))
-    return [item[0] for item in self.cursor.fetchall()]
-  
-  def _erasePreviousTimeseriesFilesFromDB(self,timeseriesFilesID):
-    """Erase a previous timeseries file from the database.
-    
-    Parameters
-    ----------
-    timeseriesFilesID : int
-      The timeseries files ID to remove
-    """
-    self.cursor.execute("DELETE FROM timeseries_files WHERE id = %s;",(timeseriesFilesID,))
   
   def uploadSolution(self,dataType,solutionParameters):
     """Upload a solution to the database.
@@ -326,62 +297,6 @@ class DatabaseUpload:
             value = " ".join(values)
             solutionParameters["sampling_period"] = value
       return solutionParameters
-  
-  def uploadTimeseriesFile(self,posFile,posFormatVersion):
-    """Upload a time series file to the database.
-    
-    Parameters
-    ----------
-    posFile           : str
-      The path to the time series file on the bucket directory
-    posFormatVersion  : str
-      The version of the POS format used
-    
-    Raises
-    ------
-    UploadError
-      If the time series file could not be uploaded to the database
-    
-    Returns
-    -------
-    list
-      A list, containing the ID of the uploaded time series file
-    """
-    try:
-      self.cursor.execute(
-        f"""
-        INSERT INTO timeseries_files(
-          url,
-          version,
-          file_type
-        )
-        VALUES(
-          'https://gnssproducts.epos.ubi.pt/file-manager/download?disk=sftp&path={"/".join(posFile.split("/")[-4:])}', 
-          '{posFormatVersion}',
-          'pos'
-        )
-        RETURNING id;
-        """
-      )
-      return [item[0] for item in self.cursor.fetchall()][0]
-    except Exception as err:
-      raise UploadError(f"Could not upload time series file to database. Error: {UploadError.formatError(str(err))}.")
-  
-  def getPBOFormatVersion(self,pboFile):
-    """Get the version of the PBO format used. (e.g. 1.1.1)
-    
-    Parameters
-    ----------
-    pboFile : str
-      The path to the PBO file
-    """
-    with open(pboFile,"rt") as f:
-      lines = [line.strip() for line in f.readlines()]
-      for line in lines:
-        match [part.strip() for part in line.split(":",1)]:
-          case ["Format Version",*values]:
-            value = " ".join(values)
-            return value
             
   def saveEstimatedCoordinatesToFile(self,posFile,idSolution,idTimeseriesFiles):
     """Save the estimated coordinates to a temporary file for bulk upload.
@@ -683,20 +598,16 @@ class DatabaseUpload:
         f"""
         INSERT INTO velocities_files(
           url,
-          epoch,
           version,
-          file_type,
-          data_type
+          file_type
         )
         VALUES(
-          'public/{"/".join(velFile.split("/")[-4:])}',
-          '2011-01-01 00:00:00',
+          'https://gnssproducts.epos.ubi.pt/file-manager/download?disk=sftp&path=/{"/".join(velFile.split("/")[-4:])}',
           '{velFormatVersion}',
-          'vel',
-          'velocities'
+          'vel'
         )
         RETURNING id;
-        """ #TODO: Mudar epoch aqui!!!!!!!!!!!!
+        """
       )
       return [item[0] for item in self.cursor.fetchall()][0]
     except Exception as err:
