@@ -142,44 +142,20 @@ class TestDatabaseUpload(unittest.TestCase):
       test_pos.close()
       self.assertEqual(databaseDump.getSolutionParametersTS(os.path.join(d.path,"test.pos")),{"reference_frame" : "IGS14", "ac_acronym" : "INGV","software" : "GIPSY 6.3","processing_parameters_url" : "https://gnssproducts.epos.ubi.pt/methods/INGV_TS.pdf","doi" : "not_specified","release_version" : "2023.1","sampling_period" : "daily","creation_date" : "2023-02-03 18:00:00"})
   
-  #def test_getPBOFormatVersion(self):
-  #  cfg          = Config("config/appconf.cfg")
-  #  logger       = Logs("logs/logsTest.log",1000)
-  #  pgConnection = DBConnection("localhost",5432,"PP-products","postgres","postgres",logger)
-  #  pgConnection.connect()
-  #  fileHandler = FileHandler(
-  #    providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
-  #    fromEmail         = "arroz123",
-  #    fromEmailPassword = "arroz123"
-  #  )
-  #  databaseDump = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp",fileHandler)
-  #  with TempDirectory() as d:
-  #    test_pos = open(os.path.join(d.path,"test.pos"),"w")
-  #    posFileContent = (
-  #      "PBO Station Position Time Series. Reference Frame : IGS14\n"
-  #      "Format Version: 1.1.0\n"
-  #      "4-character ID: ACOR\n"
-  #      "Station name  : ACOR\n"
-  #      "First Epoch   : 20000101 120000\n"
-  #      "Last Epoch    : 20221231 120000\n"
-  #      "Release Date  : 20230201 090806\n"
-  #      "XYZ Reference position :    4594489.63752  -678367.62227  4357066.20414 (IGS14)\n"
-  #      "NEU Reference position :     43.3643846386  351.6010688682   66.90070 (IGS14/WGS84)\n"
-  #      "%Begin EPOS metadata\n"
-  #      "9-character ID: ACOR00ESP\n"
-  #      "AnalysisCentre: INGV\n"
-  #      "Software      : GIPSY 6.3\n"
-  #      "Method-url    : https://gnssproducts.epos.ubi.pt/methods/INGV_TS.pdf\n"
-  #      "DOI           : not_specified\n"
-  #      "ReleaseVersion: 2023.1\n"
-  #      "SamplingPeriod: daily\n"
-  #      "CreationDate  : 2023-02-03 18:00:00\n"
-  #      "%End EPOS metadata\n"
-  #    )
-  #    test_pos.write(posFileContent)
-  #    test_pos.close()
-  #    self.assertEqual(databaseDump.getPBOFormatVersion(os.path.join(d.path,"test.pos")),"1.1.0")
-  #
+  def test_getStationID(self):
+    cfg          = Config("config/appconf.cfg")
+    logger       = Logs("logs/logsTest.log",1000)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
+    pgConnection.connect()
+    fileHandler = FileHandler(
+      providersDir      = cfg.getAppConfig("PROVIDERS_DIR"),
+      fromEmail         = "arroz123",
+      fromEmailPassword = "arroz123"
+    )
+    databaseDump = DatabaseUpload(pgConnection.conn,pgConnection.cursor,logger,cfg,"tmp",fileHandler)
+    self.assertEqual(databaseDump._getStationID("ACOR00ESP"),568)
+  
+  
   #def test_saveEstimatedCoordinatesToFile(self):
   #  cfg          = Config("config/appconf.cfg")
   #  logger       = Logs("logs/logsTest.log",1000)

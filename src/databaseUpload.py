@@ -76,10 +76,6 @@ class DatabaseUpload:
               currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
               for file in allTSFiles:
                 currFile = os.path.join(currDir,file)
-                timeseriesFileID = self.uploadTimeseriesFile(
-                  currFile,
-                  self.getPBOFormatVersion(currFile)
-                )
                 self.saveEstimatedCoordinatesToFile(
                   currFile,
                   currentSolutionID,
@@ -298,17 +294,17 @@ class DatabaseUpload:
             solutionParameters["sampling_period"] = value
       return solutionParameters
             
-  def saveEstimatedCoordinatesToFile(self,posFile,idSolution,idTimeseriesFiles):
+  def saveEstimatedCoordinatesToFile(self,posFile,idSolution,timeseriesFilename):
     """Save the estimated coordinates to a temporary file for bulk upload.
     
     Parameters
     ----------
-    posFile           : str
+    posFile            : str
       The path to the POS file
-    idSolution        : int
+    idSolution         : int
       The ID of the solution
-    idTimeseriesFiles : int
-      The ID of the time series file
+    timeseriesFilename : str
+      URL of the file location in the repository
     """
     with open(posFile,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
@@ -317,13 +313,12 @@ class DatabaseUpload:
         match [part.strip() for part in line.split(":",1)]:
           case ["9-character ID",*values]:
             stationName = " ".join(values)
-      station = self._getStationID(stationName)
       for line in lines:
         match [part.strip() for part in (" ".join(line.split())).split(" ")]:
           case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"a") as tmp:
               tmp.write(
-                str(station)                           + "," +
+                str(stationName)                           + "," +
                 str(X)                                 + "," +
                 str(Y)                                 + "," +
                 str(Z)                                 + "," +
@@ -337,24 +332,8 @@ class DatabaseUpload:
                 str(self._formatDate(YYYYMMDD,HHMMSS)) + "," +
                 str(Soln)                              + "," +
                 str(idSolution)                        + "," +
-                str(idTimeseriesFiles)                 + "\n"      
+                str(timeseriesFilename)                + "\n"      
               )
-  
-  def _getStationID(self,stationName):
-    """Get the ID of a station.
-    
-    Parameters
-    ----------
-    stationName : str
-      The long marker name of the station
-    
-    Returns
-    -------
-    int
-      The ID of the correspondent station
-    """
-    self.cursor.execute("SELECT id FROM station WHERE marker = %s",(stationName,))
-    return [item[0] for item in self.cursor.fetchall()][0]
   
   def _formatDate(self,YYYYMMDD,HHMMSS):
     """Format a date in the format YYYYMMDD HHMMSS to YYYY-MM-DD HH:MM:SS.
