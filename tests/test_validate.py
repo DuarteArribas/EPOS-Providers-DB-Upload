@@ -49,22 +49,22 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
-      validator._validateMetadataLineSnx("AnalysisCentre            ARRR   ","data/in/test/validation/wrong/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator._validateMetadataLineSnx("AnalysisCentre            ING   ","data/in/test/validation/wrong/wrongAnalysisCentre/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator._validateMetadataLineSnx("Software                  GIPSY-OASIS 6.3 ","data/in/test/validation/wrong/wrongSoftware/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator._validateMetadataLineSnx("DOI                       aaaaa            ","data/in/test/validation/wrong/wrongDoi/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator._validateMetadataLineSnx("CreationDate              02/02/2123 13:24:18","data/in/test/validation/wrong/wrongCreationDate/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator._validateMetadataLineSnx("CreationDate              02/02/2023 13:24_18","data/in/test/validation/wrong/wrongCreationDate/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator._validateMetadataLineSnx("CreationDate              2001/02/25 13:24:18","data/in/test/validation/wrong/wrongCreationDate/3/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator._validateMetadataLineSnx(" ReleaseVersion                          ","data/in/test/validation/wrong/wrongReleaseVersion/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator._validateMetadataLineSnx("SamplingPeriod            monthly      ","data/in/test/validation/wrong/wrongSamplingPeriod/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator._validateMetadataLineSnx("AnalysisCentre            INGV  ","data/in/test/validation/right/rightAnalysisCentre/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator._validateMetadataLineSnx("Software                  GIPSY-OASIS ","data/in/test/validation/right/rightSoftware/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator._validateMetadataLineSnx("DOI                       unknown            ","data/in/test/validation/right/rightDoi/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator._validateMetadataLineSnx("CreationDate              02/02/2023 13:24:18","data/in/test/validation/right/rightCreationDate/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator._validateMetadataLineSnx(" ReleaseVersion              2222.0         ","data/in/test/validation/right/rightReleaseVersion/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator._validateMetadataLineSnx("SamplingPeriod            daily      ","data/in/test/validation/right/rightSamplingPeriod/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator._validateMetadataLineSnx("SamplingPeriod            daily      ","data/in/test/validation/right/rightSamplingPeriod/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator._validateMetadataLineSnx("AnalysisCentre            ARRR   ","data/in/test/validation/wrong/snx/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator._validateMetadataLineSnx("AnalysisCentre            ING   ","data/in/test/validation/wrong/snx/wrongAnalysisCentre/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator._validateMetadataLineSnx("Software                  GIPSY-OASIS 6.3 ","data/in/test/validation/wrong/snx/wrongSoftware/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator._validateMetadataLineSnx("DOI                       aaaaa            ","data/in/test/validation/wrong/snx/wrongDoi/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator._validateMetadataLineSnx("CreationDate              02/02/2123 13:24:18","data/in/test/validation/wrong/snx/wrongCreationDate/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator._validateMetadataLineSnx("CreationDate              02/02/2023 13:24_18","data/in/test/validation/wrong/snx/wrongCreationDate/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator._validateMetadataLineSnx("CreationDate              2001/02/25 13:24:18","data/in/test/validation/wrong/snx/wrongCreationDate/3/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator._validateMetadataLineSnx(" ReleaseVersion                          ","data/in/test/validation/wrong/snx/wrongReleaseVersion/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator._validateMetadataLineSnx("SamplingPeriod            monthly      ","data/in/test/validation/wrong/snx/wrongSamplingPeriod/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator._validateMetadataLineSnx("AnalysisCentre            INGV  ","data/in/test/validation/right/snx/rightAnalysisCentre/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator._validateMetadataLineSnx("Software                  GIPSY-OASIS ","data/in/test/validation/right/snx/rightSoftware/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator._validateMetadataLineSnx("DOI                       unknown            ","data/in/test/validation/right/snx/rightDoi/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator._validateMetadataLineSnx("CreationDate              02/02/2023 13:24:18","data/in/test/validation/right/snx/rightCreationDate/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator._validateMetadataLineSnx(" ReleaseVersion              2222.0         ","data/in/test/validation/right/snx/rightReleaseVersion/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator._validateMetadataLineSnx("SamplingPeriod            daily      ","data/in/test/validation/right/snx/rightSamplingPeriod/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator._validateMetadataLineSnx("SamplingPeriod            daily      ","data/in/test/validation/right/snx/rightSamplingPeriod/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
   
   def test_validateSnx(self):
     cfg          = Config("config/appconf.cfg")
@@ -73,18 +73,18 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
-      validator.validateSnx("data/in/test/validation/wrong/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongAnalysisCentre/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongSoftware/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongDoi/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongCreationDate/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongCreationDate/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongCreationDate/3/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongReleaseVersion/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongSamplingPeriod/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongFile/1/NG1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-      validator.validateSnx("data/in/test/validation/wrong/wrongFile/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
-    validator.validateSnx("data/in/test/validation/right/rightFile/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongAnalysisCentre/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongSoftware/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongDoi/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongCreationDate/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongCreationDate/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongCreationDate/3/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongReleaseVersion/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongSamplingPeriod/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongFile/1/NG1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator.validateSnx("data/in/test/validation/wrong/snx/wrongFile/2/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+    validator.validateSnx("data/in/test/validation/right/snx/rightFile/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
     
   def test_validateTSFilename(self):
     cfg          = Config("config/appconf.cfg")
@@ -99,11 +99,11 @@ class TestValidation(unittest.TestCase):
       validator._validatePosFilenameSamplingPeriod("path/ING_ANK200UKN_01F.pos","ING_ANK200UKN_01F.pos")
       validator._validatePosFilenameSamplingPeriod("path/ING_ANK200UKN_02D.pos","ING_ANK200UKN_02D.pos")
       validator._validatePosFilenameExtension("path/ING_ANK200UKN_01D.pbo","ING_ANK200UKN_01D.pbo")
-      validator._validatePosFilename("data/in/test/validation/wrong/wrongTS/INGV_ANK200UKN_01D.pos")
+      validator._validatePosFilename("data/in/test/validation/wrong/ts/wrongFilename/INGV_ANK200UKN_01D.pos")
     validator._validatePosFilenameAbbr("path/ING_ANK200UKN_01D.pos","ING_ANK200UKN_01D.pos",["ING","WUT","ROB"])
     validator._validatePosFilenameSamplingPeriod("ING_ANK200UKN_01D.pos","ING_ANK200UKN_01D.pos")
     validator._validatePosFilenameExtension("path/ING_ANK200UKN_01D.pos","ING_ANK200UKN_01D.pos")
-    validator._validatePosFilename("data/in/test/validation/wrong/wrongTS/ING_ANK200UKN_01D.pos")
+    validator._validatePosFilename("data/in/test/validation/right/ts/rightFilename/ING_ANK200UKN_01D.pos")
   
   def test_validateTSLine(self):
     cfg          = Config("config/appconf.cfg")
@@ -112,7 +112,22 @@ class TestValidation(unittest.TestCase):
     pgConnection.connect()
     validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
     with self.assertRaises(ValidationError):
-      validator._validateMetadataLinePos("AnalysisCentre: ARRR","data/in/test/validation/wrong/wrongAnalysisCentre/1/ING1OPSSNX_20053650000_01D_01D_SOL.snx.gz")
+      validator._validateMetadataLinePos("9-character ID: ANK300UKN","data/in/test/validation/wrong/ts/wrong9CharId/ING_ANK200UKN_01D.pos")
+    validator._validateMetadataLinePos("9-character ID: ANK200TUR","data/in/test/validation/right/ts/right9CharId/ING_ANK200TUR_01D.pos")
+  
+  
+  def test_validateTS(self):
+    cfg          = Config("config/appconf.cfg")
+    logger       = Logs("logs/logsTest.log",1000)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
+    pgConnection.connect()
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator.validatePos("data/in/test/validation/wrong/ts/wrongFile/1/ING_ANK200UKN_01D.pos")
+      validator.validatePos("data/in/test/validation/wrong/ts/wrongFile/2/ING_ANK200UKN_01D.pos")
+    validator.validatePos("data/in/test/validation/right/ts/rightFile/ING_ANK200TUR_01D.pos")
+    
+  
     
 if __name__ == '__main__':
   unittest.main()

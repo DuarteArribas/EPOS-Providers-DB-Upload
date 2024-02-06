@@ -518,3 +518,8 @@
 2023-05-24 07:28:24.241863 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused---	Is the server running on that host and accepting TCP/IP connections?---'..
 2023-05-24 07:28:24.248805 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused---	Is the server running on that host and accepting TCP/IP connections?---'..
 2023-05-24 07:28:24.255180 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused---	Is the server running on that host and accepting TCP/IP connections?---'..
+2024-02-06 10:47:19.522129 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
+2024-02-06 10:47:19.528835 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
+2024-02-06 10:47:19.533937 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
+2024-02-06 10:47:19.538218 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
+2024-02-06 10:47:19.542609 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
