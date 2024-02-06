@@ -482,14 +482,10 @@ class DatabaseUpload:
             currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
             for file in allVelFiles:
               currFile = os.path.join(currDir,file)
-              velocityFileID = self.uploadVelocityFile(
-                currFile,
-                self.getPBOFormatVersion(currFile)
-              )
               self.saveReferencePositionVelocitiesToFile(
                 currFile,
                 currentSolutionID,
-                velocityFileID
+                file
               )
             self.uploadReferencePositionVelocities()
             self.eraseReferencePositionVelocitiesTmpFile()
@@ -579,29 +575,7 @@ class DatabaseUpload:
             solutionParameters["sampling_period"] = value
       return solutionParameters
   
-  def uploadVelocityFile(self,velFile,velFormatVersion):
-    """Upload a velocity file to the database."""
-    try:
-      self.cursor.execute(
-        f"""
-        INSERT INTO velocities_files(
-          url,
-          version,
-          file_type
-        )
-        VALUES(
-          'https://gnssproducts.epos.ubi.pt/file-manager/download?disk=sftp&path=/{"/".join(velFile.split("/")[-4:])}',
-          '{velFormatVersion}',
-          'vel'
-        )
-        RETURNING id;
-        """
-      )
-      return [item[0] for item in self.cursor.fetchall()][0]
-    except Exception as err:
-      raise UploadError(f"Could not upload velocity file to database. Error: {UploadError.formatError(str(err))}.")
-  
-  def saveReferencePositionVelocitiesToFile(self,velFile,idSolution,idVelocityFiles):
+  def saveReferencePositionVelocitiesToFile(self,velFile,idSolution,velocitiesFilename):
     """Save the reference position velocities to a temporary file for bulk upload.
     
     Parameters
@@ -620,7 +594,7 @@ class DatabaseUpload:
           case [Dot,Name,Ref_epoch,Ref_jday,Ref_X,Ref_Y,Ref_Z,Ref_Nlat,Ref_Elong,Ref_Up,dXDt,dYDt,dZDt,SXd,SYd,SZd,Rxy,Rxz,Rzy,dNDt,dEDt,dUDt,SNd,SEd,SUd,Rne,Rnu,Reu,first_epoch,last_epoch] if Dot[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"a") as tmp:
               tmp.write(
-                str(self._getStationID(Name))          + "," +
+                str(Name)                              + "," +
                 str(dXDt)                              + "," +
                 str(dYDt)                              + "," +
                 str(dZDt)                              + "," +
@@ -642,7 +616,7 @@ class DatabaseUpload:
                 str(self._formatOnlyDate(first_epoch)) + "," +
                 str(self._formatOnlyDate(last_epoch))  + "," +
                 str(self._formatOnlyDate(Ref_epoch))   + "," +
-                str(idVelocityFiles)                   + "," +   
+                str(velocitiesFilename)                   + "," +   
                 str(idSolution)                        + "\n"
               )
   
@@ -696,7 +670,7 @@ class DatabaseUpload:
             start_epoch,
             end_epoch,
             ref_epoch,
-            id_velocities_files,
+            velocities_files_url,
             id_solution
           )
           FROM STDIN
