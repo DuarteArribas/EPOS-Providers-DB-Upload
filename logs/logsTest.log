@@ -523,3 +523,6 @@
 2024-02-06 10:47:19.533937 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
 2024-02-06 10:47:19.538218 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
 2024-02-06 10:47:19.542609 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "postgres" does not exist---'..
+2024-02-06 12:28:41.094217 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 12345 failed: Connection refused---	Is the server running on that host and accepting TCP/IP connections?---connection to server at "localhost" (127.0.0.1), port 12345 failed: Connection refused---	Is the server running on that host and accepting TCP/IP connections?---'..
+2024-02-06 12:29:04.156990 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "arroz" does not exist---'..
+2024-02-06 12:29:30.921963 (ERROR)    | Error: Could not connect to the database: 'connection to server at "localhost" (::1), port 5432 failed: FATAL:  role "arroz" does not exist---'..
