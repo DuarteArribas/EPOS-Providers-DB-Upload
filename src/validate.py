@@ -761,8 +761,8 @@ class Validator:
           match [part.strip() for part in line.split(":",1)]:
             case ["ReleaseVersion",*values]:
               value = " ".join(values)
-              if value != ".".join(velFilename.split(".")[1:-2]):
-                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{'.'.join(velFilename.split('.')[1:-2])}' does not match the metadata file ReleaseVersion of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+              if value != velFilename.split("_")[1]:
+                raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file version '{velFilename.split('_')[1]}' does not match the metadata file ReleaseVersion of {value}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
     except IndexError:
@@ -786,8 +786,8 @@ class Validator:
     try:
       with open(velFile,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
-        if lines[0].split(":")[1].strip() != velFilename.split(".")[-2]:
-          raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file reference frame '{velFilename.split('.')[-2]}' does not match the metadata file reference frame of {lines[0].split(':')[1].strip()}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
+        if lines[0].split(":")[1].strip() != velFilename.split("_")[2].split(".")[0]:
+          raise ValidationError(f"Wrong filename format for vel file '{velFilename}' with path '{velFile}' - Vel file reference frame '{velFilename.split('_')[2].split('.')[0]}' does not match the metadata file reference frame of {lines[0].split(':')[1].strip()}. {Validator.FILENAME_CONVENTION_ERROR_MSG_VEL}")
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(velFile)}' with path '{velFile}'.")
     except IndexError:

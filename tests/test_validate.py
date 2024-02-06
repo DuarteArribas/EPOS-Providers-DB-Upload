@@ -127,7 +127,23 @@ class TestValidation(unittest.TestCase):
       validator.validatePos("data/in/test/validation/wrong/ts/wrongFile/2/ING_ANK200UKN_01D.pos")
     validator.validatePos("data/in/test/validation/right/ts/rightFile/ING_ANK200TUR_01D.pos")
     
-  
+  def test_validateVelFilename(self):
+    cfg          = Config("config/appconf.cfg")
+    logger       = Logs("logs/logsTest.log",1000)
+    pgConnection = DBConnection("localhost",5432,"db305","postgres","postgres",logger)
+    pgConnection.connect()
+    validator = Validator(cfg,pgConnection.conn,pgConnection.cursor)
+    with self.assertRaises(ValidationError):
+      validator._validateVelFilenameAbbr("path/ARR_2023.1_IGb14.vel","ARR_2023.1_IGb14.vel",["SGO","WUT","ROB"])
+      validator._validateVelFilenameVersion("data/in/test/validation/wrong/vel/wrongFilenameVersion/SGO_2023.1_IGb14.vel","SGO_2023.1_IGb14.vel")
+      validator._validateVelFilenameReferenceFrame("data/in/test/validation/wrong/vel/wrongFilenameReferenceFrame/SGO_2023.1_IGb14.vel","SGO_2023.1_IGb14.vel")
+      validator._validateVelFilenameExtension("path/SGO_2023.1_IGb14.pos","SGO_2023.1_IGb14.pos")
+      validator._validateVelFilename("data/in/test/validation/wrong/vel/wrongFilename/SGO_2023.1_IGb14.vel")
+    validator._validateVelFilenameAbbr("path/SGO_2023.1_IGb14.vel","SGO_2023.1_IGb14.vel",["SGO","WUT","ROB"])
+    validator._validateVelFilenameVersion("data/in/test/validation/right/vel/rightFilenameVersion/SGO_2221.0_IGb14.vel","SGO_2221.0_IGb14.vel")
+    validator._validateVelFilenameReferenceFrame("data/in/test/validation/right/vel/rightFilenameReferenceFrame/SGO_2221.0_IGb14.vel","SGO_2221.0_IGb14.vel")
+    validator._validateVelFilenameExtension("path/SGO_2023.1_IGb14.vel","SGO_2023.1_IGb14.vel")
+    validator._validateVelFilename("data/in/test/validation/right/vel/rightFilename/SGO_2221.0_IGb14.vel")
     
 if __name__ == '__main__':
   unittest.main()
