@@ -60,6 +60,8 @@ class DatabaseUpload:
       for filetype in os.listdir(provBucketDir):
         if filetype == "TS":
           for version in os.listdir(os.path.join(provBucketDir,filetype)):
+            if version == ".DS_Store":
+              continue
             currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
             allTSFiles = self.getListOfTSFiles(currDir)
             if len(allTSFiles) == 0:
@@ -139,7 +141,7 @@ class DatabaseUpload:
     list
       A list of all timeseries files in the directory
     """
-    return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".pos"]
+    return [file for file in os.listdir(bucketDir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".pos"]
   
   def handlePreviousSolution(self,ac,dataType,tsDatatype,velDatatype,version = None):
     """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its associated timeseries files and estimated coordinates.
@@ -167,15 +169,6 @@ class DatabaseUpload:
             return True
     else:
       if(len(solutionIDInDB) > 0):
-        for solutionID in solutionIDInDB:
-          if dataType == tsDatatype:
-            timeseriesFilesIDInDB = self._getTimeseriesFilesID(solutionID)
-            for timeseriesFileID in timeseriesFilesIDInDB:
-              self._erasePreviousTimeseriesFilesFromDB(timeseriesFileID)
-          elif dataType == velDatatype:
-            velocityFilesInDB = self._getVelocityFilesID(solutionID)
-            for velocityFileID in velocityFilesInDB:
-              self._erasePreviousVelocityFilesFromDB(velocityFileID)
         self._erasePreviousSolutionFromDB(ac,dataType)
     return False
   
@@ -468,6 +461,8 @@ class DatabaseUpload:
       for filetype in os.listdir(provBucketDir):
         if filetype == "Vel":
           for version in os.listdir(os.path.join(provBucketDir,filetype)):
+            if version == ".DS_Store":
+              continue
             currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
             allVelFiles = self.getListOfVelFiles(currDir)
             if len(allVelFiles) == 0:
@@ -508,7 +503,7 @@ class DatabaseUpload:
     list
       A list of all velocity files in the directory
     """
-    return [file for file in os.listdir(bucketDir) if os.path.splitext(file)[1].lower() == ".vel"]
+    return [file for file in os.listdir(bucketDir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".vel"]
   
   def _getVelocityFilesID(self,solutionID):
     """Get the velocity files ID from the database.

@@ -688,6 +688,7 @@ class Validator:
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(velFile)}' with path '{velFile}'.")
         for line in metadataLines:
           self._validateMetadataLineVel(line,velFile)
+        self._validate_station(velFile,lines[lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:])
     except ValidationError as err:
       raise ValidationError(str(err))
     except OSError:
@@ -872,3 +873,18 @@ class Validator:
         self.velMetadataValues[5] = value
         if value.lower() not in self.cfg.getValidationConfig("SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+  
+  def _validate_station(self,velFile,lines):
+    not_existing_stations = []
+    for line in lines:
+      if not self._is_station_in_db(line.split(" ")[0]):
+        #not_existing_stations.append(line.split(" ")[1].split(" ")[0])
+        not_existing_stations.append(line.split(" ")[0])
+    if not_existing_stations != []:
+      new_line_char           = "\n"
+      comma_and_new_line_char = ", \n"
+      raise ValidationError(f"The following stations of file '{os.path.basename(velFile)}' with path '{velFile}' are not in the database: {new_line_char}{comma_and_new_line_char.join(not_existing_stations)}.")
+  
+  def _is_station_in_db(self,station):
+    self.cursor.execute("SELECT marker FROM station WHERE marker = %s;",(station,))
+    return self.cursor.fetchone() is not None
