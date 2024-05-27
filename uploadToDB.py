@@ -41,7 +41,7 @@ def uploadAllTS(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,file
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
     provider     = providerBucketDir.split("-")[0]
     publicDir    = publicDirs[providerBucketDir.split("-")[0]]
-    if is_new_solution(provider,fileHandler,databaseUpload,bucketDir,providerBucketDir,publicDir):
+    if handle_new_solution(provider,fileHandler,databaseUpload,bucketDir,providerBucketDir,publicDir):
       return
     try:
       databaseUpload.uploadAllProviderTS(os.path.join(bucketDir,providerBucketDir),publicDir)
@@ -83,7 +83,7 @@ def uploadAllVel(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,fil
   for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
     provider  = providerBucketDir.split("-")[0]
     publicDir = publicDirs[providerBucketDir.split("-")[0]]
-    if is_new_solution(provider,fileHandler,databaseUpload,bucketDir,providerBucketDir,publicDir):
+    if handle_new_solution(provider,fileHandler,databaseUpload,bucketDir,providerBucketDir,publicDir):
       return
     try:
       databaseUpload.uploadAllProviderVel(os.path.join(bucketDir,providerBucketDir),publicDir)
@@ -94,9 +94,9 @@ def uploadAllVel(bucketDir,cfg,logger,publicDirs,providerEmails,pgConnection,fil
         providerEmails[provider]
       )
 
-def is_new_solution(provider,fileHandler,databaseUpload,bucketDir,providerBucketDir,publicDir):
+def handle_new_solution(provider,fileHandler,databaseUpload,bucketDir,providerBucketDir,publicDir):
   old_solution,new_solution = databaseUpload.check_solution_folder_exists(os.path.join(bucketDir,providerBucketDir),publicDir)
-  if new_solution:
+  if not new_solution:
     fileHandler.sendEmailToSegal(f"Warning (to Segal only). Provider {provider} uploaded a new solution!",f"The previous solution for {provider} was {old_solution} and the new one is {new_solution}. Please check that the new solution is correct and create the respective folder in the public directory.")
     return True
   return False

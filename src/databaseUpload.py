@@ -38,6 +38,14 @@ class DatabaseUpload:
       os.makedirs(self.tmpDir)
     self.fileHandler = fileHandler
   
+  def check_solution_folder_exists(self,provBucketDir,publicDir,data_type):
+    self.cursor.execute("SELECT release_version FROM solution WHERE ac_acronym = %s AND data_type = %s;",(os.path.basename(provBucketDir),self.cfg.getUploadConfig("TS_DATATYPE") if data_type == "TS" else self.cfg.getUploadConfig("VEL_DATATYPE")))
+    old_solution = [item[0] for item in self.cursor.fetchall()]
+    new_solution = self.getSolutionParametersTS(os.path.join(provBucketDir,os.listdir(provBucketDir)[0]))["release_version"] if data_type == "TS" else self.getSolutionParametersVel(os.path.join(provBucketDir,os.listdir(provBucketDir)[0]))["release_version"]
+    if os.path.exists(os.path.join(publicDir,data_type,new_solution)):
+      return old_solution,new_solution
+    return old_solution,None
+  
   def uploadAllProviderTS(self,provBucketDir,publicDir):
     """Upload all timeseries files from a provider bucket directory to the database.
     
