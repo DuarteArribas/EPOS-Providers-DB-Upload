@@ -1,6 +1,6 @@
 import sqlite3
 import sys
-from src.utils.config import *
+from provider_db_upload.utils.config import *
 
 CONFIG_FILE = "config/appconf.cfg"
 

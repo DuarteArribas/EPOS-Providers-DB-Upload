@@ -95,8 +95,8 @@ class DatabaseUpload:
               self.eraseEstimatedCoordinatesTmpFile()
             else:
               previousFiles = os.listdir(f"{publicDir}/TS/{version}")
-              newFiles      = [file for file in allTSFiles if file not in previousFiles]
-              updatedFiles  = [file for file in allTSFiles if file in previousFiles]
+              newFiles      = [file for file in allTSFiles if f"{file[0:18]}.pos" not in previousFiles]
+              updatedFiles  = [file for file in allTSFiles if f"{file[0:18]}.pos" in previousFiles]
               currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
               if len(newFiles) > 0:
                 for file in newFiles:
@@ -110,7 +110,7 @@ class DatabaseUpload:
                 self.eraseEstimatedCoordinatesTmpFile()
               # handle updated files
               for file in updatedFiles:
-                with open(f"{publicDir}/TS/{version}/{file}","r") as f:
+                with open(f"{publicDir}/TS/{version}/{file[0:18]}.pos","r") as f:
                   with open(f"{provBucketDir}/TS/{version}/{file}","r") as f2:
                     oldLines = f.readlines()
                     newLines = f2.readlines()
@@ -129,7 +129,24 @@ class DatabaseUpload:
                           file
                         )
                       self.uploadEstimatedCoordinates()
-                      self.eraseEstimatedCoordinatesTmpFile()       
+                      self.eraseEstimatedCoordinatesTmpFile()
+                      lines = []
+                      with open(f"{publicDir}/TS/{version}/{file[0:18]}.pos","r") as f:
+                        lines = [line.strip() for line in f.readlines()]
+                        lines = lines[:,lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
+                      with open(f"{publicDir}/TS/{version}/{file[0:18]}.pos","w") as f:
+                        f.write(lines)
+                        has_updated_line = False
+                        for old_line in oldLines:
+                          has_updated_line = False
+                          for updated_line in updatedLines:
+                            if old_line.split(" ")[0] == updated_line[0] and old_line.split(" ")[1] == updated_line[1]:
+                              f.write(updated_line)
+                              has_updated_line = True
+                          if not has_updated_line:
+                            f.write(old_line)
+                        for new_line in newDifferentLines:
+                          f.write(new_line)
             self.cursor.execute("COMMIT TRANSACTION;")
             self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
     except UploadError as err:
