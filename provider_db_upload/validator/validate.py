@@ -484,13 +484,17 @@ class Validator:
       If the name doesn't conform to the one specified by the guidelines
     """
     pos_filename = os.path.basename(pos_file)
-    if len(pos_filename) != Validator.DEFAULT_POS_FILENAME_LENGTH:
+    if len(pos_filename) != Validator.DEFAULT_POS_FILENAME_LENGTH and len(pos_filename) != Validator.DEFAULT_DAILY_POS_FILENAME_LENGTH:
       raise ValidationError(f"Wrong filename format for pos file '{pos_filename}' with path '{pos_file}' - Incorrect length '{len(pos_filename)}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
     self._validate_pos_filename_abbr(pos_file,pos_filename,self.cfg.config.get("VALIDATION","POS_ACS").split("|"))
     self._validate_pos_filename_constant(pos_file,pos_filename)
     self._validate_pos_filename_9_character_ID(pos_file,pos_filename)
     self._validate_pos_filename_sampling_period(pos_file,pos_filename)
-    self._validate_pos_filename_extension(pos_file,pos_filename)
+    if len(pos_filename) == Validator.DEFAULT_POS_FILENAME_LENGTH:
+      self._validate_pos_filename_extension(pos_file,pos_filename)
+    if len(pos_filename) == Validator.DEFAULT_DAILY_POS_FILENAME_LENGTH:
+      self._validate_pos_daily_date(pos_file,pos_filename)
+      self._validate_pos_daily_filename_extension(pos_file,pos_filename)
   
   def _validate_pos_filename_abbr(self,pos_file,pos_filename,allowed_ac):
     """Validate the pos filename's abbreviation according to the allowed analysis centers.
@@ -575,6 +579,42 @@ class Validator:
     """
     if not (pos_filename[13:17] == "_01D" or pos_filename[13:17] == "_01W"):
       raise ValidationError(f"Wrong filename format for pos file '{pos_filename}' with path '{pos_file}' - Wrong pos file sampling period '{pos_filename[13:17]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+  
+  def _validate_pos_daily_date(self,pos_file,pos_filename):
+    """Validate the pos daily filename's date (yyyymmdd).
+
+    Parameters
+    ----------
+    pos_file     : str
+      The full path of the pos file
+    pos_filename : str
+      The pos file name
+
+    Raises
+    ------
+    ValidationError
+      If the date is an incorrect value
+    """
+    if not pos_filename[17] == "_" and not self_validate_date(f"{pos_filename[18:22]}/{pos_filename[22:24]}/{pos_filename[24:26]}"):
+      raise ValidationError(f"Wrong filename format for pos file '{pos_filename}' with path '{pos_file}' - Wrong pos file date '{pos_filename[18:26]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
+  
+  def _validate_pos_daily_filename_extension(self,pos_file,pos_filename):
+    """Validate the pos daily filename's extension (should be .pos).
+
+    Parameters
+    ----------
+    pos_file     : str
+      The full path of the pos file
+    pos_filename : str
+      The pos file name
+
+    Raises
+    ------
+    ValidationError
+      If the extension is incorrect
+    """
+    if not (pos_filename[26] == "." and pos_filename[27:30].lower() == "pos"):
+      raise ValidationError(f"Wrong filename format for pos file '{pos_filename}' with path '{pos_file}' - Wrong pos file extension - '{pos_filename[27:30]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
   
   def _validate_pos_filename_extension(self,pos_file,pos_filename):
     """Validate the pos filename's extension (should be .pos).
