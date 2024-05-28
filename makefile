@@ -20,22 +20,9 @@ clean:
 	@$(PYTHON) $(STARTUP_DIR)/$(DATABASE_INIT_MAIN_FILE)
 	
 runValidate:
-	$(PYTHON) $(VALIDATION_MAIN_FILE)
+	$(PYTHON) $(STARTUP_DIR)/$(VALIDATION_MAIN_FILE)
 
 runUpload:
 	$(PYTHON) $(UPLOAD_TO_DB_MAIN_FILE)
 
-
-test:
-	$(PYTHON) -m unittest $(TEST_DIR)/test_$(tf).py > /dev/null
-
-testPrint:
-	$(PYTHON) -m unittest $(TEST_DIR)/test_$(tf).py
-
-testAll:
-	$(PYTHON) -m unittest $(TEST_DIR)/test_* > /dev/null
-
-testAllPrint:
-	$(PYTHON) -m unittest $(TEST_DIR)/test_*
-
-.PHONY: setup clean runValidate runUpload test testPrint testAll testAllPrint
+.PHONY: setup clean runValidate runUpload

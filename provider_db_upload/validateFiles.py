@@ -12,103 +12,108 @@ from dbConnection.dbConnection import *
 CONFIG_FILE = "config/appconf.ini"
 
 # Functions
-def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged,cfg,conn,cursor,providerEmails):
+def handle_providers(file_handler,providers_dir,public_dirs,bucket_dirs,hashes_changed,cfg,conn,cursor,provider_emails):
+  print(ROUTINE_MSG["VALIDATING_FILES"])
   for i in range(5):
     # If the hashes of the files of the provider didn't change, skip it
-    if not hashesChanged[i]:
+    if not hashes_changed[i]:
       continue
-    errors                    = []
-    previousTSMetadataValues  = [None,None,None,None,None,None]
-    previousVelMetadataValues = [None,None,None,None,None,None]
-    validatedTSFiles          = []
-    validatedVelFiles         = []
-    validatedTSEqualMetadata  = True
-    validatedVelEqualMetadata = True
-    provider                  = list(providersDir.keys())[i]
-    providerDir               = list(providersDir.items())[i][1]
-    publicDir                 = list(publicDirs.items())[i][1]
-    bucketDir                 = list(bucketDirs.items())[i][1]
-    validator                 = Validator(cfg,conn,cursor)
-    allFiles                  = [file for file in glob.glob(f"{providerDir}/**/*",recursive = True) if not os.path.isdir(file)]
+    errors                       = []
+    previous_TS_metadata_values  = [None,None,None,None,None,None]
+    previous_VEL_metadata_values = [None,None,None,None,None,None]
+    validated_TS_files           = []
+    validated_VEL_files          = []
+    validated_TS_equal_metadata  = True
+    validated_VEL_equal_metadata = True
+    provider                     = list(providers_dir.keys())[i]
+    provider_dir                 = list(providers_dir.items())[i][1]
+    public_dir                   = list(public_dirs.items())[i][1]
+    bucket_dir                   = list(bucket_dirs.items())[i][1]
+    validator                    = Validator(cfg,conn,cursor)
+    all_files                    = [file for file in glob.glob(f"{provider_dir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
-    for file in allFiles:
-      extensionWithGzip    = os.path.splitext(os.path.splitext(file)[0])[1].lower()
-      extensionWithoutGzip = os.path.splitext(file)[1].lower()
+    print(ROUTINE_MSG["VALIDATING_PROVIDER"].format(file_length = len(all_files),provider = provider))
+    for file in all_files:
+      extension_with_gzip    = os.path.splitext(os.path.splitext(file)[0])[1].lower()
+      extension_without_gzip = os.path.splitext(file)[1].lower()
       # Check snx
-      if extensionWithGzip == ".snx":
+      if extension_with_gzip == ".snx":
+        print(ROUTINE_MSG["VALIDATING_SNX"].format(file = os.path.basename(file)))
         try:
-          validator.validateSnx(file)
-          fileHandler.moveSnxFileToPublic(file,publicDir)
+          validator.validate_snx(file)
+          file_handler.move_snx_file_to_public(file,public_dir)
         except ValidationError as err:
           errors.append(str(err))
       # Check pos
-      elif extensionWithoutGzip == ".pos":
+      elif extension_without_gzip == ".pos":
+        print(ROUTINE_MSG["VALIDATING_TS"].format(file = os.path.basename(file)))
         try:
-          validator.validatePos(file)
-          if not any(value is None for value in previousTSMetadataValues):
-            if any(value for value in range(len(validator.tsMetadataValues)) if validator.tsMetadataValues[value] != previousTSMetadataValues[value]):
-              fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
-              validatedTSEqualMetadata = False
+          validator.validate_pos(file)
+          if not any(value is None for value in previous_TS_metadata_values):
+            if any(value for value in range(len(validator.ts_metadata_values)) if validator.ts_metadata_values[value] != previous_TS_metadata_values[value]):
+              file_handler.send_email_to_segal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
+              validated_TS_equal_metadata = False
             else:
-              previousTSMetadataValues = validator.tsMetadataValues.copy()
-              validatedTSFiles.append((file,validator.version))
+              previous_TS_metadata_values = validator.ts_metadata_values.copy()
+              validated_TS_files.append((file,validator.version))
           else:
-            previousTSMetadataValues = validator.tsMetadataValues.copy()
-            validatedTSFiles.append((file,validator.version))
+            previous_TS_metadata_values = validator.ts_metadata_values.copy()
+            validated_TS_files.append((file,validator.version))
         except ValidationError as err:
           errors.append(str(err))
       # Check vel
-      elif extensionWithoutGzip == ".vel":
+      elif extension_without_gzip == ".vel":
+        print(ROUTINE_MSG["VALIDATING_VEL"].format(file = os.path.basename(file)))
         try:
           validator.validateVel(file)
-          if not any(value is None for value in previousVelMetadataValues):
-            if any(value for value in range(len(validator.velMetadataValues)) if validator.velMetadataValues[value] != previousVelMetadataValues[value]):
-              fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
-              validatedVelEqualMetadata = False
+          if not any(value is None for value in previous_VEL_metadata_values):
+            if any(value for value in range(len(validator.vel_metadata_values)) if validator.vel_metadata_values[value] != previous_VEL_metadata_values[value]):
+              file_handler.send_email_to_segal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
+              validated_VEL_equal_metadata = False
             else:
-              previousVelMetadataValues = validator.velMetadataValues.copy()
-              validatedVelFiles.append((file,validator.version))
+              previous_VEL_metadata_values = validator.vel_metadata_values.copy()
+              validated_VEL_files.append((file,validator.version))
           else:
-            previousVelMetadataValues = validator.velMetadataValues.copy()
-            validatedVelFiles.append((file,validator.version))
+            previous_VEL_metadata_values = validator.vel_metadata_values.copy()
+            validated_VEL_files.append((file,validator.version))
         except ValidationError as err:
           errors.append(str(err))
       # Unknown file
       else:
-        fileHandler.sendEmailToSegal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}.")
+        file_handler.send_email_to_segal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}.")
         break
     # If there are validated files, move them to the bucket and email them if all their metadata is the same
-    if validatedTSEqualMetadata:
-      for file,version in validatedTSFiles:
-        fileHandler.movePboFileToBucket(file,bucketDir,"TS",version)
-    if validatedVelEqualMetadata:
-      for file,version in validatedVelFiles:
-        fileHandler.movePboFileToBucket(file,bucketDir,"Vel",version)
-    if len(validatedTSFiles) > 0 and len(validatedVelFiles) > 0 and validatedTSEqualMetadata and validatedVelEqualMetadata:
-      fileHandler.sendEmail(
+    if validated_TS_equal_metadata:
+      for file,version in validated_TS_files:
+        file_handler.move_pbo_file_to_bucket(file,bucket_dir,"TS",version)
+    if validated_VEL_equal_metadata:
+      for file,version in validated_VEL_files:
+        file_handler.move_pbo_file_to_bucket(file,bucket_dir,"Vel",version)
+    if len(validated_TS_files) > 0 and len(validated_VEL_files) > 0 and validated_TS_equal_metadata and validated_VEL_equal_metadata:
+      file_handler.send_email(
         f"File validation for {provider} was successful!",
-        f"{len(validatedTSFiles)} new {'files were' if len(validatedTSFiles) > 1 else 'file was'} validated and {len(validatedVelFiles)} new {'files were' if len(validatedVelFiles) > 1 else 'file was'} validated for {provider}.",
-        providerEmails[provider]
+        f"{len(validated_TS_files)} new {'files were' if len(validated_TS_files) > 1 else 'file was'} validated and {len(validated_VEL_files)} new {'files were' if len(validated_VEL_files) > 1 else 'file was'} validated for {provider}.",
+        provider_emails[provider]
       )
-    elif len(validatedTSFiles) > 0 and validatedTSEqualMetadata:
-      fileHandler.sendEmail(
+    elif len(validated_TS_files) > 0 and validated_TS_equal_metadata:
+      file_handler.send_email(
         f"File validation for {provider} was successful!",
-        f"{len(validatedTSFiles)} new {'files were' if len(validatedTSFiles) > 1 else 'file was'} validated for {provider}.",
-        providerEmails[provider]
+        f"{len(validated_TS_files)} new {'files were' if len(validated_TS_files) > 1 else 'file was'} validated for {provider}.",
+        provider_emails[provider]
       )
-    elif len(validatedVelFiles) > 0 and validatedVelEqualMetadata:
-      fileHandler.sendEmail(
+    elif len(validated_VEL_files) > 0 and validated_VEL_equal_metadata:
+      file_handler.send_email(
         f"File validation for {provider} was successful!",
-        f"{len(validatedVelFiles)} new {'files were' if len(validatedVelFiles) > 1 else 'file was'} validated for {provider}.",
-        providerEmails[provider]
+        f"{len(validated_VEL_files)} new {'files were' if len(validated_VEL_files) > 1 else 'file was'} validated for {provider}.",
+        provider_emails[provider]
       )
     # If there were any errors email them
     if len(errors) != 0:
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]
-      fileHandler.sendEmail(
+      file_handler.send_email(
         f"Error validating some {provider} files. Attention is required!",
         "There were some errors while validating your files: \n\n" + "\n".join(errors) + "\n\n\n Please re-upload the problematic files or email us back for more information.",
-        providerEmails[provider]
+        provider_emails[provider]
       )
       
 # Main function
@@ -124,25 +129,25 @@ def main():
   )
   # Upload, bucket and public directories
   providers_dir = {
-    "INGV" : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","INGV_UPLOAD_DIR")),
-    "ROB"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","ROB_UPLOAD_DIR")),
-    "SGO"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","SGO_UPLOAD_DIR")),
-    "UGA"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","UGA_UPLOAD_DIR")),
-    "WUT"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","WUT_UPLOAD_DIR"))
+    "INGV" : os.path.join(cfg.config.get("APP","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","INGV_UPLOAD_DIR")),
+    "ROB"  : os.path.join(cfg.config.get("APP","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","ROB_UPLOAD_DIR")),
+    "SGO"  : os.path.join(cfg.config.get("APP","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","SGO_UPLOAD_DIR")),
+    "UGA"  : os.path.join(cfg.config.get("APP","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","UGA_UPLOAD_DIR")),
+    "WUT"  : os.path.join(cfg.config.get("APP","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","WUT_UPLOAD_DIR"))
   }
   bucket_dirs = {
-    "INGV" : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","INGV_BUCKET_DIR")),
-    "ROB"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","ROB_BUCKET_DIR")),
-    "SGO"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","SGO_BUCKET_DIR")),
-    "UGA"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","UGA_BUCKET_DIR")),
-    "WUT"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","WUT_BUCKET_DIR"))
+    "INGV" : os.path.join(cfg.config.get("APP","BUCKET_DIR"),cfg.config.get("PROVIDERS","INGV_BUCKET_DIR")),
+    "ROB"  : os.path.join(cfg.config.get("APP","BUCKET_DIR"),cfg.config.get("PROVIDERS","ROB_BUCKET_DIR")),
+    "SGO"  : os.path.join(cfg.config.get("APP","BUCKET_DIR"),cfg.config.get("PROVIDERS","SGO_BUCKET_DIR")),
+    "UGA"  : os.path.join(cfg.config.get("APP","BUCKET_DIR"),cfg.config.get("PROVIDERS","UGA_BUCKET_DIR")),
+    "WUT"  : os.path.join(cfg.config.get("APP","BUCKET_DIR"),cfg.config.get("PROVIDERS","WUT_BUCKET_DIR"))
   }
   public_dirs = {
-    "INGV" : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","INGV_PUBLIC_DIR")),
-    "ROB"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","ROB_PUBLIC_DIR")),
-    "SGO"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","SGO_PUBLIC_DIR")),
-    "UGA"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","UGA_PUBLIC_DIR")),
-    "WUT"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","WUT_PUBLIC_DIR"))
+    "INGV" : os.path.join(cfg.config.get("APP","PUBLIC_DIR"),cfg.config.get("PROVIDERS","INGV_PUBLIC_DIR")),
+    "ROB"  : os.path.join(cfg.config.get("APP","PUBLIC_DIR"),cfg.config.get("PROVIDERS","ROB_PUBLIC_DIR")),
+    "SGO"  : os.path.join(cfg.config.get("APP","PUBLIC_DIR"),cfg.config.get("PROVIDERS","SGO_PUBLIC_DIR")),
+    "UGA"  : os.path.join(cfg.config.get("APP","PUBLIC_DIR"),cfg.config.get("PROVIDERS","UGA_PUBLIC_DIR")),
+    "WUT"  : os.path.join(cfg.config.get("APP","PUBLIC_DIR"),cfg.config.get("PROVIDERS","WUT_PUBLIC_DIR"))
   }
   # Provider emails
   provider_emails = {
@@ -160,40 +165,40 @@ def main():
     sum(ord(c) for c in cfg.config.get("EPOSDB","TOKEN")) - 34
   )
   pg_connection = DBConnection(
-    cfg.getEPOSDBConfig("IP"),
-    cfg.getEPOSDBConfig("PORT"),
-    cfg.getEPOSDBConfig("DATABASE_NAME"),
-    cfg.getEPOSDBConfig("USERNAME"),
+    cfg.config.get("EPOSDB","IP"),
+    cfg.config.get("EPOSDB","PORT"),
+    cfg.config.get("EPOSDB","DATABASE_NAME"),
+    cfg.config.get("EPOSDB","USERNAME"),
     epos_db_pwd
   )
   pg_connection.connect()
   # Get a file handler object
-  emailPswd = PasswordHandler.getPwdFromFolder(
-    cfg.getEmailConfig("PWD_PATH"),
-    sum(ord(c) for c in cfg.getEmailConfig("TOKEN")) - 34
+  email_pwd = PasswordHandler.get_pwd_from_folder(
+    cfg.config.get("EMAIL","PWD_PATH"),
+    sum(ord(c) for c in cfg.config.get("EMAIL","TOKEN")) - 34
   )
-  fileHandler = FileHandler(
-    cfg.getAppConfig("PROVIDERS_DIR"),
-    cfg.getEmailConfig("FROM_EMAIL"),
-    emailPswd,
+  file_handler = FileHandler(
+    providers_dir,
+    cfg.config.get("EMAIL","FROM_EMAIL"),
+    email_pwd,
     con
   )
   # Get list of the hashes changed of each provider
-  hashesChanged = fileHandler.getListOfHashesChanged()
+  hashes_changed = file_handler.get_list_of_hashed_changed()
   # Move the files to the corresponding public folder or email the providers if an error occurred
-  handleProviders(
-    fileHandler,
-    providersDir,
-    publicDirs,
-    bucketDirs,
-    hashesChanged,
+  handle_providers(
+    file_handler,
+    providers_dir,
+    public_dirs,
+    bucket_dirs,
+    hashes_changed,
     cfg,
-    pgConnection.conn,
-    pgConnection.cursor,
-    providerEmails
+    pg_connection.conn,
+    pg_connection.cursor,
+    provider_emails
   )
   # Update the directory hashes
-  fileHandler.updateHashes()
+  file_handler.update_hashes()
   
 if __name__ == '__main__':
   main()

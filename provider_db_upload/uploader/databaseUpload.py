@@ -1,7 +1,6 @@
 import os
-from src.utils.constants import *
-from src.utils.logs      import *
-from src.uploadError     import *
+from utils.constants import *
+from uploadError     import *
 
 class DatabaseUpload:
   """Upload data to the database."""

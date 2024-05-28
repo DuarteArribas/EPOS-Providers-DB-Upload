@@ -1,3 +1,11 @@
+# Routine Messages
+ROUTINE_MSG = {
+  "VALIDATING_FILES"    : "Validating files...",
+  "VALIDATING_PROVIDER" : "Validating {file_length} files from provider {provider}...",
+  "VALIDATING_SNX"      : "Validating the snx file {file}...",
+  "VALIDATING_TS"       : "Validating the ts file {file}...",
+  "VALIDATING_VEL"      : "Validating the vel file {file}..."
+}
 # Success Messages
 SUCC_MSG = { 
   "DB_CREATE" : "Database created successfully!"

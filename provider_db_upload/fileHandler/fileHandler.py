@@ -1,45 +1,45 @@
-import checksumdir
-import smtplib
-import shutil
-import gzip
 import os
+import gzip
+import shutil
+import smtplib
+import checksumdir
+from utils.config    import *
 from email.mime.text import MIMEText
-from src.utils.config import *
 
 class FileHandler:
   """Handle provider files."""
   
   # Attributes
-  CONFIG_FILE = "config/appconf.cfg"
+  CONFIG_FILE = "config/appconf.ini"
   
   # == Methods ==
-  def __init__(self,providersDir,fromEmail,fromEmailPassword,con = None):
+  def __init__(self : "FileHandler",providers_dir : dict,from_email : str,from_email_password : str,con = None) -> None:
     """Get default parameters.
 
     Parameters
     ----------
-    providersDir      : str
-      The default directory for the providers
-    fromEmail         : str
+    providers_dir       : dict
+      A dictionary containing the upload directory for each provider
+    from_email          : str
       The email address to send the email from
-    fromEmailPassword : str
+    from_email_password : str
       The password of the , which is sending the email
-    con               : Connection
+    con                 : Connection
       A connection object to the local database
     """
-    self.providerDir       = {
-      "INGV" : f"{providersDir}/providers_ingv/uploads",
-      "ROB"  : f"{providersDir}/providers_rob/uploads",
-      "SGO"  : f"{providersDir}/providers_sgo/uploads", #TODO hardcoded?
-      "UGA"  : f"{providersDir}/providers_uga-cnrs/uploads",
-      "WUT"  : f"{providersDir}/providers_wut/uploads"
+    self.provider_dir       = {
+      "INGV" : providers_dir["INGV"],
+      "ROB"  : providers_dir["ROB"],
+      "SGO"  : providers_dir["SGO"],
+      "UGA"  : providers_dir["UGA"],
+      "WUT"  : providers_dir["WUT"]
     }
-    self.fromEmail         = fromEmail
-    self.fromEmailPassword = fromEmailPassword
-    self.con               = con
+    self.from_email          = from_email
+    self.from_email_password = from_email_password
+    self.con                 = con
     self.cfg = Config(FileHandler.CONFIG_FILE)
   
-  def getListOfHashesChanged(self):
+  def get_list_of_hashed_changed(self : "FileHandler") -> list:
     """Get the list of hashes changed.
 
     Returns
@@ -47,18 +47,18 @@ class FileHandler:
     list
       A list containing a boolean for each provider, indicating if their hash was changed (True) or not (False)
     """
-    cur            = self.con.cursor()
-    providerList   = list(self.providerDir.keys())
-    providerHashes = [self._getHashOfDir(providerDir) for provider,providerDir in self.providerDir.items()]
-    hashesChanged  = [False,False,False,False,False]
-    for i in range(len(providerList)):
-      res          = cur.execute(f"SELECT fileHash FROM previousFiles WHERE fileName LIKE '{providerList[i]}'")
-      previousHash = res.fetchall()
-      if providerHashes[i] != previousHash[0][0]:
-        hashesChanged[i] = True
-    return hashesChanged
+    cur             = self.con.cursor()
+    provider_list   = list(self.provider_dir.keys())
+    provider_hashed = [self._get_hash_of_dir(provider_dir) for provider,provider_dir in self.provider_dir.items()]
+    hashes_changed  = [False,False,False,False,False]
+    for i in range(len(provider_list)):
+      res          = cur.execute(f"SELECT fileHash FROM previousFiles WHERE fileName LIKE '{provider_list[i]}'")
+      previous_hash = res.fetchall()
+      if provider_hashed[i] != previous_hash[0][0]:
+        hashes_changed[i] = True
+    return hashes_changed
   
-  def _getHashOfDir(self,dir):
+  def _get_hash_of_dir(self : "FileHandler",dir : str) -> str:
     """Get checksum hash from a directory recursively.
 
     Parameters
@@ -73,24 +73,24 @@ class FileHandler:
     """
     return checksumdir.dirhash(dir)
 
-  def updateHashes(self):
+  def update_hashes(self : "FileHandler") -> None:
     """Update the hashes in the database."""
     cur = self.con.cursor()
-    for provider,providerDir in self.providerDir.items():
-      newFileHash = self._getHashOfDir(providerDir)
-      cur.execute(f"UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE ?",(newFileHash,provider))
+    for provider,provider_dir in self.provider_dir.items():
+      new_file_hash = self._get_hash_of_dir(provider_dir)
+      cur.execute(f"UPDATE previousFiles SET fileHash = ? WHERE fileName LIKE ?",(new_file_hash,provider))
       self.con.commit()
   
-  def sendEmail(self,subject,body,toEmail):
+  def send_email(self : "FileHandler",subject : str,body : str,to_email : str) -> None:
     """Email errors to providers.
 
     Parameters
     ----------
-    subject : str
+    subject  : str
       The email subject
-    body    : str
+    body     : str
       The email body
-    toEmail : str
+    to_email : str
       The provider's email address
     """
     try:
@@ -99,16 +99,16 @@ class FileHandler:
       server.ehlo()
       server.starttls()
       server.ehlo()    
-      server.login(self.fromEmail,self.fromEmailPassword)
+      server.login(self.from_email,self.from_email_password)
       msg = MIMEText(body)
       msg["Subject"] = subject
-      server.sendmail(self.fromEmail,toEmail,msg.as_string())
-      server.sendmail(self.fromEmail,self.cfg.getEmailConfig('SEGAL_EMAIL'),msg.as_string())
+      server.sendmail(self.from_email,to_email,msg.as_string())
+      server.sendmail(self.from_email,self.cfg.config.get("EMAIL","SEGAL_EMAIL"),msg.as_string())
       server.quit()
     except Exception as err:
-      print(err)
+      logging.exception(err)
   
-  def sendEmailToSegal(self,subject,body):
+  def send_email_to_segal(self,subject,body):
     """Email errors to Segal.
 
     Parameters
@@ -124,47 +124,47 @@ class FileHandler:
       server.ehlo()
       server.starttls()
       server.ehlo()    
-      server.login(self.fromEmail,self.fromEmailPassword)
+      server.login(self.from_email,self.from_email_password)
       msg = MIMEText(body)
       msg["Subject"] = subject
-      server.sendmail(self.fromEmail,self.cfg.getEmailConfig('SEGAL_EMAIL'),msg.as_string())
+      server.sendmail(self.from_email,self.cfg.config.get("EMAIL","SEGAL_EMAIL"),msg.as_string())
       server.quit()
     except Exception as err:
       print(err)
   
-  def moveSnxFileToPublic(self,snxFile,publicDir):
-    """Move an snx file to the public directory, according to {publicDir}/Coor/{version}/{snxFile}
+  def move_snx_file_to_public(self,snx_file,public_dir):
+    """Move an snx file to the public directory, according to {public_dir}/Coor/{version}/{snx_file}
 
     Parameters
     ----------
-    snxFile   : str
+    snx_file   : str
       The snx file to move
-    publicDir : str
+    public_dir : str
       The public directory of the correspondent provider
     """
     try:
-      with gzip.open(snxFile,"rt") as f:
+      with gzip.open(snx_file,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
         for line in lines[lines.index("+FILE/COMMENT") + 1:lines.index("-FILE/COMMENT")]:
           if line.split(":")[0].strip() == "ReleaseVersion":
             version    = "".join(line.split(":")[1:])
-            pathToMove = f"{publicDir}/Coor/{version}"
-            if not os.path.exists(pathToMove):
-              os.makedirs(pathToMove)
-            shutil.move(snxFile,pathToMove)
+            path_to_move = f"{public_dir}/Coor/{version}"
+            if not os.path.exists(path_to_move):
+              os.makedirs(path_to_move)
+            shutil.move(snx_file,path_to_move)
             break
     except Exception as err:
       print(err)
     
   
-  def movePboFileToBucket(self,pboFile,bucketDir,filetype,version):
-    """Move a pbo file to the bucket directory, according to {bucketDir}/TS/{version}/{pboFile}
+  def move_pbo_file_to_bucket(self,pbo_file,bucket_dir,filetype,version):
+    """Move a pbo file to the bucket directory, according to {bucket_dir}/TS/{version}/{pbo_file}
 
     Parameters
     ----------
-    pboFile   : str
+    pbo_file   : str
       The pbo file to move
-    bucketDir : str
+    bucket_dir : str
       The bucket directory of the correspondent provider
     fileType  : str
       The type of the file (TS or VEL)
@@ -172,35 +172,34 @@ class FileHandler:
       The release number
     """
     try:
-      pathToMove = f"{bucketDir}/{filetype}/{version}"
-      if not os.path.exists(pathToMove):
-        os.makedirs(pathToMove)
-      shutil.copy(pboFile,pathToMove)
-      os.remove(pboFile)
+      path_to_move = f"{bucket_dir}/{filetype}/{version}"
+      if not os.path.exists(path_to_move):
+        os.makedirs(path_to_move)
+      shutil.copy(pbo_file,path_to_move)
+      os.remove(pbo_file)
     except Exception as err:
       print(err)
   
-  def moveSolutionToPublic(self,solutionDir,publicDir,filetype):
-    """Move a solution directory to the public directory, according to {publicDir}/{filetype}/{solutionDir}.
+  def move_solution_to_public(self,solution_dir,public_dir,filetype):
+    """Move a solution directory to the public directory, according to {public_dir}/{filetype}/{solution_dir}.
     
     Parameters
     ----------
-    solutionDir : str
+    solution_dir : str
       The solution directory to move
-    publicDir   : str
+    public_dir   : str
       The public directory of the correspondent provider
     fileType    : str
       The type of the file (TS or VEL)
     """
-    try: #TODO
-      pathToMove = f"{publicDir}/{filetype}"
-      if not os.path.exists(pathToMove):
-        os.makedirs(pathToMove)
-      if not os.path.exists(os.path.join(pathToMove,solutionDir.split("/")[-1])):
-        os.makedirs(os.path.join(pathToMove,solutionDir.split("/")[-1]))
-      for file in os.listdir(solutionDir):
-        shutil.copy(os.path.join(solutionDir,file),os.path.join(pathToMove,solutionDir.split("/")[-1]))
-        os.remove(os.path.join(solutionDir,file))
+    try:
+      path_to_move = f"{public_dir}/{filetype}"
+      if not os.path.exists(path_to_move):
+        os.makedirs(path_to_move)
+      if not os.path.exists(os.path.join(path_to_move,solution_dir.split("/")[-1])):
+        os.makedirs(os.path.join(path_to_move,solution_dir.split("/")[-1]))
+      for file in os.listdir(solution_dir):
+        shutil.copy(os.path.join(solution_dir,file),os.path.join(path_to_move,solution_dir.split("/")[-1]))
+        os.remove(os.path.join(solution_dir,file))
     except Exception as err:
-      print('arropz')
       print(err)
