@@ -3,7 +3,7 @@ import sys
 from utils.config    import *
 from utils.constants import *
 
-CONFIG_FILE = "config/appconf.cfg"
+CONFIG_FILE = "config/appconf.ini"
 
 def main():
   # Read config file

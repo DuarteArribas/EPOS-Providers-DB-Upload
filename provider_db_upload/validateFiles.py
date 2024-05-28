@@ -1,14 +1,15 @@
-import sqlite3
-import glob
 import os
-from src.utils.passwordHandler import *
-from src.dbConnection          import *
-from src.utils.config          import *
-from src.fileHandler           import *
-from src.validate              import *
+import glob
+import sqlite3
+import logging
+from utils.config              import *
+from validator.validate        import *
+from utils.passwordHandler     import *
+from fileHandler.fileHandler   import *
+from dbConnection.dbConnection import *
 
 # Global variables
-CONFIG_FILE = "config/appconf.cfg"
+CONFIG_FILE = "config/appconf.ini"
 
 # Functions
 def handleProviders(fileHandler,providersDir,publicDirs,bucketDirs,hashesChanged,cfg,conn,cursor,providerEmails):
@@ -115,57 +116,58 @@ def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
   # Logger
-  logsFile = os.path.join(cfg.getLogsConfig('LOGS_DIR'),cfg.getLogsConfig('VALIDATE_LOGS'))
-  logger   = Logs(
-    logsFile,
-    cfg.getLogsConfig("MAX_LOGS")
+  logs_file = os.path.join(cfg.config.get("LOGS","LOGS_DIR"),cfg.config.get("LOGS","VALIDATE_LOGS"))
+  logging.basicConfig(
+    filename = logs_file,
+    level    = cfg.config.get("LOGS","LOG_LEVEL"),
+    format   = '%(asctime)s - %(message)s'
   )
   # Upload, bucket and public directories
-  providersDir = {
-    "INGV" : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('INGV_UPLOAD_DIR')),
-    "ROB"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('ROB_UPLOAD_DIR')),
-    "SGO"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('SGO_UPLOAD_DIR')),
-    "UGA"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('UGA_UPLOAD_DIR')),
-    "WUT"  : os.path.join(cfg.getAppConfig('PROVIDERS_DIR'),cfg.getProvidersConfig('WUT_UPLOAD_DIR'))
+  providers_dir = {
+    "INGV" : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","INGV_UPLOAD_DIR")),
+    "ROB"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","ROB_UPLOAD_DIR")),
+    "SGO"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","SGO_UPLOAD_DIR")),
+    "UGA"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","UGA_UPLOAD_DIR")),
+    "WUT"  : os.path.join(cfg.config.get("PROVIDERS","PROVIDERS_DIR"),cfg.config.get("PROVIDERS","WUT_UPLOAD_DIR"))
   }
-  bucketDirs = {
-    "INGV" : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('INGV_BUCKET_DIR')),
-    "ROB"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('ROB_BUCKET_DIR')),
-    "SGO"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('SGO_BUCKET_DIR')),
-    "UGA"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('UGA_BUCKET_DIR')),
-    "WUT"  : os.path.join(cfg.getAppConfig('BUCKET_DIR'),cfg.getProvidersConfig('WUT_BUCKET_DIR'))
+  bucket_dirs = {
+    "INGV" : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","INGV_BUCKET_DIR")),
+    "ROB"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","ROB_BUCKET_DIR")),
+    "SGO"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","SGO_BUCKET_DIR")),
+    "UGA"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","UGA_BUCKET_DIR")),
+    "WUT"  : os.path.join(cfg.config.get("PROVIDERS","BUCKET_DIR"),cfg.config.get("PROVIDERS","WUT_BUCKET_DIR"))
   }
-  publicDirs = {
-    "INGV" : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('INGV_PUBLIC_DIR')),
-    "ROB"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('ROB_PUBLIC_DIR')),
-    "SGO"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('SGO_PUBLIC_DIR')),
-    "UGA"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('UGA_PUBLIC_DIR')),
-    "WUT"  : os.path.join(cfg.getAppConfig('PUBLIC_DIR'),cfg.getProvidersConfig('WUT_PUBLIC_DIR'))
+  public_dirs = {
+    "INGV" : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","INGV_PUBLIC_DIR")),
+    "ROB"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","ROB_PUBLIC_DIR")),
+    "SGO"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","SGO_PUBLIC_DIR")),
+    "UGA"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","UGA_PUBLIC_DIR")),
+    "WUT"  : os.path.join(cfg.config.get("PROVIDERS","PUBLIC_DIR"),cfg.config.get("PROVIDERS","WUT_PUBLIC_DIR"))
   }
   # Provider emails
-  providerEmails = {
-    "INGV" : f"{cfg.getEmailConfig('INGV_EMAIL')}",
-    "ROB"  : f"{cfg.getEmailConfig('ROB_EMAIL')}",
-    "SGO"  : f"{cfg.getEmailConfig('SGO_EMAIL')}",
-    "UGA"  : f"{cfg.getEmailConfig('UDA_EMAIL')}",
-    "WUT"  : f"{cfg.getEmailConfig('WUT_EMAIL')}"
+  provider_emails = {
+    "INGV" : f"{cfg.config.get("EMAIL","INGV_EMAIL")}",
+    "ROB"  : f"{cfg.config.get("EMAIL","ROB_EMAIL")}",
+    "SGO"  : f"{cfg.config.get("EMAIL","SGO_EMAIL")}",
+    "UGA"  : f"{cfg.config.get("EMAIL","UDA_EMAIL")}",
+    "WUT"  : f"{cfg.config.get("EMAIL","WUT_EMAIL")}"
   }
   # Get a connection to the local database (used to store the hashes of the files, so we can check if they changed)
-  con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
+  con = sqlite3.connect(cfg.config.get("APP","LOCAL_DATABASE_FILE"))
   # Get a connection to the EPOS database
-  eposDBPswd = PasswordHandler.getPwdFromFolder(
-    cfg.getEPOSDBConfig("PWD_PATH"),
-    sum(ord(c) for c in cfg.getEPOSDBConfig("TOKEN")) - 34
+  epos_db_pwd = PasswordHandler.get_pwd_from_folder(
+    cfg.config.get("EPOSDB","PWD_PATH"),
+    sum(ord(c) for c in cfg.config.get("EPOSDB","TOKEN")) - 34
   )
-  pgConnection = DBConnection(
+  pg_connection = DBConnection(
     cfg.getEPOSDBConfig("IP"),
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    eposDBPswd,
+    epos_db_pwd,
     logger
   )
-  pgConnection.connect()
+  pg_connection.connect()
   # Get a file handler object
   emailPswd = PasswordHandler.getPwdFromFolder(
     cfg.getEmailConfig("PWD_PATH"),
