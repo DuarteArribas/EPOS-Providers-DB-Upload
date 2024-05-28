@@ -1,6 +1,11 @@
+# Success Messages
+SUCC_MSG = { 
+  "DB_CREATE" : "Database created successfully!"
+}
 # Error Messages
 ERROR_MSG = {
   "CONFIG_READ" : "Could not read config file. Exiting...",
+  "DB_EXISTS"   : "Database already exists. Did nothing..."
 }
 
 

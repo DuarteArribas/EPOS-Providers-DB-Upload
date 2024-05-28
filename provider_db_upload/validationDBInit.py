@@ -1,6 +1,7 @@
 import sqlite3
 import sys
-from provider_db_upload.utils.config import *
+from utils.config    import *
+from utils.constants import *
 
 CONFIG_FILE = "config/appconf.cfg"
 
@@ -8,7 +9,7 @@ def main():
   # Read config file
   cfg = Config(CONFIG_FILE)
   # Get a connection to the local database and cursor
-  con = sqlite3.connect(cfg.getAppConfig("LOCAL_DATABASE_FILE"))
+  con = sqlite3.connect(cfg.config.get("APP","LOCAL_DATABASE_FILE"))
   cur = con.cursor()
   # Create table
   try:
@@ -19,10 +20,10 @@ def main():
     cur.execute("INSERT INTO previousFiles VALUES(?,?)",("UGA",""))
     cur.execute("INSERT INTO previousFiles VALUES(?,?)",("WUT",""))
     con.commit()
-    print("Database created successfully!")
+    print(SUCC_MSG["DB_CREATE"])
   except sqlite3.OperationalError:
     con.rollback()
-    print("Database already exists. Did nothing...",file = sys.stderr)
+    print(ERROR_MSG["DB_EXISTS"],file = sys.stderr)
 
 if __name__ == '__main__':
   main()
