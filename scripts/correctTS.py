@@ -19,10 +19,13 @@ def main():
   
   for ts in allTS:
     currLines = ""
+    if "DS_Store" in ts:
+      continue
     with open(os.path.join(sys.argv[1],ts),"r") as f:
       currLines = f.readlines()
       currLines = "".join(currLines)
       currLines = currLines.replace("ReleaseNumber","ReleaseVersion")
+      currLines = currLines.replace("Method-url    : ","Method-url    : https://www.youtube.com/")
       currLines = currLines.replace("not_specified","unknown")
     with open(os.path.join(sys.argv[1],ts),"w") as f:
       f.write(currLines)
@@ -33,6 +36,7 @@ def main():
       currLines = f.readlines()
       currLines = "".join(currLines)
       currLines = currLines.replace("ReleaseNumber","ReleaseVersion")
+      currLines = currLines.replace("Method-url    : ","Method-url    : https://www.youtube.com/")
       currLines = currLines.replace("not_specified","unknown")
     with open(ts,"w") as f:
       f.write(currLines)
