@@ -164,8 +164,7 @@ def main():
     cfg.getEPOSDBConfig("PORT"),
     cfg.getEPOSDBConfig("DATABASE_NAME"),
     cfg.getEPOSDBConfig("USERNAME"),
-    epos_db_pwd,
-    logger
+    epos_db_pwd
   )
   pg_connection.connect()
   # Get a file handler object

@@ -1,4 +1,4 @@
-import sys
+import logging
 import configparser
 from utils.constants import *
 
@@ -17,5 +17,5 @@ class Config:
     self.config = configparser.RawConfigParser()
     config_list = self.config.read(config_file)
     if len(config_list) == 0:
-      print(ERROR_MSG["CONFIG_READ"],file = sys.stderr)
+      logging.error(ERROR_MSG["CONFIG_READ"])
       exit(-1)
