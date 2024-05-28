@@ -26,3 +26,38 @@
 2024-05-28 14:45:54,191 - Could not read config file. Exiting...
 2024-05-28 14:46:12,826 - Could not read config file. Exiting...
 2024-05-28 14:46:47,677 - Could not read config file. Exiting...
+2024-05-28 16:49:48,573 - (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-3557a1c9303sm12198958f8f.88 - gsmtp')
+Traceback (most recent call last):
+  File "/Users/yoznacks/Projects/Scholarships/SEGAL/EPOS/EPOS-Providers-DB-Upload/Software/provider_db_upload/fileHandler/fileHandler.py", line 103, in send_email
+    server.login(self.from_email,self.from_email_password)
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 750, in login
+    raise last_exception
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 739, in login
+    (code, resp) = self.auth(
+                   ^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 662, in auth
+    raise SMTPAuthenticationError(code, resp)
+smtplib.SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-3557a1c9303sm12198958f8f.88 - gsmtp')2024-05-28 16:51:32,191 - (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-359b3675c6csm5113389f8f.71 - gsmtp')
+Traceback (most recent call last):
+  File "/Users/yoznacks/Projects/Scholarships/SEGAL/EPOS/EPOS-Providers-DB-Upload/Software/provider_db_upload/fileHandler/fileHandler.py", line 102, in send_email
+    server.login(self.from_email,self.from_email_password)
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 750, in login
+    raise last_exception
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 739, in login
+    (code, resp) = self.auth(
+                   ^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 662, in auth
+    raise SMTPAuthenticationError(code, resp)
+smtplib.SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-359b3675c6csm5113389f8f.71 - gsmtp')
+2024-05-28 16:52:03,068 - (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-3557a1c9363sm12141245f8f.72 - gsmtp')
+Traceback (most recent call last):
+  File "/Users/yoznacks/Projects/Scholarships/SEGAL/EPOS/EPOS-Providers-DB-Upload/Software/provider_db_upload/fileHandler/fileHandler.py", line 102, in send_email
+    server.login(self.from_email,self.from_email_password)
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 750, in login
+    raise last_exception
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 739, in login
+    (code, resp) = self.auth(
+                   ^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.3/Frameworks/Python.framework/Versions/3.12/lib/python3.12/smtplib.py", line 662, in auth
+    raise SMTPAuthenticationError(code, resp)
+smtplib.SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-3557a1c9363sm12141245f8f.72 - gsmtp')

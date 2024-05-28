@@ -108,7 +108,7 @@ class FileHandler:
     except Exception as err:
       logging.exception(err)
   
-  def send_email_to_segal(self,subject,body):
+  def send_email_to_segal(self : "FileHandler",subject : str,body : str) -> None:
     """Email errors to Segal.
 
     Parameters
@@ -130,7 +130,7 @@ class FileHandler:
       server.sendmail(self.from_email,self.cfg.config.get("EMAIL","SEGAL_EMAIL"),msg.as_string())
       server.quit()
     except Exception as err:
-      print(err)
+      logging.exception(err)
   
   def move_snx_file_to_public(self,snx_file,public_dir):
     """Move an snx file to the public directory, according to {public_dir}/Coor/{version}/{snx_file}

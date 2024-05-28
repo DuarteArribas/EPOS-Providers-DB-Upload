@@ -12,7 +12,7 @@ from dbConnection.dbConnection import *
 CONFIG_FILE = "config/appconf.ini"
 
 # Functions
-def handle_providers(file_handler,providers_dir,public_dirs,bucket_dirs,hashes_changed,cfg,conn,cursor,provider_emails):
+def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs : dict,bucket_dirs : dict,hashes_changed : list,cfg,conn,cursor,provider_emails : dict) -> None:
   print(ROUTINE_MSG["VALIDATING_FILES"])
   for i in range(5):
     # If the hashes of the files of the provider didn't change, skip it
@@ -51,7 +51,10 @@ def handle_providers(file_handler,providers_dir,public_dirs,bucket_dirs,hashes_c
           validator.validate_pos(file)
           if not any(value is None for value in previous_TS_metadata_values):
             if any(value for value in range(len(validator.ts_metadata_values)) if validator.ts_metadata_values[value] != previous_TS_metadata_values[value]):
-              file_handler.send_email_to_segal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
+              file_handler.send_email_to_segal(
+                ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT_SEGAL"].format(provider = provider),
+                ERROR_MSG["PROVIDER_VALIDATION_EMAIL_BODY"].format(file = os.path.basename(file))
+              )
               validated_TS_equal_metadata = False
             else:
               previous_TS_metadata_values = validator.ts_metadata_values.copy()
@@ -68,7 +71,10 @@ def handle_providers(file_handler,providers_dir,public_dirs,bucket_dirs,hashes_c
           validator.validateVel(file)
           if not any(value is None for value in previous_VEL_metadata_values):
             if any(value for value in range(len(validator.vel_metadata_values)) if validator.vel_metadata_values[value] != previous_VEL_metadata_values[value]):
-              file_handler.send_email_to_segal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Not all files contain the same metadata parameters--the first file with different parameters is {file}.")
+              file_handler.send_email_to_segal(
+                ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT_SEGAL"].format(provider = provider),
+                ERROR_MSG["PROVIDER_VALIDATION_EMAIL_BODY"].format(file = os.path.basename(file))
+              )
               validated_VEL_equal_metadata = False
             else:
               previous_VEL_metadata_values = validator.vel_metadata_values.copy()
@@ -80,7 +86,10 @@ def handle_providers(file_handler,providers_dir,public_dirs,bucket_dirs,hashes_c
           errors.append(str(err))
       # Unknown file
       else:
-        file_handler.send_email_to_segal(f"Error (to Segal only) validating some {provider} files. Attention is required!",f"Unknown file type: {file}.")
+        file_handler.send_email_to_segal(
+          ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT_SEGAL"].format(provider = provider),
+          ERROR_MSG["PROVIDER_UNKNOWN_FILE_EMAIL_BODY"].format(file = os.path.basename(file))
+        )
         break
     # If there are validated files, move them to the bucket and email them if all their metadata is the same
     if validated_TS_equal_metadata:
@@ -91,19 +100,19 @@ def handle_providers(file_handler,providers_dir,public_dirs,bucket_dirs,hashes_c
         file_handler.move_pbo_file_to_bucket(file,bucket_dir,"Vel",version)
     if len(validated_TS_files) > 0 and len(validated_VEL_files) > 0 and validated_TS_equal_metadata and validated_VEL_equal_metadata:
       file_handler.send_email(
-        f"File validation for {provider} was successful!",
+        SUCC_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"].format(provider = provider),
         f"{len(validated_TS_files)} new {'files were' if len(validated_TS_files) > 1 else 'file was'} validated and {len(validated_VEL_files)} new {'files were' if len(validated_VEL_files) > 1 else 'file was'} validated for {provider}.",
         provider_emails[provider]
       )
     elif len(validated_TS_files) > 0 and validated_TS_equal_metadata:
       file_handler.send_email(
-        f"File validation for {provider} was successful!",
+        SUCC_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"].format(provider = provider),
         f"{len(validated_TS_files)} new {'files were' if len(validated_TS_files) > 1 else 'file was'} validated for {provider}.",
         provider_emails[provider]
       )
     elif len(validated_VEL_files) > 0 and validated_VEL_equal_metadata:
       file_handler.send_email(
-        f"File validation for {provider} was successful!",
+        SUCC_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"].format(provider = provider),
         f"{len(validated_VEL_files)} new {'files were' if len(validated_VEL_files) > 1 else 'file was'} validated for {provider}.",
         provider_emails[provider]
       )
@@ -111,7 +120,7 @@ def handle_providers(file_handler,providers_dir,public_dirs,bucket_dirs,hashes_c
     if len(errors) != 0:
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]
       file_handler.send_email(
-        f"Error validating some {provider} files. Attention is required!",
+        ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"],
         "There were some errors while validating your files: \n\n" + "\n".join(errors) + "\n\n\n Please re-upload the problematic files or email us back for more information.",
         provider_emails[provider]
       )
