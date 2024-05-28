@@ -2,3 +2,4 @@ __pycache__/
 .vscode/
 dbDump3.0.0/
 data/
+.venv/
