@@ -1,5 +1,9 @@
-# === GLOBAL CONSTANTS ===
-# == LOGGING STRINGS ==
+# Error Messages
+ERROR_MSG = {
+  "CONFIG_READ" : "Could not read config file. Exiting...",
+}
+
+
 dbConnectionError = "Error: Could not connect to the database: '{errMsg}'."
 dbUploadError     = "Could not upload file '{file}' to the database (problem in '{uploadType}'): '{errMsg}'."
 dbUploadAllError  = "Could not upload all '{uploadType}' to the database: '{errMsg}'."
