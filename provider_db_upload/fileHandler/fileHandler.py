@@ -132,7 +132,7 @@ class FileHandler:
     except Exception as err:
       logging.exception(err)
   
-  def move_snx_file_to_public(self,snx_file,public_dir):
+  def move_snx_file_to_public(self : "FileHandler",snx_file : str,public_dir : str) -> None:
     """Move an snx file to the public directory, according to {public_dir}/Coor/{version}/{snx_file}
 
     Parameters
@@ -154,11 +154,10 @@ class FileHandler:
             shutil.move(snx_file,path_to_move)
             break
     except Exception as err:
-      print(err)
+      logging.exception(err)
     
-  
-  def move_pbo_file_to_bucket(self,pbo_file,bucket_dir,filetype,version):
-    """Move a pbo file to the bucket directory, according to {bucket_dir}/TS/{version}/{pbo_file}
+  def move_pbo_file_to_bucket(self : "FileHandler",pbo_file : str,bucket_dir : str,file_type : str,version : str) -> None:
+    """Move a pbo file to the bucket directory, according to {bucket_dir}/{file_type}/{version}/{pbo_file}
 
     Parameters
     ----------
@@ -166,13 +165,13 @@ class FileHandler:
       The pbo file to move
     bucket_dir : str
       The bucket directory of the correspondent provider
-    fileType  : str
+    file_type  : str
       The type of the file (TS or VEL)
-    version   : str
+    version    : str
       The release number
     """
     try:
-      path_to_move = f"{bucket_dir}/{filetype}/{version}"
+      path_to_move = f"{bucket_dir}/{file_type}/{version}"
       if not os.path.exists(path_to_move):
         os.makedirs(path_to_move)
       shutil.copy(pbo_file,path_to_move)
@@ -180,8 +179,8 @@ class FileHandler:
     except Exception as err:
       print(err)
   
-  def move_solution_to_public(self,solution_dir,public_dir,filetype):
-    """Move a solution directory to the public directory, according to {public_dir}/{filetype}/{solution_dir}.
+  def move_solution_to_public(self : "FileHandler",solution_dir : str,public_dir : str,file_type : str) -> None:
+    """Move a solution directory to the public directory, according to {public_dir}/{file_type}/{solution_dir}.
     
     Parameters
     ----------
@@ -189,11 +188,11 @@ class FileHandler:
       The solution directory to move
     public_dir   : str
       The public directory of the correspondent provider
-    fileType    : str
+    file_type    : str
       The type of the file (TS or VEL)
     """
     try:
-      path_to_move = f"{public_dir}/{filetype}"
+      path_to_move = f"{public_dir}/{file_type}"
       if not os.path.exists(path_to_move):
         os.makedirs(path_to_move)
       if not os.path.exists(os.path.join(path_to_move,solution_dir.split("/")[-1])):
@@ -202,4 +201,4 @@ class FileHandler:
         shutil.copy(os.path.join(solution_dir,file),os.path.join(path_to_move,solution_dir.split("/")[-1]))
         os.remove(os.path.join(solution_dir,file))
     except Exception as err:
-      print(err)
+      logging.exception(err)
