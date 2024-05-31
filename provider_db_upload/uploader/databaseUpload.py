@@ -1,6 +1,6 @@
 import os
-from utils.constants import *
 from uploadError     import *
+from utils.constants import *
 
 class DatabaseUpload:
   """Upload data to the database."""
@@ -10,49 +10,62 @@ class DatabaseUpload:
   REFERENCE_POSITION_VELOCITIES_TEMP = "referencePositionVelocitiesTemp.csv"
   
   # == Methods ==
-  def __init__(self,conn,cursor,logger,cfg,tmp,fileHandler):
+  def __init__(self,conn,cursor,cfg,tmp,file_handler):
     """Initialize needed variables for a database upload.
 
     Parameters
     ----------
-    conn   : Connection
+    conn         : Connection
       A connection object to the database
-    cursor : Cursor
+    cursor       : Cursor
       A cursor object to the database
-    logger : Logs
-      A logging object to which logs can be written
-    cfg    : Config
+    cfg          : Config
       A configuration object to which configuration parameters can be read
-    tmp    : str
+    tmp          : str
       A directory to which temporary files used for bulk database insertion (optimization) will be saved to
-    fileHandler : FileHandler
+    file_handler : FileHandler
       A file handler object
     """
     self.conn   = conn
     self.cursor = cursor
-    self.logger = logger
     self.cfg    = cfg
     self.tmpDir = tmp + "/" if tmp[-1] != "/" else tmp
     if not os.path.exists(self.tmpDir):
       os.makedirs(self.tmpDir)
-    self.fileHandler = fileHandler
+    self.file_handler = file_handler
   
-  def check_solution_folder_exists(self,provBucketDir,publicDir,data_type):
-    self.cursor.execute("SELECT release_version FROM solution WHERE ac_acronym = %s AND data_type = %s;",(os.path.basename(provBucketDir),self.cfg.getUploadConfig("TS_DATATYPE") if data_type == "TS" else self.cfg.getUploadConfig("VEL_DATATYPE")))
+  def check_solution_folder_exists(self : "DatabaseUpload",prov_bucket_dir : str,public_dir : str,data_type : str) -> tuple:
+    """Check if a solution folder exists in the public directory.
+    
+    Parameters
+    ----------
+    prov_bucket_dir : str
+      The path to the provider bucket directory
+    public_dir      : str
+      The path to the provider's public directory
+    data_type       : str
+      The data type of the solution (timeseries or velocity)
+    
+    Returns
+    -------
+    tuple
+      A tuple containing the old and new solution versions
+    """
+    self.cursor.execute("SELECT release_version FROM solution WHERE ac_acronym = %s AND data_type = %s;",(os.path.basename(prov_bucket_dir),self.cfg.config.get("UPLOAD","TS_DATATYPE") if data_type == "TS" else self.cfg.config.get("UPLOAD","VEL_DATATYPE")))
     old_solution = [item[0] for item in self.cursor.fetchall()]
-    new_solution = self.getSolutionParametersTS(os.path.join(provBucketDir,os.listdir(provBucketDir)[0]))["release_version"] if data_type == "TS" else self.getSolutionParametersVel(os.path.join(provBucketDir,os.listdir(provBucketDir)[0]))["release_version"]
-    if os.path.exists(os.path.join(publicDir,data_type,new_solution)):
+    new_solution = self.get_solution_parameters_TS(os.path.join(prov_bucket_dir,os.listdir(prov_bucket_dir)[0]))["release_version"] if data_type == "TS" else self.getSolutionParametersVel(os.path.join(prov_bucket_dir,os.listdir(prov_bucket_dir)[0]))["release_version"]
+    if os.path.exists(os.path.join(public_dir,data_type,new_solution)):
       return old_solution,new_solution
     return old_solution,None
   
-  def uploadAllProviderTS(self,provBucketDir,publicDir):
+  def upload_all_provider_TS(self : "DatabaseUpload",prov_bucket_dir : str,public_dir : str) -> None:
     """Upload all timeseries files from a provider bucket directory to the database.
     
     Parameters
     ----------
-    provBucketDir : str
+    prov_bucket_dir : str
       The path to the provider bucket directory
-    publicDir     : str
+    public_dir      : str
       The path to the provider's public directory
     
     Raises
@@ -62,97 +75,97 @@ class DatabaseUpload:
     """
     self.cursor.execute("START TRANSACTION;")
     try:
-      ac       = os.path.basename(provBucketDir)
-      dataType = self.cfg.getUploadConfig("TS_DATATYPE")
-      for filetype in os.listdir(provBucketDir):
+      ac       = os.path.basename(prov_bucket_dir)
+      data_type = self.cfg.config.get("UPLOAD","TS_DATATYPE")
+      for filetype in os.listdir(prov_bucket_dir):
         if filetype == "TS":
-          for version in os.listdir(os.path.join(provBucketDir,filetype)):
+          for version in os.listdir(os.path.join(prov_bucket_dir,filetype)):
             if version == ".DS_Store":
               continue
-            currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
-            allTSFiles = self.getListOfTSFiles(currDir)
-            if len(allTSFiles) == 0:
+            curr_dir = os.path.join(os.path.join(prov_bucket_dir,filetype),version)
+            all_TS_files = self.get_list_of_TS_files(curr_dir)
+            if len(all_TS_files) == 0:
               break
-            isUpdate = self.handlePreviousSolution(
+            is_update = self.handle_previous_solution(
               ac,
-              dataType,
-              self.cfg.getUploadConfig("TS_DATATYPE"),
-              self.cfg.getUploadConfig("VEL_DATATYPE"),
+              data_type,
+              self.cfg.config.get("UPLOAD","TS_DATATYPE"),
+              self.cfg.config.get("UPLOAD","VEL_DATATYPE"),
               version 
             )
-            if not isUpdate:
-              self.uploadSolution(dataType,self.getSolutionParametersTS(os.path.join(currDir,allTSFiles[0])))
-              currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
-              for file in allTSFiles:
-                currFile = os.path.join(currDir,file)
-                self.saveEstimatedCoordinatesToFile(
-                  currFile,
-                  currentSolutionID,
+            if not is_update:
+              self.upload_solution(data_type,self.get_solution_parameters_TS(os.path.join(curr_dir,all_TS_files[0])))
+              current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
+              for file in all_TS_files:
+                curr_file = os.path.join(curr_dir,file)
+                self.save_estimated_coordinates_to_file(
+                  curr_file,
+                  current_solution_ID,
                   file
                 )
-              self.uploadEstimatedCoordinates()
-              self.eraseEstimatedCoordinatesTmpFile()
+              self.upload_estimated_coordinates()
+              self.erase_estimated_coordinates_tmp_file()
             else:
-              previousFiles = os.listdir(f"{publicDir}/TS/{version}")
-              newFiles      = [file for file in allTSFiles if f"{file[0:18]}.pos" not in previousFiles]
-              updatedFiles  = [file for file in allTSFiles if f"{file[0:18]}.pos" in previousFiles]
-              currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
-              if len(newFiles) > 0:
-                for file in newFiles:
-                  currFile = os.path.join(currDir,file)
-                  self.saveEstimatedCoordinatesToFile(
-                    currFile,
-                    currentSolutionID,
+              previous_files = os.listdir(f"{public_dir}/TS/{version}")
+              new_files      = [file for file in all_TS_files if f"{file[0:18]}.pos" not in previous_files]
+              updated_files  = [file for file in all_TS_files if f"{file[0:18]}.pos" in previous_files]
+              current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
+              if len(new_files) > 0:
+                for file in new_files:
+                  curr_file = os.path.join(curr_dir,file)
+                  self.save_estimated_coordinates_to_file(
+                    curr_file,
+                    current_solution_ID,
                     file
                   )
-                self.uploadEstimatedCoordinates()
-                self.eraseEstimatedCoordinatesTmpFile()
+                self.upload_estimated_coordinates()
+                self.erase_estimated_coordinates_tmp_file()
               # handle updated files
-              for file in updatedFiles:
-                with open(f"{publicDir}/TS/{version}/{file[0:18]}.pos","r") as f:
-                  with open(f"{provBucketDir}/TS/{version}/{file}","r") as f2:
+              for file in updated_files:
+                with open(f"{public_dir}/TS/{version}/{file[0:18]}.pos","r") as f:
+                  with open(f"{prov_bucket_dir}/TS/{version}/{file}","r") as f2:
                     oldLines = f.readlines()
                     newLines = f2.readlines()
-                    updatedLines,newDifferentLines = self._getUpdatedAndNewLines(
+                    updated_lines,new_different_lines = self._get_updated_and_new_lines(
                       oldLines,
                       newLines
                     )
-                    for line in updatedLines:
-                      self.updateEstimatedCoordinates(line)
-                    if newDifferentLines:
-                      for line in newDifferentLines:
-                        currFile = os.path.join(currDir,file)
-                        self.saveEstimatedCoordinatesToFile(
-                          currFile,
-                          currentSolutionID,
+                    for line in updated_lines:
+                      self.update_estimated_coordinates(line)
+                    if new_different_lines:
+                      for line in new_different_lines:
+                        curr_file = os.path.join(curr_dir,file)
+                        self.save_estimated_coordinates_to_file(
+                          curr_file,
+                          current_solution_ID,
                           file
                         )
-                      self.uploadEstimatedCoordinates()
-                      self.eraseEstimatedCoordinatesTmpFile()
+                      self.upload_estimated_coordinates()
+                      self.erase_estimated_coordinates_tmp_file()
                       lines = []
-                      with open(f"{publicDir}/TS/{version}/{file[0:18]}.pos","r") as f:
+                      with open(f"{public_dir}/TS/{version}/{file[0:18]}.pos","r") as f:
                         lines = [line.strip() for line in f.readlines()]
                         lines = lines[:,lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
-                      with open(f"{publicDir}/TS/{version}/{file[0:18]}.pos","w") as f:
+                      with open(f"{public_dir}/TS/{version}/{file[0:18]}.pos","w") as f:
                         f.write(lines)
                         has_updated_line = False
                         for old_line in oldLines:
                           has_updated_line = False
-                          for updated_line in updatedLines:
+                          for updated_line in updated_lines:
                             if old_line.split(" ")[0] == updated_line[0] and old_line.split(" ")[1] == updated_line[1]:
                               f.write(updated_line)
                               has_updated_line = True
                           if not has_updated_line:
                             f.write(old_line)
-                        for new_line in newDifferentLines:
+                        for new_line in new_different_lines:
                           f.write(new_line)
             self.cursor.execute("COMMIT TRANSACTION;")
-            self.fileHandler.moveSolutionToPublic(currDir,publicDir,"TS")
+            self.fileHandler.move_solution_to_public(curr_dir,public_dir,"TS")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
   
-  def getListOfTSFiles(self,bucketDir):
+  def get_list_of_TS_files(self,bucketDir):
     """Get a list of all timeseries files in a directory.
     
     Parameters
@@ -167,7 +180,7 @@ class DatabaseUpload:
     """
     return [file for file in os.listdir(bucketDir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".pos"]
   
-  def handlePreviousSolution(self,ac,dataType,tsDatatype,velDatatype,version = None):
+  def handle_previous_solution(self,ac,dataType,tsDatatype,velDatatype,version = None):
     """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its associated timeseries files and estimated coordinates.
     
     Parameters
@@ -183,7 +196,7 @@ class DatabaseUpload:
     version     : str
       The release version of the solution
     """
-    solutionIDInDB = self.checkSolutionAlreadyInDB(ac,dataType)
+    solutionIDInDB = self.check_solution_already_in_DB(ac,dataType)
     if dataType == tsDatatype:
       if(len(solutionIDInDB) > 0):
         for solutionID in solutionIDInDB:
@@ -196,7 +209,7 @@ class DatabaseUpload:
         self._erasePreviousSolutionFromDB(ac,dataType)
     return False
   
-  def checkSolutionAlreadyInDB(self,ac,dataType):
+  def check_solution_already_in_DB(self,ac,dataType):
     """Check if a solution is already in the database.
     
     Parameters
@@ -230,7 +243,7 @@ class DatabaseUpload:
     """
     self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
   
-  def uploadSolution(self,dataType,solutionParameters):
+  def upload_solution(self,dataType,solutionParameters):
     """Upload a solution to the database.
     
     Parameters
@@ -275,7 +288,7 @@ class DatabaseUpload:
     except Exception as err:
       raise UploadError(f"Could not upload solution to database. Error: {UploadError.formatError(str(err))}.")
   
-  def getSolutionParametersTS(self,posFile):
+  def get_solution_parameters_TS(self,posFile):
     """Get the solution parameters from a POS file.
     
     Parameters
@@ -317,7 +330,7 @@ class DatabaseUpload:
             solutionParameters["sampling_period"] = value
       return solutionParameters
             
-  def saveEstimatedCoordinatesToFile(self,posFile,idSolution,timeseriesFilename):
+  def save_estimated_coordinates_to_file(self,posFile,idSolution,timeseriesFilename):
     """Save the estimated coordinates to a temporary file for bulk upload.
     
     Parameters
@@ -375,7 +388,7 @@ class DatabaseUpload:
     """
     return f"{YYYYMMDD[0:4]}-{YYYYMMDD[4:6]}-{YYYYMMDD[6:8]} {HHMMSS[0:2]}:{HHMMSS[2:4]}:{HHMMSS[4:6]}"
   
-  def uploadEstimatedCoordinates(self):
+  def upload_estimated_coordinates(self):
     """Bulk upload the estimated coordinates from the temporary file to the database.
     
     Raises
@@ -412,13 +425,13 @@ class DatabaseUpload:
     except Exception as err:
       raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
   
-  def eraseEstimatedCoordinatesTmpFile(self):
+  def erase_estimated_coordinates_tmp_file(self):
     """Erase the temporary file containing the previous estimated coordinates."""
     tempPath = os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
     if os.path.exists(tempPath):
       os.remove(tempPath)
   
-  def _getUpdatedAndNewLines(self,oldLines,newLines):
+  def _get_updated_and_new_lines(self,oldLines,newLines):
     oldLines           = [line.strip() for line in oldLines]
     oldLines           = oldLines[oldLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
     newLines           = [line.strip() for line in newLines]
@@ -442,7 +455,7 @@ class DatabaseUpload:
     return [[line[key] for key in keys] for line in matchingLines],[[line[key] for key in keys] for line in newLines]
   
   
-  def updateEstimatedCoordinates(self,line):
+  def update_estimated_coordinates(self,line):
     """Bulk upload the estimated coordinates from the temporary file to the database.
     
     Raises
@@ -481,7 +494,7 @@ class DatabaseUpload:
     self.cursor.execute("START TRANSACTION;")
     try:
       ac       = os.path.basename(provBucketDir)
-      dataType = self.cfg.getUploadConfig("VEL_DATATYPE")
+      dataType = self.cfg.config.get("UPLOAD","VEL_DATATYPE")
       for filetype in os.listdir(provBucketDir):
         if filetype == "Vel":
           for version in os.listdir(os.path.join(provBucketDir,filetype)):
@@ -491,25 +504,25 @@ class DatabaseUpload:
             allVelFiles = self.getListOfVelFiles(currDir)
             if len(allVelFiles) == 0:
               break
-            self.handlePreviousSolution(
+            self.handle_previous_solution(
               ac,
               dataType,
-              self.cfg.getUploadConfig("TS_DATATYPE"),
-              self.cfg.getUploadConfig("VEL_DATATYPE")
+              self.cfg.config.get("UPLOAD","TS_DATATYPE"),
+              self.cfg.config.get("UPLOAD","VEL_DATATYPE")
             )
-            self.uploadSolution(dataType,self.getSolutionParametersVel(os.path.join(currDir,allVelFiles[0])))
-            currentSolutionID = self.checkSolutionAlreadyInDB(ac,dataType)[0]
+            self.upload_solution(dataType,self.getSolutionParametersVel(os.path.join(currDir,allVelFiles[0])))
+            current_solution_ID = self.check_solution_already_in_DB(ac,dataType)[0]
             for file in allVelFiles:
-              currFile = os.path.join(currDir,file)
+              curr_file = os.path.join(currDir,file)
               self.saveReferencePositionVelocitiesToFile(
-                currFile,
-                currentSolutionID,
+                curr_file,
+                current_solution_ID,
                 file
               )
             self.uploadReferencePositionVelocities()
             self.eraseReferencePositionVelocitiesTmpFile()
             self.cursor.execute("COMMIT TRANSACTION;")
-            self.fileHandler.moveSolutionToPublic(currDir,publicDir,"Vel")
+            self.fileHandler.move_solution_to_public(currDir,publicDir,"Vel")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
