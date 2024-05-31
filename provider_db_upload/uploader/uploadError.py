@@ -7,7 +7,7 @@ class UploadError(Exception):
     An Exception object
   """
   @staticmethod
-  def formatError(error):
+  def format_error(error : str) -> str:
     """Formats the error message.
     
     Parameters

@@ -92,8 +92,9 @@ def upload_all_vel(bucketDir,cfg,publicDirs,providerEmails,pg_connection,fileHan
 def _handle_new_solution(provider : str,file_handler : FileHandler,database_upload : DatabaseUpload,bucket_dir : str,provider_bucket_dir : str,public_dir : str) -> bool:
   # Check if a new solution was uploaded
   old_solution,new_solution = database_upload.check_solution_folder_exists(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
+  old_solution_text = "didn't exist" if not old_solution else f"was {old_solution}"
   if not new_solution:
-    file_handler.send_email_to_segal(f"Warning (to Segal only). Provider {provider} uploaded a new solution!",f"The previous solution for {provider} was {old_solution} and the new one is {new_solution}. Please check that the new solution is correct and create the respective folder in the public directory.")
+    file_handler.send_email_to_segal(f"Warning (to Segal only). Provider {provider} uploaded a new solution!",f"The previous solution for {provider} {old_solution} and the new one is {new_solution}. Please check that the new solution is correct and create the respective folder in the public directory, so that the files can be uploaded.")
     return True
   return False
       

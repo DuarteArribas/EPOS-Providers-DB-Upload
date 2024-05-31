@@ -180,43 +180,41 @@ class DatabaseUpload:
     """
     return [file for file in os.listdir(bucketDir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".pos"]
   
-  def handle_previous_solution(self,ac,dataType,tsDatatype,velDatatype,version = None):
-    """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its associated timeseries files and estimated coordinates.
+  def handle_previous_solution(self : "DatabaseUpload",ac : str,data_type : str,ts_datatype : str,version : str = None) -> bool:
+    """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its estimated coordinates.
     
     Parameters
     ----------
     ac          : str
       The analysis centre acronym
-    dataType    : str
+    data_type   : str
       The data type of the solution (timeseries or velocity)
-    tsDatatype  : str
+    ts_datatype : str
       The timeseries data type
-    velDatatype : str
-      The velocity data type
     version     : str
       The release version of the solution
     """
-    solutionIDInDB = self.check_solution_already_in_DB(ac,dataType)
-    if dataType == tsDatatype:
-      if(len(solutionIDInDB) > 0):
-        for solutionID in solutionIDInDB:
-          if version != self.getVersionFromSolution(solutionID): 
-            self._erasePreviousSolutionFromDB(ac,dataType)
+    solution_ID_in_DB = self.check_solution_already_in_DB(ac,data_type)
+    if data_type == ts_datatype:
+      if(len(solution_ID_in_DB) > 0):
+        for solution_ID in solution_ID_in_DB:
+          if version != self.get_version_from_solution(solution_ID): 
+            self._erase_previous_solution_from_DB(ac,data_type)
           else:
             return True
     else:
-      if(len(solutionIDInDB) > 0):
-        self._erasePreviousSolutionFromDB(ac,dataType)
+      if(len(solution_ID_in_DB) > 0):
+        self._erase_previous_solution_from_DB(ac,data_type)
     return False
   
-  def check_solution_already_in_DB(self,ac,dataType):
+  def check_solution_already_in_DB(self : "DatabaseUpload",ac : str,data_type : str) -> list:
     """Check if a solution is already in the database.
     
     Parameters
     ----------
-    ac       : str
+    ac        : str
       The analysis centre acronym
-    dataType : str
+    data_type : str
       The data type of the solution (timeseries or velocity)
     
     Returns
@@ -224,33 +222,33 @@ class DatabaseUpload:
     list
       A list of solution IDs if the solution is already in the database or an empty list otherwise
     """
-    self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
+    self.cursor.execute("SELECT id FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,data_type))
     return [item[0] for item in self.cursor.fetchall()]
 
-  def getVersionFromSolution(self,solutionID):
-    self.cursor.execute("SELECT release_version FROM solution WHERE id = %s",(solutionID,))
+  def get_version_from_solution(self : "DatabaseUpload",solution_ID : int) -> str:
+    self.cursor.execute("SELECT release_version FROM solution WHERE id = %s",(solution_ID,))
     return [item[0] for item in self.cursor.fetchall()][0]
   
-  def _erasePreviousSolutionFromDB(self,ac,dataType):
+  def _erase_previous_solution_from_DB(self : "DatabaseUpload",ac : str,data_type : str) -> None:
     """Erase a previous solution from the database.
     
     Parameters
     ----------
     ac       : str
       The analysis centre acronym
-    dataType : str
+    data_type : str
       The data type of the solution (timeseries or velocity)
     """
-    self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,dataType))
+    self.cursor.execute("DELETE FROM solution WHERE ac_acronym = %s AND data_type = %s;",(ac,data_type))
   
-  def upload_solution(self,dataType,solutionParameters):
+  def upload_solution(self : "DatabaseUpload",data_type : str,solution_parameters : dict) -> None:
     """Upload a solution to the database.
     
     Parameters
     ----------
-    dataType           : str
+    data_type           : str
       The data type of the solution (timeseries or velocity)
-    solutionParameters : dict
+    solution_parameters : dict
       The solution parameters
         
     Raises
@@ -273,27 +271,27 @@ class DatabaseUpload:
           reference_frame
         )
         VALUES(
-          '{solutionParameters["creation_date"]}',
-          '{solutionParameters["release_version"]}',
-          '{dataType}',
-          '{solutionParameters["sampling_period"]}',
-          '{solutionParameters["software"]}',
-          '{solutionParameters["doi"]}',
-          '{solutionParameters["processing_parameters_url"]}',
-          '{solutionParameters["ac_acronym"]}',
-          '{solutionParameters["reference_frame"]}'
+          '{solution_parameters["creation_date"]}',
+          '{solution_parameters["release_version"]}',
+          '{data_type}',
+          '{solution_parameters["sampling_period"]}',
+          '{solution_parameters["software"]}',
+          '{solution_parameters["doi"]}',
+          '{solution_parameters["processing_parameters_url"]}',
+          '{solution_parameters["ac_acronym"]}',
+          '{solution_parameters["reference_frame"]}'
         );
         """
       )
     except Exception as err:
-      raise UploadError(f"Could not upload solution to database. Error: {UploadError.formatError(str(err))}.")
+      raise UploadError(f"Could not upload solution to database. Error: {UploadError.format_error(str(err))}.")
   
-  def get_solution_parameters_TS(self,posFile):
+  def get_solution_parameters_TS(self : "DatabaseUpload",pos_file : str) -> dict:
     """Get the solution parameters from a POS file.
     
     Parameters
     ----------
-    posFile : str
+    pos_file : str
       The path to the POS file
     
     Returns
@@ -301,60 +299,60 @@ class DatabaseUpload:
     dict
       The solution parameters
     """
-    with open(posFile,"rt") as f:
+    with open(pos_file,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
-      solutionParameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
+      solution_parameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
       for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
         match [part.strip() for part in line.split(":",1)]:
           case ["AnalysisCentre",*values]:
             value = " ".join(values)
-            solutionParameters["ac_acronym"] = value
+            solution_parameters["ac_acronym"] = value
           case ["Software",*values]:
             value = " ".join(values)
-            solutionParameters["software"] = value
+            solution_parameters["software"] = value
           case ["Method-url",*values]:
             value = " ".join(values)
-            solutionParameters["processing_parameters_url"] = value
+            solution_parameters["processing_parameters_url"] = value
           case ["DOI",*values]:
             value = " ".join(values)
-            solutionParameters["doi"] = value
+            solution_parameters["doi"] = value
           case ["CreationDate",*values]:
             value = " ".join(values)
-            solutionParameters["creation_date"] = value
-            solutionParameters["creation_date"] = solutionParameters["creation_date"].replace("/","-")
+            solution_parameters["creation_date"] = value
+            solution_parameters["creation_date"] = solution_parameters["creation_date"].replace("/","-")
           case ["ReleaseVersion",*values]:
             value = " ".join(values)
-            solutionParameters["release_version"] = value
+            solution_parameters["release_version"] = value
           case ["SamplingPeriod",*values]:
             value = " ".join(values)
-            solutionParameters["sampling_period"] = value
-      return solutionParameters
+            solution_parameters["sampling_period"] = value
+      return solution_parameters
             
-  def save_estimated_coordinates_to_file(self,posFile,idSolution,timeseriesFilename):
+  def save_estimated_coordinates_to_file(self : "DatabaseUpload",pos_file : str,id_solution : int,timeseries_filename : str) -> None:
     """Save the estimated coordinates to a temporary file for bulk upload.
     
     Parameters
     ----------
-    posFile            : str
+    pos_file            : str
       The path to the POS file
-    idSolution         : int
+    id_solution         : int
       The ID of the solution
-    timeseriesFilename : str
+    timeseries_filename : str
       URL of the file location in the repository
     """
-    with open(posFile,"rt") as f:
+    with open(pos_file,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
-      stationName = None
+      station_name = None
       for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
         match [part.strip() for part in line.split(":",1)]:
           case ["9-character ID",*values]:
-            stationName = " ".join(values)
+            station_name = " ".join(values)
       for line in lines:
         match [part.strip() for part in (" ".join(line.split())).split(" ")]:
           case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"a") as tmp:
               tmp.write(
-                str(stationName)                           + "," +
+                str(station_name)                           + "," +
                 str(X)                                 + "," +
                 str(Y)                                 + "," +
                 str(Z)                                 + "," +
@@ -365,13 +363,13 @@ class DatabaseUpload:
                 str(Rxz)                               + "," +
                 str(Ryz)                               + "," +
                 str(1 if Soln == "outlier" else 0)     + "," +
-                str(self._formatDate(YYYYMMDD,HHMMSS)) + "," +
+                str(self._format_date(YYYYMMDD,HHMMSS)) + "," +
                 str(Soln)                              + "," +
-                str(idSolution)                        + "," +
-                str(timeseriesFilename)                + "\n"      
+                str(id_solution)                        + "," +
+                str(timeseries_filename)                + "\n"      
               )
   
-  def _formatDate(self,YYYYMMDD,HHMMSS):
+  def _format_date(self : "DatabaseUpload",YYYYMMDD : str,HHMMSS : str) -> str:
     """Format a date in the format YYYYMMDD HHMMSS to YYYY-MM-DD HH:MM:SS.
     
     Parameters
@@ -388,7 +386,7 @@ class DatabaseUpload:
     """
     return f"{YYYYMMDD[0:4]}-{YYYYMMDD[4:6]}-{YYYYMMDD[6:8]} {HHMMSS[0:2]}:{HHMMSS[2:4]}:{HHMMSS[4:6]}"
   
-  def upload_estimated_coordinates(self):
+  def upload_estimated_coordinates(self : "DatabaseUpload") -> None:
     """Bulk upload the estimated coordinates from the temporary file to the database.
     
     Raises
@@ -397,7 +395,7 @@ class DatabaseUpload:
       If the estimated coordinates could not be uploaded to the database
     """
     try:
-      with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csvFile:
+      with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csv_file:
         self.cursor.copy_expert(
           f"""
           COPY estimated_coordinates(
@@ -420,42 +418,42 @@ class DatabaseUpload:
           FROM STDIN
           WITH (FORMAT CSV,HEADER FALSE);
           """,
-          csvFile
+          csv_file
         )
     except Exception as err:
-      raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
+      raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.format_error(str(err))}.")
   
-  def erase_estimated_coordinates_tmp_file(self):
+  def erase_estimated_coordinates_tmp_file(self : "DatabaseUpload") -> None:
     """Erase the temporary file containing the previous estimated coordinates."""
-    tempPath = os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
-    if os.path.exists(tempPath):
-      os.remove(tempPath)
+    temp_path = os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP)
+    if os.path.exists(temp_path):
+      os.remove(temp_path)
   
-  def _get_updated_and_new_lines(self,oldLines,newLines):
-    oldLines           = [line.strip() for line in oldLines]
-    oldLines           = oldLines[oldLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
-    newLines           = [line.strip() for line in newLines]
-    newLines           = newLines[newLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+  def _get_updated_and_new_lines(self : "DatabaseUpload",old_lines,new_lines):
+    old_lines           = [line.strip() for line in old_lines]
+    old_lines           = old_lines[old_lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+    new_lines           = [line.strip() for line in new_lines]
+    new_lines           = new_lines[new_lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
     keys               = ["YYYYMMDD","HHMMSS","JJJJJ_JJJJ","X","Y","Z","Sx","Sy","Sz","Rxy","Rxz","Ryz","NLat","Elong","Height","dN","dE","dU","Sn","Se","Su","Rne","Rnu","Reu","Soln"]
-    oldLinesDict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in oldLines]
-    newLinesDict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in newLines]
-    uniqueDateHoursSet = {(line['YYYYMMDD'],line['HHMMSS']) for line in oldLinesDict}
-    matchingLines      = []
-    newLines           = []
-    for line in newLinesDict:
-      dateHours = (line['YYYYMMDD'],line['HHMMSS'])
-      if dateHours in uniqueDateHoursSet:
-        matchingLineInList1 = next(
-          (l for l in oldLinesDict if l['YYYYMMDD'] == line['YYYYMMDD'] and l['HHMMSS'] == line['HHMMSS']), None
+    old_lines_dict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in old_lines]
+    new_lines_dict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in new_lines]
+    unique_date_hours_set = {(line['YYYYMMDD'],line['HHMMSS']) for line in old_lines_dict}
+    matching_lines      = []
+    new_lines           = []
+    for line in new_lines_dict:
+      date_hours = (line['YYYYMMDD'],line['HHMMSS'])
+      if date_hours in unique_date_hours_set:
+        matching_line_in_list1 = next(
+          (l for l in old_lines_dict if l['YYYYMMDD'] == line['YYYYMMDD'] and l['HHMMSS'] == line['HHMMSS']), None
         )
-        if matchingLineInList1 and (matchingLineInList1['X'] != line['X'] or matchingLineInList1['Y'] != line['Y'] or matchingLineInList1['Z'] != line['Z'] or matchingLineInList1['Sx'] != line['Sx'] or matchingLineInList1['Sy'] != line['Sy'] or matchingLineInList1['Sz'] != line['Sz'] or matchingLineInList1['Rxy'] != line['Rxy'] or matchingLineInList1['Rxz'] != line['Rxz'] or matchingLineInList1['Ryz'] != line['Ryz'] or matchingLineInList1['NLat'] != line['NLat'] or matchingLineInList1['Elong'] != line['Elong'] or matchingLineInList1['Height'] != line['Height'] or matchingLineInList1['dN'] != line['dN'] or matchingLineInList1['dE'] != line['dE'] or matchingLineInList1['dU'] != line['dU'] or matchingLineInList1['Sn'] != line['Sn'] or matchingLineInList1['Se'] != line['Se'] or matchingLineInList1['Su'] != line['Su'] or matchingLineInList1['Rne'] != line['Rne'] or matchingLineInList1['Rnu'] != line['Rnu'] or matchingLineInList1['Reu'] != line['Reu'] or matchingLineInList1['Soln'] != line['Soln']):
-          matchingLines.append(line)
+        if matching_line_in_list1 and (matching_line_in_list1['X'] != line['X'] or matching_line_in_list1['Y'] != line['Y'] or matching_line_in_list1['Z'] != line['Z'] or matching_line_in_list1['Sx'] != line['Sx'] or matching_line_in_list1['Sy'] != line['Sy'] or matching_line_in_list1['Sz'] != line['Sz'] or matching_line_in_list1['Rxy'] != line['Rxy'] or matching_line_in_list1['Rxz'] != line['Rxz'] or matching_line_in_list1['Ryz'] != line['Ryz'] or matching_line_in_list1['NLat'] != line['NLat'] or matching_line_in_list1['Elong'] != line['Elong'] or matching_line_in_list1['Height'] != line['Height'] or matching_line_in_list1['dN'] != line['dN'] or matching_line_in_list1['dE'] != line['dE'] or matching_line_in_list1['dU'] != line['dU'] or matching_line_in_list1['Sn'] != line['Sn'] or matching_line_in_list1['Se'] != line['Se'] or matching_line_in_list1['Su'] != line['Su'] or matching_line_in_list1['Rne'] != line['Rne'] or matching_line_in_list1['Rnu'] != line['Rnu'] or matching_line_in_list1['Reu'] != line['Reu'] or matching_line_in_list1['Soln'] != line['Soln']):
+          matching_lines.append(line)
       else:
-        newLines.append(line)
-    return [[line[key] for key in keys] for line in matchingLines],[[line[key] for key in keys] for line in newLines]
+        new_lines.append(line)
+    return [[line[key] for key in keys] for line in matching_lines],[[line[key] for key in keys] for line in new_lines]
   
   
-  def update_estimated_coordinates(self,line):
+  def update_estimated_coordinates(self : "DatabaseUpload",line : list) -> None:
     """Bulk upload the estimated coordinates from the temporary file to the database.
     
     Raises
@@ -470,10 +468,10 @@ class DatabaseUpload:
         SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
         WHERE epoch = %s;
         """,
-        (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._formatDate(line[0],line[1]))
+        (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._format_date(line[0],line[1]))
       )
     except Exception as err:
-      raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.formatError(str(err))}.")
+      raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.format_error(str(err))}.")
     
   
   def uploadAllProviderVel(self,provBucketDir,publicDir):
@@ -711,7 +709,7 @@ class DatabaseUpload:
           csvFile
         )
     except Exception as err:
-      raise UploadError(f"Could not upload reference position velocities to database. Error: {UploadError.formatError(str(err))}.")
+      raise UploadError(f"Could not upload reference position velocities to database. Error: {UploadError.format_error(str(err))}.")
   
   def eraseReferencePositionVelocitiesTmpFile(self):
     """Erase the temporary file containing the previous reference position velocities."""
