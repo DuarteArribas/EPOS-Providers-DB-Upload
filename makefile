@@ -23,6 +23,6 @@ runValidate:
 	$(PYTHON) $(STARTUP_DIR)/$(VALIDATION_MAIN_FILE)
 
 runUpload:
-	$(PYTHON) $(UPLOAD_TO_DB_MAIN_FILE)
+	$(PYTHON) $(STARTUP_DIR)/$(UPLOAD_TO_DB_MAIN_FILE)
 
 .PHONY: setup clean runValidate runUpload

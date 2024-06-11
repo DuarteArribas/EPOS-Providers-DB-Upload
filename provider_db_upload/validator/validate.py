@@ -701,7 +701,7 @@ class Validator:
     self.cursor.execute("SELECT marker FROM station;")
     return [item[0] for item in self.cursor.fetchall()]
   
-  def validateVel(self,vel_file):
+  def validate_vel(self,vel_file):
     """Validate a specific vel file.
 
     Parameters
@@ -918,10 +918,15 @@ class Validator:
   
   def _validate_station(self,vel_file,lines):
     not_existing_stations = []
+    existing_stations     = []
     for line in lines:
       if not self._is_station_in_db(line.split(" ")[0]):
-        #not_existing_stations.append(line.split(" ")[1].split(" ")[0])
         not_existing_stations.append(line.split(" ")[0])
+      else:
+        if line.split(" ")[0] not in existing_stations:
+          existing_stations.append(line.split(" ")[0])
+        else:
+          raise ValidationError(f"Duplicate station '{line.split(' ')[0]}' in file '{os.path.basename(vel_file)}' with path '{vel_file}'.")
     if not_existing_stations != []:
       new_line_char           = "\n"
       comma_and_new_line_char = ", \n"

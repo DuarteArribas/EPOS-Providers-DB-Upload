@@ -68,7 +68,7 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
       elif extension_without_gzip == ".vel":
         print(ROUTINE_MSG["VALIDATING_VEL"].format(file = os.path.basename(file)))
         try:
-          validator.validateVel(file)
+          validator.validate_vel(file)
           if not any(value is None for value in previous_VEL_metadata_values):
             if any(value for value in range(len(validator.vel_metadata_values)) if validator.vel_metadata_values[value] != previous_VEL_metadata_values[value]):
               file_handler.send_email_to_segal(

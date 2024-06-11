@@ -37,9 +37,11 @@ def upload_all_ts(bucket_dir : str,cfg : Config,public_dirs : dict,provider_emai
     file_handler
   )
   for count,provider_bucket_dir in enumerate(os.listdir(bucket_dir)):
+    if provider_bucket_dir == ".DS_Store":
+      continue
     provider   = provider_bucket_dir.split("-")[0]
     public_dir = public_dirs[provider_bucket_dir.split("-")[0]]
-    if _handle_new_solution(provider,file_handler,database_upload,bucket_dir,provider_bucket_dir,public_dir):
+    if _handle_new_solution(provider,file_handler,database_upload,bucket_dir,provider_bucket_dir,public_dir,"TS"):
       continue
     try:
       database_upload.upload_all_provider_TS(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
@@ -63,7 +65,7 @@ def upload_all_vel(bucketDir,cfg,publicDirs,providerEmails,pg_connection,fileHan
     The public directory of each provider.
   providerEmails : dict
     The email of each provider.
-  pg_connection   : pg_connection
+  pg_connection  : pg_connection
     The database connection object.
   fileHandler    : FileHandler
     The file handler object.
@@ -89,14 +91,22 @@ def upload_all_vel(bucketDir,cfg,publicDirs,providerEmails,pg_connection,fileHan
         providerEmails[provider]
       )
 
-def _handle_new_solution(provider : str,file_handler : FileHandler,database_upload : DatabaseUpload,bucket_dir : str,provider_bucket_dir : str,public_dir : str) -> bool:
+def _handle_new_solution(provider : str,file_handler : FileHandler,database_upload : DatabaseUpload,bucket_dir : str,provider_bucket_dir : str,public_dir : str,data_type : str) -> bool:
   # Check if a new solution was uploaded
-  old_solution,new_solution = database_upload.check_solution_folder_exists(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
-  old_solution_text = "didn't exist" if not old_solution else f"was {old_solution}"
-  if not new_solution:
-    file_handler.send_email_to_segal(f"Warning (to Segal only). Provider {provider} uploaded a new solution!",f"The previous solution for {provider} {old_solution} and the new one is {new_solution}. Please check that the new solution is correct and create the respective folder in the public directory, so that the files can be uploaded.")
+  old_solution,new_solutions = database_upload.check_solution_folder_exists(os.path.join(bucket_dir,provider_bucket_dir),public_dir,data_type)
+  old_solution_text = "didn't exist" if not old_solution else f"was {old_solution[0]}"
+  if new_solutions["folder_not_created"]:
+    solutions_text = str(len(new_solutions["folder_not_created"])) + " solution, which has" if len(new_solutions["folder_not_created"]) == 1 else " solutions, which have"
+    solutions_text2 = "The new solution is " + new_solutions["folder_not_created"][0] if len(new_solutions["folder_not_created"]) == 1 else "The new solutions are " + ", ".join(new_solutions["folder_not_created"])
+    file_handler.send_email_to_segal(f"Warning (to Segal only). Provider {provider} uploaded {solutions_text} no public directory.",f"The previous solution for {provider} {old_solution_text}. {solutions_text2}. Please check that from the new solution(s), any is correct and create the respective folder in the public directory, so that the files can be uploaded.")
     return True
-  return False
+  if new_solutions["folder_created"]:
+    if len(new_solutions["folder_created"]) > 1:
+      file_handler.send_email_to_segal(f"Warning (to Segal only). Provider {provider} uploaded more than one new solution that contain a public directory.",f"Only 1 solution can be active at a time, so please delete the wrong public solution folders and try again.")
+      return True
+    else:
+      return False
+  return True
       
 # Main function
 def main():
@@ -163,7 +173,7 @@ def main():
     public_dirs,
     provider_emails,
     pg_connection,
-    provider_emails
+    file_handler
   )
   # Upload all vel files
   #upload_all_vel(
@@ -172,7 +182,7 @@ def main():
   #  public_dirs,
   #  provider_emails,
   #  pg_connection,
-  #  provider_emails
+  #  file_handler
   #)
   
 if __name__ == '__main__':

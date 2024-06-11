@@ -1,6 +1,7 @@
 import os
-from uploadError     import *
-from utils.constants import *
+import shutil
+from utils.constants      import *
+from uploader.uploadError import *
 
 class DatabaseUpload:
   """Upload data to the database."""
@@ -53,10 +54,19 @@ class DatabaseUpload:
     """
     self.cursor.execute("SELECT release_version FROM solution WHERE ac_acronym = %s AND data_type = %s;",(os.path.basename(prov_bucket_dir),self.cfg.config.get("UPLOAD","TS_DATATYPE") if data_type == "TS" else self.cfg.config.get("UPLOAD","VEL_DATATYPE")))
     old_solution = [item[0] for item in self.cursor.fetchall()]
-    new_solution = self.get_solution_parameters_TS(os.path.join(prov_bucket_dir,os.listdir(prov_bucket_dir)[0]))["release_version"] if data_type == "TS" else self.getSolutionParametersVel(os.path.join(prov_bucket_dir,os.listdir(prov_bucket_dir)[0]))["release_version"]
-    if os.path.exists(os.path.join(public_dir,data_type,new_solution)):
-      return old_solution,new_solution
-    return old_solution,None
+    solutions = {
+      "folder_created"     : [],
+      "folder_not_created" : []
+    }
+    if not os.path.exists(os.path.join(prov_bucket_dir,data_type)):
+      os.makedirs(os.path.join(prov_bucket_dir,data_type))
+    new_solutions = [f for f in os.listdir(os.path.join(prov_bucket_dir,data_type)) if f != ".DS_Store"]
+    for new_solution in new_solutions:
+      if os.path.exists(os.path.join(public_dir,data_type,new_solution)):
+        solutions["folder_created"].append(new_solution)
+      else:
+        solutions["folder_not_created"].append(new_solution)
+    return old_solution,solutions
   
   def upload_all_provider_TS(self : "DatabaseUpload",prov_bucket_dir : str,public_dir : str) -> None:
     """Upload all timeseries files from a provider bucket directory to the database.
@@ -90,10 +100,11 @@ class DatabaseUpload:
               ac,
               data_type,
               self.cfg.config.get("UPLOAD","TS_DATATYPE"),
-              self.cfg.config.get("UPLOAD","VEL_DATATYPE"),
               version 
             )
             if not is_update:
+              self._merge_solution_files(curr_dir)
+              all_TS_files = self.get_list_of_TS_files(curr_dir)
               self.upload_solution(data_type,self.get_solution_parameters_TS(os.path.join(curr_dir,all_TS_files[0])))
               current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
               for file in all_TS_files:
@@ -106,9 +117,11 @@ class DatabaseUpload:
               self.upload_estimated_coordinates()
               self.erase_estimated_coordinates_tmp_file()
             else:
+              self._merge_solution_files(curr_dir)
+              all_TS_files = self.get_list_of_TS_files(curr_dir)
               previous_files = os.listdir(f"{public_dir}/TS/{version}")
-              new_files      = [file for file in all_TS_files if f"{file[0:18]}.pos" not in previous_files]
-              updated_files  = [file for file in all_TS_files if f"{file[0:18]}.pos" in previous_files]
+              new_files      = [file for file in all_TS_files if file not in previous_files]
+              updated_files  = [file for file in all_TS_files if file in previous_files]
               current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
               if len(new_files) > 0:
                 for file in new_files:
@@ -122,45 +135,52 @@ class DatabaseUpload:
                 self.erase_estimated_coordinates_tmp_file()
               # handle updated files
               for file in updated_files:
-                with open(f"{public_dir}/TS/{version}/{file[0:18]}.pos","r") as f:
+                oldLines = []
+                newLines = []
+                with open(f"{public_dir}/TS/{version}/{file}","r") as f:
                   with open(f"{prov_bucket_dir}/TS/{version}/{file}","r") as f2:
-                    oldLines = f.readlines()
-                    newLines = f2.readlines()
-                    updated_lines,new_different_lines = self._get_updated_and_new_lines(
-                      oldLines,
-                      newLines
-                    )
-                    for line in updated_lines:
-                      self.update_estimated_coordinates(line)
-                    if new_different_lines:
-                      for line in new_different_lines:
-                        curr_file = os.path.join(curr_dir,file)
-                        self.save_estimated_coordinates_to_file(
-                          curr_file,
-                          current_solution_ID,
-                          file
-                        )
-                      self.upload_estimated_coordinates()
-                      self.erase_estimated_coordinates_tmp_file()
-                      lines = []
-                      with open(f"{public_dir}/TS/{version}/{file[0:18]}.pos","r") as f:
-                        lines = [line.strip() for line in f.readlines()]
-                        lines = lines[:,lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
-                      with open(f"{public_dir}/TS/{version}/{file[0:18]}.pos","w") as f:
-                        f.write(lines)
-                        has_updated_line = False
-                        for old_line in oldLines:
-                          has_updated_line = False
-                          for updated_line in updated_lines:
-                            if old_line.split(" ")[0] == updated_line[0] and old_line.split(" ")[1] == updated_line[1]:
-                              f.write(updated_line)
-                              has_updated_line = True
-                          if not has_updated_line:
-                            f.write(old_line)
-                        for new_line in new_different_lines:
-                          f.write(new_line)
+                    oldLines = [line.strip() for line in f.readlines()]
+                    newLines = [line.strip() for line in f2.readlines()]
+                updated_lines,new_different_lines = self._get_updated_and_new_lines(
+                  oldLines,
+                  newLines
+                )
+                updated_lines2 = [" ".join(line) for line in updated_lines]
+                for line in updated_lines:
+                  self.update_estimated_coordinates(line,file.split("_")[1].split("_")[0])
+                for line in new_different_lines:
+                  curr_file = os.path.join(curr_dir,file)
+                  self.save_estimated_coordinates_to_file(
+                    curr_file,
+                    current_solution_ID,
+                    file
+                  )
+                if len(new_different_lines) > 0:
+                  self.upload_estimated_coordinates()
+                  self.erase_estimated_coordinates_tmp_file()
+                old_file_initial_lines = oldLines[:oldLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
+                oldLines = oldLines[oldLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+                with open(f"{prov_bucket_dir}/TS/{version}/{file}","w") as bucket_write:
+                  bucket_write.write("\n".join(old_file_initial_lines))
+                  bucket_write.write("\n")
+                  file_lines = []
+                  has_updated_line = False
+                  for old_line in oldLines:
+                    has_updated_line = False
+                    for updated_line in updated_lines2:
+                      if old_line.split(" ")[0] == updated_line.split(" ")[0] and old_line.split(" ")[1].split(" ")[0] == updated_line.split(" ")[1].split(" ")[0]:
+                        file_lines.append(updated_line)
+                        has_updated_line = True
+                    if not has_updated_line:
+                      file_lines.append(old_line)
+                  for new_line in new_different_lines:
+                    file_lines.append(new_line)
+                  file_lines = self._order_lines_by_date(file_lines)
+                  for line in file_lines:
+                    bucket_write.write(line)
+                    bucket_write.write("\n")
             self.cursor.execute("COMMIT TRANSACTION;")
-            self.fileHandler.move_solution_to_public(curr_dir,public_dir,"TS")
+            self.file_handler.move_solution_to_public(curr_dir,public_dir,"TS")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
@@ -453,7 +473,7 @@ class DatabaseUpload:
     return [[line[key] for key in keys] for line in matching_lines],[[line[key] for key in keys] for line in new_lines]
   
   
-  def update_estimated_coordinates(self : "DatabaseUpload",line : list) -> None:
+  def update_estimated_coordinates(self : "DatabaseUpload",line : list,station : str) -> None:
     """Bulk upload the estimated coordinates from the temporary file to the database.
     
     Raises
@@ -461,18 +481,71 @@ class DatabaseUpload:
     UploadError
       If the estimated coordinates could not be uploaded to the database
     """
-    try:
-      self.cursor.execute(
-        f"""
-        UPDATE estimated_coordinates
-        SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
-        WHERE epoch = %s;
-        """,
-        (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._format_date(line[0],line[1]))
-      )
-    except Exception as err:
-      raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.format_error(str(err))}.")
+   
+    self.cursor.execute(
+      f"""
+      UPDATE estimated_coordinates
+      SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
+      WHERE epoch = %s AND id_station = %s;
+      """,
+      (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._format_date(line[0],line[1]),station)
+    )
     
+  def _get_set_of_equal_files(self : "DatabaseUpload",solution_dir : str) -> None:
+    files = {}
+    for file in os.listdir(solution_dir):
+      if file != ".DS_Store":
+        if file[0:17] not in files:
+          files[file[0:17]] = [os.path.join(solution_dir,file)]
+        else:
+          files[file[0:17]].append(os.path.join(solution_dir,file))
+    return files
+  
+  def _order_lines_by_date_and_file(self : "DatabaseUpload",lines : list) -> list:
+    return sorted(lines,key = lambda x : x[0].split(" ")[0] + x[0].split(" ")[1] + x[1].rsplit("_")[-1].split(".")[0])
+  
+  def _order_lines_by_date(self : "DatabaseUpload",lines : list) -> list:
+    return sorted(lines,key = lambda x : x.split(" ")[0] + x.split(" ")[1])
+  
+  def _delete_repeated_lines(self : "DatabaseUpload",lines : list) -> list:
+    lines_to_remove = []
+    for i in range(len(lines) - 1):
+      if lines[i][0].split(" ")[0] + lines[i][0].split(" ")[1] == lines[i + 1][0].split(" ")[0] + lines[i + 1][0].split(" ")[1]:
+        lines_to_remove.append(lines[i])
+    for i in lines_to_remove:
+      lines.remove(i)
+    return lines
+      
+  def _merge_solution_files(self : "DatabaseUpload",solution_dir : str) -> None:
+    files = self._get_set_of_equal_files(solution_dir)
+    for key in files:
+      if len(files[key]) == 1:
+        continue
+      if len(files[key]) > 1:
+        initial_lines   = []
+        remaining_lines = []
+        with open(files[key][0],"r") as f2:
+          lines = [line.strip() for line in f2.readlines()]
+          initial_lines = lines[:lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
+          for file in files[key]:
+            with open(file,"r") as f3:
+              lines = [line.strip() for line in f3.readlines()]
+              lines = lines[lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+              for line in lines:
+                remaining_lines.append((line,file))
+      if len(files[key]) > 1:
+        with open(os.path.join(solution_dir,f"{key}.pos"),"w") as f:
+          f.write("\n".join(initial_lines))
+          f.write("\n")
+          remaining_lines = self._order_lines_by_date_and_file(remaining_lines)
+          remaining_lines = self._delete_repeated_lines(remaining_lines)
+          for line in remaining_lines:
+            f.write(line[0])
+            f.write("\n")
+    for file in files:
+      if len(files[file]) > 1:
+        for f in files[file]:
+          os.remove(f)
   
   def uploadAllProviderVel(self,provBucketDir,publicDir):
     """Upload all velocity files from a provider bucket directory to the database.
