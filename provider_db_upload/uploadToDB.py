@@ -52,22 +52,22 @@ def upload_all_ts(bucket_dir : str,cfg : Config,public_dirs : dict,provider_emai
         provider_emails[provider]
       )
 
-def upload_all_vel(bucketDir,cfg,publicDirs,providerEmails,pg_connection,fileHandler):
+def upload_all_vel(bucket_dir : str,cfg : Config,public_dirs : dict,provider_emails : dict,pg_connection,file_handler : FileHandler):
   """Upload all Vel files from all the providers to the database.
   
   Parameters
   ----------
-  bucketDir      : str
+  bucket_dir      : str
     The bucket directory where the Vel files are stored.
-  cfg            : Config
+  cfg             : Config
     The configuration object.
-  publicDirs     : dict
+  public_dirs     : dict
     The public directory of each provider.
-  providerEmails : dict
+  provider_emails : dict
     The email of each provider.
-  pg_connection  : pg_connection
+  pg_connection   : pg_connection
     The database connection object.
-  fileHandler    : FileHandler
+  file_handler    : FileHandler
     The file handler object.
   """
   databaseUpload = DatabaseUpload(
@@ -75,20 +75,22 @@ def upload_all_vel(bucketDir,cfg,publicDirs,providerEmails,pg_connection,fileHan
     pg_connection.cursor,
     cfg,
     cfg.getAppConfig("TMP_DIR"),
-    fileHandler
+    file_handler
   )
-  for count,providerBucketDir in enumerate(os.listdir(bucketDir)):
-    provider  = providerBucketDir.split("-")[0]
-    publicDir = publicDirs[providerBucketDir.split("-")[0]]
-    if _handle_new_solution(provider,fileHandler,databaseUpload,bucketDir,providerBucketDir,publicDir):
+  for count,provider_bucket_dir in enumerate(os.listdir(bucket_dir)):
+    if provider_bucket_dir == ".DS_Store":
+      continue
+    provider  = provider_bucket_dir.split("-")[0]
+    public_dir = public_dirs[provider_bucket_dir.split("-")[0]]
+    if _handle_new_solution(provider,file_handler,databaseUpload,bucket_dir,provider_bucket_dir,public_dir):
       continue
     try:
-      databaseUpload.uploadAllProviderVel(os.path.join(bucketDir,providerBucketDir),publicDir)
+      databaseUpload.upload_all_provider_vel(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
     except UploadError as err:
-      fileHandler.sendEmail(
+      file_handler.send_email(
         f"Error uploading {provider} Vel files. Attention is required!",
         "There were some errors while uploading your files: \n\n" + str(err) + "\n\n\n Please email us back for more information.",
-        providerEmails[provider]
+        provider_emails[provider]
       )
 
 def _handle_new_solution(provider : str,file_handler : FileHandler,database_upload : DatabaseUpload,bucket_dir : str,provider_bucket_dir : str,public_dir : str,data_type : str) -> bool:

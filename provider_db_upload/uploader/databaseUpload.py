@@ -185,12 +185,12 @@ class DatabaseUpload:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
   
-  def get_list_of_TS_files(self,bucketDir):
+  def get_list_of_TS_files(self,bucket_dir):
     """Get a list of all timeseries files in a directory.
     
     Parameters
     ----------
-    bucketDir : str
+    bucket_dir : str
       The bucket directory to search for timeseries files
       
     Returns
@@ -198,7 +198,7 @@ class DatabaseUpload:
     list
       A list of all timeseries files in the directory
     """
-    return [file for file in os.listdir(bucketDir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".pos"]
+    return [file for file in os.listdir(bucket_dir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".pos"]
   
   def handle_previous_solution(self : "DatabaseUpload",ac : str,data_type : str,ts_datatype : str,version : str = None) -> bool:
     """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its estimated coordinates.
@@ -547,14 +547,14 @@ class DatabaseUpload:
         for f in files[file]:
           os.remove(f)
   
-  def uploadAllProviderVel(self,provBucketDir,publicDir):
+  def upload_all_provider_vel(self,prov_bucket_dir,public_dir):
     """Upload all velocity files from a provider bucket directory to the database.
     
     Parameters
     ----------
-    provBucketDir : str
+    prov_bucket_dir : str
       The path to the provider bucket directory
-    publicDir     : str
+    public_dir      : str
       The path to the provider's public directory
     
     Raises
@@ -564,46 +564,45 @@ class DatabaseUpload:
     """
     self.cursor.execute("START TRANSACTION;")
     try:
-      ac       = os.path.basename(provBucketDir)
-      dataType = self.cfg.config.get("UPLOAD","VEL_DATATYPE")
-      for filetype in os.listdir(provBucketDir):
+      ac        = os.path.basename(prov_bucket_dir)
+      data_type = self.cfg.config.get("UPLOAD","VEL_DATATYPE")
+      for filetype in os.listdir(prov_bucket_dir):
         if filetype == "Vel":
-          for version in os.listdir(os.path.join(provBucketDir,filetype)):
+          for version in os.listdir(os.path.join(prov_bucket_dir,filetype)):
             if version == ".DS_Store":
               continue
-            currDir = os.path.join(os.path.join(provBucketDir,filetype),version)
-            allVelFiles = self.getListOfVelFiles(currDir)
-            if len(allVelFiles) == 0:
+            curr_dir = os.path.join(os.path.join(prov_bucket_dir,filetype),version)
+            all_vel_files = self.get_list_of_vel_files(curr_dir)
+            if len(all_vel_files) == 0:
               break
             self.handle_previous_solution(
               ac,
-              dataType,
-              self.cfg.config.get("UPLOAD","TS_DATATYPE"),
-              self.cfg.config.get("UPLOAD","VEL_DATATYPE")
+              data_type,
+              self.cfg.config.get("UPLOAD","TS_DATATYPE")
             )
-            self.upload_solution(dataType,self.getSolutionParametersVel(os.path.join(currDir,allVelFiles[0])))
-            current_solution_ID = self.check_solution_already_in_DB(ac,dataType)[0]
-            for file in allVelFiles:
-              curr_file = os.path.join(currDir,file)
-              self.saveReferencePositionVelocitiesToFile(
+            self.upload_solution(data_type,self.get_solution_parameters_vel(os.path.join(curr_dir,all_vel_files[0])))
+            current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
+            for file in all_vel_files:
+              curr_file = os.path.join(curr_dir,file)
+              self.save_reference_position_velocities_to_file(
                 curr_file,
                 current_solution_ID,
                 file
               )
-            self.uploadReferencePositionVelocities()
-            self.eraseReferencePositionVelocitiesTmpFile()
+            self.upload_reference_position_velocities()
+            self.erase_reference_position_velocities_tmp_file()
             self.cursor.execute("COMMIT TRANSACTION;")
-            self.fileHandler.move_solution_to_public(currDir,publicDir,"Vel")
+            self.fileHandler.move_solution_to_public(curr_dir,public_dir,"Vel")
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
   
-  def getListOfVelFiles(self,bucketDir):
+  def get_list_of_vel_files(self,bucket_dir):
     """Get a list of all velocity files in a directory.
     
     Parameters
     ----------
-    bucketDir : str
+    bucket_dir : str
       The bucket directory to search for velocity files
       
     Returns
@@ -611,40 +610,14 @@ class DatabaseUpload:
     list
       A list of all velocity files in the directory
     """
-    return [file for file in os.listdir(bucketDir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".vel"]
+    return [file for file in os.listdir(bucket_dir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".vel"]
   
-  def _getVelocityFilesID(self,solutionID):
-    """Get the velocity files ID from the database.
-    
-    Parameters
-    ----------
-    solutionID : int
-      The solution ID
-    
-    Returns
-    -------
-    list
-      A list of velocity files IDs
-    """
-    self.cursor.execute("SELECT id_velocities_files FROM reference_position_velocities WHERE id_solution = %s GROUP BY id_velocities_files;",(solutionID,))
-    return [item[0] for item in self.cursor.fetchall()]
-  
-  def _erasePreviousVelocityFilesFromDB(self,velocityFilesID):
-    """Erase a previous velocity file from the database.
-    
-    Parameters
-    ----------
-    velocityFilesID : int
-      The velocity files ID to remove
-    """
-    self.cursor.execute("DELETE FROM velocities_files WHERE id = %s;",(velocityFilesID,))
-  
-  def getSolutionParametersVel(self,velFile):
+  def get_solution_parameters_vel(self,vel_file):
     """Get the solution parameters from a Vel file.
     
     Parameters
     ----------
-    velFile : str
+    vel_file : str
       The path to the Vel file
     
     Returns
@@ -652,78 +625,78 @@ class DatabaseUpload:
     dict
       The solution parameters
     """
-    with open(velFile,"rt") as f:
+    with open(vel_file,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
-      solutionParameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
-      solutionParameters["creation_date"] = "2011-01-01 00:00:00" #TODO: Change this
+      solution_parameters = {"reference_frame" : f"{lines[0].split(':')[1].strip()}"}
+      solution_parameters["creation_date"] = self._format_date(lines[2].split(':')[1].strip()[:9],lines[2].split(':')[1].strip()[9:])
       for line in lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]:
         match [part.strip() for part in line.split(":",1)]:
           case ["AnalysisCentre",*values]:
             value = " ".join(values)
-            solutionParameters["ac_acronym"] = value
+            solution_parameters["ac_acronym"] = value
           case ["Software",*values]:
             value = " ".join(values)
-            solutionParameters["software"] = value
+            solution_parameters["software"] = value
           case ["Method-url",*values]:
             value = " ".join(values)
-            solutionParameters["processing_parameters_url"] = value
+            solution_parameters["processing_parameters_url"] = value
           case ["DOI",*values]:
             value = " ".join(values)
-            solutionParameters["doi"] = value
+            solution_parameters["doi"] = value
           case ["ReleaseVersion",*values]:
             value = " ".join(values)
-            solutionParameters["release_version"] = value
+            solution_parameters["release_version"] = value
           case ["SamplingPeriod",*values]:
             value = " ".join(values)
-            solutionParameters["sampling_period"] = value
-      return solutionParameters
+            solution_parameters["sampling_period"] = value
+      return solution_parameters
   
-  def saveReferencePositionVelocitiesToFile(self,velFile,idSolution,velocitiesFilename):
+  def save_reference_position_velocities_to_file(self,vel_file,id_solution,velocities_filename):
     """Save the reference position velocities to a temporary file for bulk upload.
     
     Parameters
     ----------
-    velFile           : str
+    vel_file            : str
       The path to the Vel file
-    idSolution        : int
+    id_solution         : int
       The ID of the solution
-    idVelocityFiles    : int
-      The ID of the velocities file
+    velocities_filename : int
+      The velocities filename
     """
-    with open(velFile,"rt") as f:
+    with open(vel_file,"rt") as f:
       lines = [line.strip() for line in f.readlines()]
       for line in lines:
         match [part.strip() for part in (" ".join(line.split())).split(" ")]:
           case [Dot,Name,Ref_epoch,Ref_jday,Ref_X,Ref_Y,Ref_Z,Ref_Nlat,Ref_Elong,Ref_Up,dXDt,dYDt,dZDt,SXd,SYd,SZd,Rxy,Rxz,Rzy,dNDt,dEDt,dUDt,SNd,SEd,SUd,Rne,Rnu,Reu,first_epoch,last_epoch] if Dot[0] != "*":
             with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"a") as tmp:
               tmp.write(
-                str(Name)                              + "," +
-                str(dXDt)                              + "," +
-                str(dYDt)                              + "," +
-                str(dZDt)                              + "," +
-                str(SXd)                               + "," +
-                str(SYd)                               + "," +
-                str(SZd)                               + "," +
-                str(Rxy)                               + "," +
-                str(Rxz)                               + "," +
-                str(Rzy)                               + "," +
-                str(dNDt)                              + "," +
-                str(dEDt)                              + "," +
-                str(dUDt)                              + "," +
-                str(SNd)                               + "," +
-                str(SEd)                               + "," +
-                str(SUd)                               + "," +
-                str(Rne)                               + "," +
-                str(Rnu)                               + "," +
-                str(Reu)                               + "," +
-                str(self._formatOnlyDate(first_epoch)) + "," +
-                str(self._formatOnlyDate(last_epoch))  + "," +
-                str(self._formatOnlyDate(Ref_epoch))   + "," +
-                str(velocitiesFilename)                   + "," +   
-                str(idSolution)                        + "\n"
+                str(Name)                                + "," +
+                str(dXDt)                                + "," +
+                str(dYDt)                                + "," +
+                str(dZDt)                                + "," +
+                str(SXd)                                 + "," +
+                str(SYd)                                 + "," +
+                str(SZd)                                 + "," +
+                str(Rxy)                                 + "," +
+                str(Rxz)                                 + "," +
+                str(Rzy)                                 + "," +
+                str(dNDt)                                + "," +
+                str(dEDt)                                + "," +
+                str(dUDt)                                + "," +
+                str(SNd)                                 + "," +
+                str(SEd)                                 + "," +
+                str(SUd)                                 + "," +
+                str(Rne)                                 + "," +
+                str(Rnu)                                 + "," +
+                str(Reu)                                 + "," +
+                str(self._format_only_date(first_epoch)) + "," +
+                str(self._format_only_date(last_epoch))  + "," +
+                str(self._format_only_date(Ref_epoch))   + "," +
+                str(velocities_filename)                 + "," +   
+                str(id_solution)                         + "\n"
               )
   
-  def _formatOnlyDate(self,YYYYMMDD):
+  def _format_only_date(self,YYYYMMDD):
     """Format a date in the format YYYYMMDD to YYYY-MM-DD.
     
     Parameters
@@ -738,7 +711,7 @@ class DatabaseUpload:
     """
     return f"{YYYYMMDD[0:4]}-{YYYYMMDD[4:6]}-{YYYYMMDD[6:8]}"
        
-  def uploadReferencePositionVelocities(self):
+  def upload_reference_position_velocities(self):
     """Bulk upload the reference position velocities from the temporary file to the database.
     
     Raises
@@ -747,7 +720,7 @@ class DatabaseUpload:
       If the reference position velocities could not be uploaded to the database
     """
     try:
-      with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"r") as csvFile:
+      with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"r") as csv_file:
         self.cursor.copy_expert(
           f"""
           COPY reference_position_velocities(
@@ -779,13 +752,13 @@ class DatabaseUpload:
           FROM STDIN
           WITH (FORMAT CSV,HEADER FALSE);
           """,
-          csvFile
+          csv_file
         )
     except Exception as err:
       raise UploadError(f"Could not upload reference position velocities to database. Error: {UploadError.format_error(str(err))}.")
   
-  def eraseReferencePositionVelocitiesTmpFile(self):
+  def erase_reference_position_velocities_tmp_file(self):
     """Erase the temporary file containing the previous reference position velocities."""
-    tempPath = os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP)
-    if os.path.exists(tempPath):
-      os.remove(tempPath)
+    temp_path = os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP)
+    if os.path.exists(temp_path):
+      os.remove(temp_path)
