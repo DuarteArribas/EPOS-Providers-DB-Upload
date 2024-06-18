@@ -120,7 +120,7 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
     if len(errors) != 0:
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]
       file_handler.send_email(
-        ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"],
+        ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"].format(provider = provider),
         "There were some errors while validating your files: \n\n" + "\n".join(errors) + "\n\n\n Please re-upload the problematic files or email us back for more information.",
         provider_emails[provider]
       )
