@@ -28,23 +28,29 @@ class Validator:
   
   FOUND                             = 200
   # == Methods ==
-  def __init__(self : "Validator",cfg : Config,conn,cursor) -> None:
+  def __init__(self : "Validator",cfg : Config,conn,cursor,provider_dir : str,bucket_dir : str) -> None:
     """Get default parameters.
 
     Parameters
     ----------
-    cfg    : Config
+    cfg          : Config
       A config object
-    conn   : psycopg2.extensions.connection
+    conn         : psycopg2.extensions.connection
       A connection object to the EPOS db
-    cursor : psycopg2.extensions.cursor
+    cursor       : psycopg2.extensions.cursor
       A cursor object to the EPOS db
+    provider_dir : str
+      The directory where the provider files are stored
+    bucket_dir   : str
+      The directory where the provider files are stored in the bucket
     """
     self.cfg                 = cfg
     self.conn                = conn
     self.cursor              = cursor
     self.ts_metadata_values  = [None,None,None,None,None,None]
     self.vel_metadata_values = [None,None,None,None,None,None]
+    self.provider_dir        = provider_dir
+    self.bucket_dir          = bucket_dir
 
   def validate_snx(self,snx_file):
     """Validate a specific snx file.
@@ -730,7 +736,7 @@ class Validator:
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(vel_file)}' with path '{vel_file}'.")
         for line in metadata_lines:
           self._validate_metadata_line_vel(line,vel_file)
-        self._validate_station(vel_file,lines[lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:])
+        self._validate_station(vel_file,lines[lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:],lines[:lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1])
     except ValidationError as err:
       raise ValidationError(str(err))
     except OSError:
@@ -916,15 +922,20 @@ class Validator:
         if value.lower() not in self.cfg.config.get("VALIDATION","SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
   
-  def _validate_station(self,vel_file,lines):
-    not_existing_stations = []
-    existing_stations     = []
+  def _validate_station(self,vel_file,lines,metadata_lines):
+    not_existing_stations      = []
+    not_existing_stations_line = []
+    existing_stations          = []
+    existing_stations_line     = []
     for line in lines:
-      if not self._is_station_in_db(line.split(" ")[0]):
-        not_existing_stations.append(line.split(" ")[0])
+      station = line.split(" ")[1]
+      if not self._is_station_in_db(station):
+        not_existing_stations.append(station)
+        not_existing_stations_line.append(line)
       else:
-        if line.split(" ")[0] not in existing_stations:
-          existing_stations.append(line.split(" ")[0])
+        if station not in existing_stations:
+          existing_stations.append(station)
+          existing_stations_line.append(line)
         else:
           raise ValidationError(f"Duplicate station '{line.split(' ')[0]}' in file '{os.path.basename(vel_file)}' with path '{vel_file}'.")
     if not_existing_stations != []:

@@ -29,7 +29,7 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
     provider_dir                 = list(providers_dir.items())[i][1]
     public_dir                   = list(public_dirs.items())[i][1]
     bucket_dir                   = list(bucket_dirs.items())[i][1]
-    validator                    = Validator(cfg,conn,cursor)
+    validator                    = Validator(cfg,conn,cursor,provider_dir,bucket_dir)
     all_files                    = [file for file in glob.glob(f"{provider_dir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
     print(ROUTINE_MSG["VALIDATING_PROVIDER"].format(file_length = len(all_files),provider = provider))
