@@ -160,7 +160,7 @@ def main():
   }
   # Provider emails
   provider_emails = {
-    "INGV" : f"{cfg.config.get('EMAIL','INGV_EMAI')}",
+    "INGV" : f"{cfg.config.get('EMAIL','INGV_EMAIL')}",
     "ROB"  : f"{cfg.config.get('EMAIL','ROB_EMAIL')}",
     "SGO"  : f"{cfg.config.get('EMAIL','SGO_EMAIL')}",
     "UGA"  : f"{cfg.config.get('EMAIL','UDA_EMAIL')}",
