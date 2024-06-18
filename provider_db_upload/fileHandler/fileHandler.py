@@ -98,7 +98,8 @@ class FileHandler:
       server.connect("smtp.gmail.com",587)
       server.ehlo()
       server.starttls()
-      server.ehlo()    
+      server.ehlo()
+      print(self.from_email,self.from_email_password)
       server.login(self.from_email,self.from_email_password)
       msg = MIMEText(body)
       msg["Subject"] = subject
