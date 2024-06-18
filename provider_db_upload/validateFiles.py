@@ -160,11 +160,11 @@ def main():
   }
   # Provider emails
   provider_emails = {
-    "INGV" : f"{cfg.config.get("EMAIL","INGV_EMAIL")}",
-    "ROB"  : f"{cfg.config.get("EMAIL","ROB_EMAIL")}",
-    "SGO"  : f"{cfg.config.get("EMAIL","SGO_EMAIL")}",
-    "UGA"  : f"{cfg.config.get("EMAIL","UDA_EMAIL")}",
-    "WUT"  : f"{cfg.config.get("EMAIL","WUT_EMAIL")}"
+    "INGV" : f"{cfg.config.get('EMAIL','INGV_EMAI')}",
+    "ROB"  : f"{cfg.config.get('EMAIL','ROB_EMAIL')}",
+    "SGO"  : f"{cfg.config.get('EMAIL','SGO_EMAIL')}",
+    "UGA"  : f"{cfg.config.get('EMAIL','UDA_EMAIL')}",
+    "WUT"  : f"{cfg.config.get('EMAIL','WUT_EMAIL')}"
   }
   # Get a connection to the local database (used to store the hashes of the files, so we can check if they changed)
   con = sqlite3.connect(cfg.config.get("APP","LOCAL_DATABASE_FILE"))
