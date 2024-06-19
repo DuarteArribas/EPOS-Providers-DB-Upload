@@ -455,20 +455,28 @@ class Validator:
     ValidationError
       If there was an error validating the pos file
     """
+    print("a")
     self._validate_pos_filename(pos_file)
+    print("b")
     try:
       with open(pos_file,"rt") as f:
         lines = [line.strip() for line in f.readlines()]
+        print("c")
         try:
           metadata_lines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+          print("d")
         except Exception:
           raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(pos_file)}' with path '{pos_file}'.")
         mandatoryPosHeaders = self.cfg.config.get("VALIDATION","MANDATORY_POS_HEADERS").split("|")
+        print("e")
         count_matching_mandatory_headers = sum([header.split(":")[0].strip() in mandatoryPosHeaders for header in metadata_lines])
+        print("f")
         if count_matching_mandatory_headers != len(mandatoryPosHeaders):
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(pos_file)}' with path '{pos_file}'.")
         for line in metadata_lines:
+          print("g")
           self._validate_metadata_line_pos(line,pos_file)
+        print("h")
     except ValidationError as err:
       raise ValidationError(str(err))
     except OSError:
