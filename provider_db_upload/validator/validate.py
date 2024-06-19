@@ -665,40 +665,48 @@ class Validator:
     """
     match [part.strip() for part in line.split(":",1)]:
       case ["9-character ID",*values]:
+        print("9-character ID")
         value = " ".join(values)
         if value not in self._get_allowed_9_character_ID_values():
           raise ValidationError(f"Wrong 9-character ID value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
+        print("AnalysisCentre")
         value = " ".join(values)
         self.ts_metadata_values[0] = value
         if value not in self._get_allowed_analysis_centre_values():
           raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Software",*values]:
+        print("Software")
         value = " ".join(values)
         self.ts_metadata_values[1] = value
         if value not in self.cfg.config.get("VALIDATION","SOFTWARE_VALUES").split("|"):
           raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Method-url",*values]:
+        print("Method-url")
         value = " ".join(values)
         self.ts_metadata_values[2] = value
         if requests.get(value).status_code != Validator.FOUND or self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["DOI",*values]:
+        print("DOI")
         value = " ".join(values)
         self.ts_metadata_values[3] = value
         if value != "unknown" and not self._validate_doi(value):
           raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["CreationDate",*values]:
+        print("CreationDate")
         value = " ".join(values)
         if not self._validate_date(value):
           raise ValidationError(f"Wrong CreationDate format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["ReleaseVersion",*values]:
+        print("ReleaseVersion")
         value = " ".join(values)
         self.ts_metadata_values[4] = value
         if not value:
           raise ValidationError(f"Wrong ReleaseVersion format '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
         self.version = value
       case ["SamplingPeriod",*values]:
+        print("SamplingPeriod")
         value = " ".join(values)
         self.ts_metadata_values[5] = value
         if value.lower() not in self.cfg.config.get("VALIDATION","SAMPLINGPERIOD_VALUES").split("|"):
