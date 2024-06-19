@@ -685,16 +685,13 @@ class Validator:
         print("Method-url")
         value = " ".join(values)
         self.ts_metadata_values[2] = value
-        try:
-          if requests.get(value,timeout = 2).status_code != Validator.FOUND or self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
-            raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
-        except requests.exceptions.Timeout:
-          raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")  
+        if self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
+          raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.") 
       case ["DOI",*values]:
         print("DOI")
         value = " ".join(values)
         self.ts_metadata_values[3] = value
-        if value != "unknown" and not self._validate_doi(value):
+        if not value:
           raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["CreationDate",*values]:
         print("CreationDate")
@@ -922,12 +919,12 @@ class Validator:
       case ["Method-url",*values]:
         value = " ".join(values)
         self.vel_metadata_values[2] = value
-        if requests.get(value).status_code != Validator.FOUND or self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
+        if self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
           raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["DOI",*values]:
         value = " ".join(values)
         self.vel_metadata_values[3] = value
-        if value != "unknown" and not self._validate_doi(value):
+        if not value:
           raise ValidationError(f"Wrong DOI value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["ReleaseVersion",*values]:
         value = " ".join(values)
