@@ -685,8 +685,11 @@ class Validator:
         print("Method-url")
         value = " ".join(values)
         self.ts_metadata_values[2] = value
-        if requests.get(value).status_code != Validator.FOUND or self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
-          raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+        try:
+          if requests.get(value,timeout = 2).status_code != Validator.FOUND or self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
+            raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+        except requests.exceptions.Timeout:
+          raise ValidationError(f"Wrong method-url value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")  
       case ["DOI",*values]:
         print("DOI")
         value = " ".join(values)
