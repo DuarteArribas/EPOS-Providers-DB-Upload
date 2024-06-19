@@ -99,7 +99,6 @@ class FileHandler:
       server.ehlo()
       server.starttls()
       server.ehlo()
-      print(self.from_email,self.from_email_password)
       server.login(self.from_email,self.from_email_password)
       msg = MIMEText(body)
       msg["Subject"] = subject

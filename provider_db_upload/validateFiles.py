@@ -118,8 +118,8 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
       )
     # If there were any errors email them
     if len(errors) != 0:
-      print("aaaaaaaaaaa")
-      print(errors)
+      for error in error:
+        logging.exception(error)
       errors = [f"Error {count} - {error}" for count,error in enumerate(errors)]
       file_handler.send_email(
         ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"].format(provider = provider),
