@@ -2,9 +2,10 @@ import os
 import doi
 import gzip
 import requests
-from utils.config              import *
-from validator.validationError import *
-from datetime                  import datetime
+from utils.config                             import *
+from validator.validationError                import *
+from validator.validationStationsDividedError import *
+from datetime                                 import datetime
 
 class Validator:
   """Validate provider files before handling them."""
@@ -28,7 +29,7 @@ class Validator:
   
   FOUND                             = 200
   # == Methods ==
-  def __init__(self : "Validator",cfg : Config,conn,cursor,provider_dir : str,bucket_dir : str) -> None:
+  def __init__(self : "Validator",cfg : Config,conn,cursor,provider_dir : str,bucket_dir : str,file_handler) -> None:
     """Get default parameters.
 
     Parameters
@@ -51,6 +52,7 @@ class Validator:
     self.vel_metadata_values = [None,None,None,None,None,None]
     self.provider_dir        = provider_dir
     self.bucket_dir          = bucket_dir
+    self.file_handler        = file_handler
 
   def validate_snx(self,snx_file):
     """Validate a specific snx file.
@@ -371,8 +373,8 @@ class Validator:
           raise ValidationError(f"Wrong AnalysisCentre value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["Software",*values]:
         value = " ".join(values)
-        if value not in self.cfg.config.get("VALIDATION","SOFTWARE_VALUES").split("|"):
-          raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}' with path: '{file}'.")
+        if not value:
+          raise ValidationError(f"The software value is empty in file '{os.path.basename(file)}' with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
         if requests.get(value).status_code != Validator.FOUND or self.cfg.config.get("VALIDATION","METHOD_URL_START") not in value:
@@ -668,8 +670,8 @@ class Validator:
       case ["Software",*values]:
         value = " ".join(values)
         self.ts_metadata_values[1] = value
-        if value not in self.cfg.config.get("VALIDATION","SOFTWARE_VALUES").split("|"):
-          raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+        if not value:
+          raise ValidationError(f"The software value is empty in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
         self.ts_metadata_values[2] = value
@@ -736,13 +738,22 @@ class Validator:
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(vel_file)}' with path '{vel_file}'.")
         for line in metadata_lines:
           self._validate_metadata_line_vel(line,vel_file)
-        self._validate_station(vel_file,lines[lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:],lines[:lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1])
+        self._validate_station(vel_file,lines[self._find_index(lines,"*Dot#") + 1:],lines[:self._find_index(lines,"*Dot#") + 1])
     except ValidationError as err:
       raise ValidationError(str(err))
+    except ValidationStationsDividedError as err:
+      raise ValidationStationsDividedError(str(err))
     except OSError:
       raise ValidationError(f"Cannot read file '{os.path.basename(vel_file)}' with path '{vel_file}'.")
-    except Exception:
+    except Exception as err:
+      print(err)
       raise ValidationError(f"An unknown error occurred when validating file '{os.path.basename(vel_file)}' with path '{vel_file}'.")
+  
+  def _find_index(self,lines,start):
+    for count,line in enumerate(lines):
+      if line.startswith(start):
+        return count
+    return 0
   
   def _validate_vel_filename(self,vel_file):
     """Validate a vel file's filename according to 20230707UploadGuidelines_v2.6 guidelines.
@@ -898,8 +909,8 @@ class Validator:
       case ["Software",*values]:
         value = " ".join(values)
         self.vel_metadata_values[1] = value
-        if value not in self.cfg.config.get("VALIDATION","SOFTWARE_VALUES").split("|"):
-          raise ValidationError(f"Wrong Software value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
+        if not value:
+          raise ValidationError(f"The software value is empty in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["Method-url",*values]:
         value = " ".join(values)
         self.vel_metadata_values[2] = value
@@ -922,27 +933,55 @@ class Validator:
         if value.lower() not in self.cfg.config.get("VALIDATION","SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
   
-  def _validate_station(self,vel_file,lines,metadata_lines):
+  def _validate_station(self,vel_file,lines,metadata_lines_and_header):
     not_existing_stations      = []
     not_existing_stations_line = []
-    existing_stations          = []
-    existing_stations_line     = []
+    duplicate_stations         = []
+    duplicate_stations_line    = []
+    correct_stations           = []
+    correct_stations_line      = []
     for line in lines:
       station = line.split(" ")[1]
       if not self._is_station_in_db(station):
         not_existing_stations.append(station)
         not_existing_stations_line.append(line)
       else:
-        if station not in existing_stations:
-          existing_stations.append(station)
-          existing_stations_line.append(line)
+        if station not in correct_stations:
+          correct_stations.append(station)
+          correct_stations_line.append(line)
         else:
-          raise ValidationError(f"Duplicate station '{line.split(' ')[0]}' in file '{os.path.basename(vel_file)}' with path '{vel_file}'.")
-    if not_existing_stations != []:
-      new_line_char           = "\n"
-      comma_and_new_line_char = ", \n"
-      raise ValidationError(f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' are not in the database: {new_line_char}{comma_and_new_line_char.join(not_existing_stations)}.")
+          duplicate_stations.append(station)
+          duplicate_stations_line.append(station)
+    wrong_stations      = set(not_existing_stations + duplicate_stations)
+    wrong_stations_line = set(not_existing_stations_line + duplicate_stations_line)
+    new_line_char           = "\n"
+    comma_and_new_line_char = ", \n"
+    not_existing_stations_error = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' are not in the database: {new_line_char}{comma_and_new_line_char.join(not_existing_stations)}.{new_line_char}" if not_existing_stations != [] else ""
+    duplicate_stations_error    = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' are duplicated: {new_line_char}{comma_and_new_line_char.join(duplicate_stations)}." if duplicate_stations != [] else ""
+    if wrong_stations and correct_stations:
+      self._divide_good_and_wrong_stations_into_files(vel_file,wrong_stations_line,correct_stations_line,metadata_lines_and_header)
+      raise ValidationStationsDividedError(f"{not_existing_stations_error}{duplicate_stations_error}")
+    elif wrong_stations:
+      raise ValidationError(f"{not_existing_stations_error}{duplicate_stations_error}")
   
   def _is_station_in_db(self,station):
     self.cursor.execute("SELECT marker FROM station WHERE marker = %s;",(station,))
     return self.cursor.fetchone() is not None
+  
+  def _divide_good_and_wrong_stations_into_files(self,vel_file,wrong_stations_line,correct_stations_line,metadata_lines_and_header):
+    os.remove(vel_file)
+    with open(vel_file,"w") as f:
+      for line in metadata_lines_and_header:
+        f.write(line)
+        f.write("\n")
+      for line in correct_stations_line:
+        f.write(line)
+        f.write("\n")
+    self.file_handler.move_pbo_file_to_bucket(vel_file,self.bucket_dir,"Vel",self.vel_metadata_values[4])
+    with open(vel_file,"w") as g:
+      for line in metadata_lines_and_header:
+        g.write(line)
+        g.write("\n")
+      for line in wrong_stations_line:
+        g.write(line)
+        g.write("\n")

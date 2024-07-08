@@ -7,8 +7,8 @@ def correctName(filename,provider):
   return newFilename
   
 def main():
-  if len(sys.argv) != 3 or sys.argv[1] == "" or sys.argv[2] == "":
-    print("Usage: python correctTS.py providerTSDir provider",file = sys.stderr)
+  if sys.argv[1] == "" or sys.argv[2] == "":
+    print("Usage: python correctTS.py providerTSDir provider [old_version] [new_version]",file = sys.stderr)
     sys.exit(-1)
   allTS         = os.listdir(sys.argv[1])
   allTSNewNames = []
@@ -25,8 +25,11 @@ def main():
       currLines = f.readlines()
       currLines = "".join(currLines)
       currLines = currLines.replace("ReleaseNumber","ReleaseVersion")
-      currLines = currLines.replace("Method-url    : ","Method-url    : https://www.youtube.com/")
+      #currLines = currLines.replace("Method-url    : ","Method-url    : https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
+      currLines = currLines.replace("https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdfhttps://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf","https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
       currLines = currLines.replace("not_specified","unknown")
+      if sys.argv[3] and sys.argv[4]:
+        currLines = currLines.replace(f"ReleaseVersion : {sys.argv[3]}",f"ReleaseVersion : {sys.argv[4]}")
     with open(os.path.join(sys.argv[1],ts),"w") as f:
       f.write(currLines)
       
@@ -36,10 +39,14 @@ def main():
       currLines = f.readlines()
       currLines = "".join(currLines)
       currLines = currLines.replace("ReleaseNumber","ReleaseVersion")
-      currLines = currLines.replace("Method-url    : ","Method-url    : https://www.youtube.com/")
+      #currLines = currLines.replace("Method-url    : ","Method-url    : https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
+      currLines = currLines.replace("https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdfhttps://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf","https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
       currLines = currLines.replace("not_specified","unknown")
+      if sys.argv[3] and sys.argv[4]:
+        currLines = currLines.replace(f"ReleaseVersion : {sys.argv[3]}",f"ReleaseVersion : {sys.argv[4]}")
     with open(ts,"w") as f:
       f.write(currLines)
+    
       
 if __name__ == "__main__":
   main()

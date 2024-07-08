@@ -44,8 +44,15 @@ def upload_all_ts(bucket_dir : str,cfg : Config,public_dirs : dict,provider_emai
     if _handle_new_solution(provider,file_handler,database_upload,bucket_dir,provider_bucket_dir,public_dir,"TS"):
       continue
     try:
-      database_upload.upload_all_provider_TS(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
+      has_uploaded = database_upload.upload_all_provider_TS(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
+      if has_uploaded:
+        file_handler.send_email(
+          SUCC_MSG["TS_UPLOAD_EMAIL_SUBJECT"].format(provider = provider),
+          "Successfully uploaded the most recent timeseries files to the database!",
+          provider_emails[provider]
+        )
     except UploadError as err:
+      logging.exception(err)
       file_handler.send_email(
         f"Error uploading {provider} TS files. Attention is required!",
         "There were some errors while uploading your files: \n\n" + str(err) + "\n\n\n Please email us back for more information.",
@@ -70,11 +77,11 @@ def upload_all_vel(bucket_dir : str,cfg : Config,public_dirs : dict,provider_ema
   file_handler    : FileHandler
     The file handler object.
   """
-  databaseUpload = DatabaseUpload(
+  database_upload = DatabaseUpload(
     pg_connection.conn,
     pg_connection.cursor,
     cfg,
-    cfg.getAppConfig("TMP_DIR"),
+    cfg.config.get("APP","TMP_DIR"),
     file_handler
   )
   for count,provider_bucket_dir in enumerate(os.listdir(bucket_dir)):
@@ -82,11 +89,18 @@ def upload_all_vel(bucket_dir : str,cfg : Config,public_dirs : dict,provider_ema
       continue
     provider  = provider_bucket_dir.split("-")[0]
     public_dir = public_dirs[provider_bucket_dir.split("-")[0]]
-    if _handle_new_solution(provider,file_handler,databaseUpload,bucket_dir,provider_bucket_dir,public_dir):
+    if _handle_new_solution(provider,file_handler,database_upload,bucket_dir,provider_bucket_dir,public_dir,"Vel"):
       continue
     try:
-      databaseUpload.upload_all_provider_vel(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
+      has_uploaded = database_upload.upload_all_provider_vel(os.path.join(bucket_dir,provider_bucket_dir),public_dir)
+      if has_uploaded:
+        file_handler.send_email(
+          SUCC_MSG["VEL_UPLOAD_EMAIL_SUBJECT"].format(provider = provider),
+          "Successfully uploaded the most recent velocities files to the database!",
+          provider_emails[provider]
+        )
     except UploadError as err:
+      logging.exception(err)
       file_handler.send_email(
         f"Error uploading {provider} Vel files. Attention is required!",
         "There were some errors while uploading your files: \n\n" + str(err) + "\n\n\n Please email us back for more information.",
@@ -100,10 +114,12 @@ def _handle_new_solution(provider : str,file_handler : FileHandler,database_uplo
   if new_solutions["folder_not_created"]:
     solutions_text = str(len(new_solutions["folder_not_created"])) + " solution, which has" if len(new_solutions["folder_not_created"]) == 1 else " solutions, which have"
     solutions_text2 = "The new solution is " + new_solutions["folder_not_created"][0] if len(new_solutions["folder_not_created"]) == 1 else "The new solutions are " + ", ".join(new_solutions["folder_not_created"])
+    logging.exception(f"The previous solution for {provider} {old_solution_text}. {solutions_text2}. Please check that from the new solution(s), any is correct and create the respective folder in the public directory, so that the files can be uploaded.")
     file_handler.send_email_to_segal(f"Warning (to Segal only). Provider {provider} uploaded {solutions_text} no public directory.",f"The previous solution for {provider} {old_solution_text}. {solutions_text2}. Please check that from the new solution(s), any is correct and create the respective folder in the public directory, so that the files can be uploaded.")
     return True
   if new_solutions["folder_created"]:
     if len(new_solutions["folder_created"]) > 1:
+      logging.exception(f"Only 1 solution can be active at a time, so please delete the wrong public solution folders and try again.")
       file_handler.send_email_to_segal(f"Warning (to Segal only). Provider {provider} uploaded more than one new solution that contain a public directory.",f"Only 1 solution can be active at a time, so please delete the wrong public solution folders and try again.")
       return True
     else:
@@ -138,11 +154,11 @@ def main():
   }
   # Provider emails
   provider_emails = {
-    "INGV" : f"{cfg.config.get("EMAIL","INGV_EMAIL")}",
-    "ROB"  : f"{cfg.config.get("EMAIL","ROB_EMAIL")}",
-    "SGO"  : f"{cfg.config.get("EMAIL","SGO_EMAIL")}",
-    "UGA"  : f"{cfg.config.get("EMAIL","UDA_EMAIL")}",
-    "WUT"  : f"{cfg.config.get("EMAIL","WUT_EMAIL")}"
+    "INGV" : f"{cfg.config.get('EMAIL','INGV_EMAIL')}",
+    "ROB"  : f"{cfg.config.get('EMAIL','ROB_EMAIL')}",
+    "SGO"  : f"{cfg.config.get('EMAIL','SGO_EMAIL')}",
+    "UGA"  : f"{cfg.config.get('EMAIL','UDA_EMAIL')}",
+    "WUT"  : f"{cfg.config.get('EMAIL','WUT_EMAIL')}"
   }
   # Get a connection to the EPOS database
   epos_db_pwd = PasswordHandler.get_pwd_from_folder(
@@ -168,6 +184,7 @@ def main():
     email_pwd,
     "dummy"
   )
+  
   # Upload all ts files
   upload_all_ts(
     cfg.config.get("APP","BUCKET_DIR"),
@@ -178,14 +195,14 @@ def main():
     file_handler
   )
   # Upload all vel files
-  #upload_all_vel(
-  #  cfg.config.get("APP","BUCKET_DIR"),
-  #  cfg,
-  #  public_dirs,
-  #  provider_emails,
-  #  pg_connection,
-  #  file_handler
-  #)
+  upload_all_vel(
+    cfg.config.get("APP","BUCKET_DIR"),
+    cfg,
+    public_dirs,
+    provider_emails,
+    pg_connection,
+    file_handler
+  )
   
 if __name__ == '__main__':
   main()

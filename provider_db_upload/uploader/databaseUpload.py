@@ -145,7 +145,8 @@ class DatabaseUpload:
                   oldLines,
                   newLines
                 )
-                updated_lines2 = [" ".join(line) for line in updated_lines]
+                new_different_lines = [" ".join(line) for line in new_different_lines]
+                updated_lines2      = [" ".join(line) for line in updated_lines]
                 for line in updated_lines:
                   self.update_estimated_coordinates(line,file.split("_")[1].split("_")[0])
                 for line in new_different_lines:
@@ -181,6 +182,7 @@ class DatabaseUpload:
                     bucket_write.write("\n")
             self.cursor.execute("COMMIT TRANSACTION;")
             self.file_handler.move_solution_to_public(curr_dir,public_dir,"TS")
+            return True
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
@@ -367,6 +369,7 @@ class DatabaseUpload:
         match [part.strip() for part in line.split(":",1)]:
           case ["9-character ID",*values]:
             station_name = " ".join(values)
+      lines = lines[lines.index("End Field Description") + 1:]
       for line in lines:
         match [part.strip() for part in (" ".join(line.split())).split(" ")]:
           case [YYYYMMDD,HHMMSS,JJJJJ_JJJJ,X,Y,Z,Sx,Sy,Sz,Rxy,Rxz,Ryz,NLat,Elong,Height,dN,dE,dU,Sn,Se,Su,Rne,Rnu,Reu,Soln] if YYYYMMDD[0] != "*":
@@ -419,7 +422,7 @@ class DatabaseUpload:
         self.cursor.copy_expert(
           f"""
           COPY estimated_coordinates(
-            id_station,
+            marker,
             x,
             y,
             z,
@@ -455,8 +458,8 @@ class DatabaseUpload:
     new_lines           = [line.strip() for line in new_lines]
     new_lines           = new_lines[new_lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
     keys               = ["YYYYMMDD","HHMMSS","JJJJJ_JJJJ","X","Y","Z","Sx","Sy","Sz","Rxy","Rxz","Ryz","NLat","Elong","Height","dN","dE","dU","Sn","Se","Su","Rne","Rnu","Reu","Soln"]
-    old_lines_dict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in old_lines]
-    new_lines_dict       = [dict(zip(keys,[part.strip() for part in (" ".join(line.split())).split(" ")])) for line in new_lines]
+    old_lines_dict = [dict(zip(keys, [part.strip() for part in line.split()])) for line in old_lines]
+    new_lines_dict = [dict(zip(keys, [part.strip() for part in line.split()])) for line in new_lines]
     unique_date_hours_set = {(line['YYYYMMDD'],line['HHMMSS']) for line in old_lines_dict}
     matching_lines      = []
     new_lines           = []
@@ -464,7 +467,7 @@ class DatabaseUpload:
       date_hours = (line['YYYYMMDD'],line['HHMMSS'])
       if date_hours in unique_date_hours_set:
         matching_line_in_list1 = next(
-          (l for l in old_lines_dict if l['YYYYMMDD'] == line['YYYYMMDD'] and l['HHMMSS'] == line['HHMMSS']), None
+          (l for l in old_lines_dict if l['YYYYMMDD'] == line['YYYYMMDD'] and l['HHMMSS'] == line['HHMMSS']),None
         )
         if matching_line_in_list1 and (matching_line_in_list1['X'] != line['X'] or matching_line_in_list1['Y'] != line['Y'] or matching_line_in_list1['Z'] != line['Z'] or matching_line_in_list1['Sx'] != line['Sx'] or matching_line_in_list1['Sy'] != line['Sy'] or matching_line_in_list1['Sz'] != line['Sz'] or matching_line_in_list1['Rxy'] != line['Rxy'] or matching_line_in_list1['Rxz'] != line['Rxz'] or matching_line_in_list1['Ryz'] != line['Ryz'] or matching_line_in_list1['NLat'] != line['NLat'] or matching_line_in_list1['Elong'] != line['Elong'] or matching_line_in_list1['Height'] != line['Height'] or matching_line_in_list1['dN'] != line['dN'] or matching_line_in_list1['dE'] != line['dE'] or matching_line_in_list1['dU'] != line['dU'] or matching_line_in_list1['Sn'] != line['Sn'] or matching_line_in_list1['Se'] != line['Se'] or matching_line_in_list1['Su'] != line['Su'] or matching_line_in_list1['Rne'] != line['Rne'] or matching_line_in_list1['Rnu'] != line['Rnu'] or matching_line_in_list1['Reu'] != line['Reu'] or matching_line_in_list1['Soln'] != line['Soln']):
           matching_lines.append(line)
@@ -592,7 +595,8 @@ class DatabaseUpload:
             self.upload_reference_position_velocities()
             self.erase_reference_position_velocities_tmp_file()
             self.cursor.execute("COMMIT TRANSACTION;")
-            self.fileHandler.move_solution_to_public(curr_dir,public_dir,"Vel")
+            self.file_handler.move_solution_to_public(curr_dir,public_dir,"Vel")
+            return True
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
@@ -671,6 +675,12 @@ class DatabaseUpload:
             with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"a") as tmp:
               tmp.write(
                 str(Name)                                + "," +
+                str(Ref_X)                               + "," +
+                str(Ref_Y)                               + "," +
+                str(Ref_Z)                               + "," +
+                str(Ref_Nlat)                            + "," +
+                str(Ref_Elong)                           + "," +
+                str(Ref_Up)                              + "," +
                 str(dXDt)                                + "," +
                 str(dYDt)                                + "," +
                 str(dZDt)                                + "," +
@@ -692,6 +702,7 @@ class DatabaseUpload:
                 str(self._format_only_date(first_epoch)) + "," +
                 str(self._format_only_date(last_epoch))  + "," +
                 str(self._format_only_date(Ref_epoch))   + "," +
+                str(Ref_jday)                            + "," +
                 str(velocities_filename)                 + "," +   
                 str(id_solution)                         + "\n"
               )
@@ -724,28 +735,35 @@ class DatabaseUpload:
         self.cursor.copy_expert(
           f"""
           COPY reference_position_velocities(
-            id_station,
-            velx,
-            vely,
-            velz,
-            velx_sigma,
-            vely_sigma,
-            velz_sigma,
-            vel_rho_xy,
-            vel_rho_xz,
-            vel_rho_yz,
-            reference_position_x,
-            reference_position_y,
-            reference_position_z,
-            reference_position_x_sigma,
-            reference_position_y_sigma,
-            reference_position_z_sigma,
-            reference_position_rho_xy,
-            reference_position_rho_xz,
-            reference_position_rho_yz,
-            start_epoch,
-            end_epoch,
+            marker,
+            ref_x,
+            ref_y,
+            ref_z,
+            ref_nlat,
+            ref_elong,
+            ref_up,
+            vel_x,
+            vel_y,
+            vel_z,
+            sd_vel_x,
+            sd_vel_y,
+            sd_vel_z,
+            rho_xy,
+            rho_xz,
+            rho_yz,
+            vel_n,
+            vel_e,
+            vel_u,
+            sd_vel_n,
+            sd_vel_e,
+            sd_vel_u,
+            rho_ne,
+            rho_nu,
+            rho_eu,
+            first_epoch,
+            last_epoch,
             ref_epoch,
+            ref_jday,
             velocities_files_url,
             id_solution
           )

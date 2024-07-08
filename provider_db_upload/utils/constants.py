@@ -9,8 +9,11 @@ ROUTINE_MSG = {
 # Success Messages
 SUCC_MSG = { 
   "DB_CREATE"                               : "Database created successfully!",
-  "PROVIDER_VALIDATION_EMAIL_SUBJECT"       : "File validation for {provider} was successful!"
+  "PROVIDER_VALIDATION_EMAIL_SUBJECT"       : "File validation for {provider} was successful!",
+  "TS_UPLOAD_EMAIL_SUBJECT"                 : "Successfully uploaded some TS files for {provider}",
+  "VEL_UPLOAD_EMAIL_SUBJECT"                : "Successfully uploaded some Vel files for {provider}"
 }
+
 # Error Messages
 ERROR_MSG = {
   "CONFIG_READ"                             : "Could not read config file. Exiting...",

@@ -29,7 +29,7 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
     provider_dir                 = list(providers_dir.items())[i][1]
     public_dir                   = list(public_dirs.items())[i][1]
     bucket_dir                   = list(bucket_dirs.items())[i][1]
-    validator                    = Validator(cfg,conn,cursor,provider_dir,bucket_dir)
+    validator                    = Validator(cfg,conn,cursor,provider_dir,bucket_dir,file_handler)
     all_files                    = [file for file in glob.glob(f"{provider_dir}/**/*",recursive = True) if not os.path.isdir(file)]
     # Check each file
     print(ROUTINE_MSG["VALIDATING_PROVIDER"].format(file_length = len(all_files),provider = provider))
@@ -78,12 +78,27 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
               validated_VEL_equal_metadata = False
             else:
               previous_VEL_metadata_values = validator.vel_metadata_values.copy()
-              validated_VEL_files.append((file,validator.version))
+              validated_VEL_files.append((file,validator.version,False))
           else:
             previous_VEL_metadata_values = validator.vel_metadata_values.copy()
-            validated_VEL_files.append((file,validator.version))
+            validated_VEL_files.append((file,validator.version,False))
         except ValidationError as err:
           errors.append(str(err))
+        except ValidationStationsDividedError as err:
+          errors.append(str(err))
+          if not any(value is None for value in previous_VEL_metadata_values):
+            if any(value for value in range(len(validator.vel_metadata_values)) if validator.vel_metadata_values[value] != previous_VEL_metadata_values[value]):
+              file_handler.send_email_to_segal(
+                ERROR_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT_SEGAL"].format(provider = provider),
+                ERROR_MSG["PROVIDER_VALIDATION_EMAIL_BODY"].format(file = os.path.basename(file))
+              )
+              validated_VEL_equal_metadata = False
+            else:
+              previous_VEL_metadata_values = validator.vel_metadata_values.copy()
+              validated_VEL_files.append((file,validator.version,True))
+          else:
+            previous_VEL_metadata_values = validator.vel_metadata_values.copy()
+            validated_VEL_files.append((file,validator.version,True))
       # Unknown file
       else:
         file_handler.send_email_to_segal(
@@ -96,8 +111,9 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
       for file,version in validated_TS_files:
         file_handler.move_pbo_file_to_bucket(file,bucket_dir,"TS",version)
     if validated_VEL_equal_metadata:
-      for file,version in validated_VEL_files:
-        file_handler.move_pbo_file_to_bucket(file,bucket_dir,"Vel",version)
+      for file,version,is_also_error in validated_VEL_files:
+        if not is_also_error:
+          file_handler.move_pbo_file_to_bucket(file,bucket_dir,"Vel",version)
     if len(validated_TS_files) > 0 and len(validated_VEL_files) > 0 and validated_TS_equal_metadata and validated_VEL_equal_metadata:
       file_handler.send_email(
         SUCC_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"].format(provider = provider),
