@@ -499,9 +499,11 @@ class DatabaseUpload:
     for file in os.listdir(solution_dir):
       if file != ".DS_Store":
         if file[0:17] not in files:
-          files[file[0:17]] = [os.path.join(solution_dir,file)]
+          if len(file) != 21:
+            files[file[0:17]] = [os.path.join(solution_dir,file)]
         else:
-          files[file[0:17]].append(os.path.join(solution_dir,file))
+          if len(file) != 21:
+            files[file[0:17]].append(os.path.join(solution_dir,file))
     return files
   
   def _order_lines_by_date_and_file(self : "DatabaseUpload",lines : list) -> list:
@@ -522,33 +524,28 @@ class DatabaseUpload:
   def _merge_solution_files(self : "DatabaseUpload",solution_dir : str) -> None:
     files = self._get_set_of_equal_files(solution_dir)
     for key in files:
-      if len(files[key]) == 1:
-        continue
-      if len(files[key]) > 1:
-        initial_lines   = []
-        remaining_lines = []
-        with open(files[key][0],"r") as f2:
-          lines = [line.strip() for line in f2.readlines()]
-          initial_lines = lines[:lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
-          for file in files[key]:
-            with open(file,"r") as f3:
-              lines = [line.strip() for line in f3.readlines()]
-              lines = lines[lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
-              for line in lines:
-                remaining_lines.append((line,file))
-      if len(files[key]) > 1:
-        with open(os.path.join(solution_dir,f"{key}.pos"),"w") as f:
-          f.write("\n".join(initial_lines))
+      initial_lines   = []
+      remaining_lines = []
+      with open(files[key][0],"r") as f2:
+        lines = [line.strip() for line in f2.readlines()]
+        initial_lines = lines[:lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
+        for file in files[key]:
+          with open(file,"r") as f3:
+            lines = [line.strip() for line in f3.readlines()]
+            lines = lines[lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+            for line in lines:
+              remaining_lines.append((line,file))
+      with open(os.path.join(solution_dir,f"{key}.pos"),"w") as f:
+        f.write("\n".join(initial_lines))
+        f.write("\n")
+        remaining_lines = self._order_lines_by_date_and_file(remaining_lines)
+        remaining_lines = self._delete_repeated_lines(remaining_lines)
+        for line in remaining_lines:
+          f.write(line[0])
           f.write("\n")
-          remaining_lines = self._order_lines_by_date_and_file(remaining_lines)
-          remaining_lines = self._delete_repeated_lines(remaining_lines)
-          for line in remaining_lines:
-            f.write(line[0])
-            f.write("\n")
     for file in files:
-      if len(files[file]) > 1:
-        for f in files[file]:
-          os.remove(f)
+      for f in files[file]:
+        os.remove(f)
   
   def upload_all_provider_vel(self,prov_bucket_dir,public_dir):
     """Upload all velocity files from a provider bucket directory to the database.
