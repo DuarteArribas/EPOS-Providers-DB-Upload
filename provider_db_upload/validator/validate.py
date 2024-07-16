@@ -1,6 +1,7 @@
 import os
 import doi
 import gzip
+import math
 import requests
 from utils.config                             import *
 from validator.validationError                import *
@@ -48,6 +49,7 @@ class Validator:
     self.cfg                 = cfg
     self.conn                = conn
     self.cursor              = cursor
+    self.marker              = None
     self.ts_metadata_values  = [None,None,None,None,None,None]
     self.vel_metadata_values = [None,None,None,None,None,None]
     self.provider_dir        = provider_dir
@@ -463,6 +465,7 @@ class Validator:
         lines = [line.strip() for line in f.readlines()]
         try:
           metadata_lines = lines[lines.index("%Begin EPOS metadata") + 1:lines.index("%End EPOS metadata")]
+          non_epos_metadata_lines = lines[:lines.index("%Begin EPOS metadata")]
         except Exception:
           raise ValidationError(f"No metadata block '%Begin EPOS metadata'/'%End EPOS metadata' in file '{os.path.basename(pos_file)}' with path '{pos_file}'.")
         mandatoryPosHeaders = self.cfg.config.get("VALIDATION","MANDATORY_POS_HEADERS").split("|")
@@ -471,6 +474,8 @@ class Validator:
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(pos_file)}' with path '{pos_file}'.")
         for line in metadata_lines:
           self._validate_metadata_line_pos(line,pos_file)
+        x,y = self._extract_marker_x_y_ts(non_epos_metadata_lines)
+        self._validate_reference_coordinates(pos_file,self.marker,x,y)
     except ValidationError as err:
       raise ValidationError(str(err))
     except OSError:
@@ -603,7 +608,7 @@ class Validator:
     ValidationError
       If the date is an incorrect value
     """
-    if not pos_filename[17] == "_" and not self_validate_date(f"{pos_filename[18:22]}/{pos_filename[22:24]}/{pos_filename[24:26]}"):
+    if not pos_filename[17] == "_" and not self._validate_date(f"{pos_filename[18:22]}/{pos_filename[22:24]}/{pos_filename[24:26]}"):
       raise ValidationError(f"Wrong filename format for pos file '{pos_filename}' with path '{pos_file}' - Wrong pos file date '{pos_filename[18:26]}'. {Validator.FILENAME_CONVENTION_ERROR_MSG_POS}")
   
   def _validate_pos_daily_filename_extension(self,pos_file,pos_filename):
@@ -660,6 +665,7 @@ class Validator:
     match [part.strip() for part in line.split(":",1)]:
       case ["9-character ID",*values]:
         value = " ".join(values)
+        self.marker = value
         if value not in self._get_allowed_9_character_ID_values():
           raise ValidationError(f"Wrong 9-character ID value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
       case ["AnalysisCentre",*values]:
@@ -698,6 +704,27 @@ class Validator:
         if value.lower() not in self.cfg.config.get("VALIDATION","SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
 
+  def _extract_marker_x_y_ts(self,non_epos_metadata_lines):
+    for line in non_epos_metadata_lines:
+      header = line.split(":")[0].strip()
+      if header == "XYZ Reference position":
+        x = line.split(":")[1].strip().split()[0]
+        y = line.split(":")[1].strip().split()[1]
+        return x,y
+
+  def _validate_reference_coordinates(self,file,marker,x,y):
+    x_t1,y_t1 = self._get_t1_station_coordinates(marker)
+    distance = math.sqrt((float(x) - float(x_t1))**2 + (float(y) - float(y_t1))**2)
+    if distance > 10:
+      raise ValidationError(f"Wrong reference coordinates x = {x} and y = {y} for station '{marker}' in file '{os.path.basename(file)}', with path: '{file}'.")
+  
+  def _get_t1_station_coordinates(self,marker):
+    self.cursor.execute("SELECT x FROM station WHERE marker = %s;",(marker,))
+    x = [item[0] for item in self.cursor.fetchall()][0]
+    self.cursor.execute("SELECT y FROM station WHERE marker = %s;",(marker,))
+    y = [item[0] for item in self.cursor.fetchall()][0]
+    return x,y
+  
   def _get_allowed_9_character_ID_values(self):
     """Get all the 9 character ID markers from the EPOS db.
 
@@ -934,12 +961,14 @@ class Validator:
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
   
   def _validate_station(self,vel_file,lines,metadata_lines_and_header):
-    not_existing_stations      = []
-    not_existing_stations_line = []
-    duplicate_stations         = []
-    duplicate_stations_line    = []
-    correct_stations           = []
-    correct_stations_line      = []
+    not_existing_stations          = []
+    not_existing_stations_line     = []
+    duplicate_stations             = []
+    duplicate_stations_line        = []
+    wrong_coordinates_station      = []
+    wrong_coordinates_station_line = []
+    correct_stations               = []
+    correct_stations_line          = []
     for line in lines:
       station = line.split(" ")[1]
       if not self._is_station_in_db(station):
@@ -947,22 +976,28 @@ class Validator:
         not_existing_stations_line.append(line)
       else:
         if station not in correct_stations:
-          correct_stations.append(station)
-          correct_stations_line.append(line)
+          try:
+            self._validate_reference_coordinates(vel_file,line.split()[1],line.split()[4],line.split()[5])
+            correct_stations.append(station)
+            correct_stations_line.append(line) 
+          except ValidationError as err:
+            wrong_coordinates_station.append(str(err))
+            wrong_coordinates_station_line.append(line)   
         else:
           duplicate_stations.append(station)
-          duplicate_stations_line.append(station)
-    wrong_stations      = set(not_existing_stations + duplicate_stations)
-    wrong_stations_line = set(not_existing_stations_line + duplicate_stations_line)
+          duplicate_stations_line.append(station)        
+    wrong_stations      = set(not_existing_stations + duplicate_stations + wrong_coordinates_station)
+    wrong_stations_line = set(not_existing_stations_line + duplicate_stations_line + wrong_coordinates_station_line)
     new_line_char           = "\n"
     comma_and_new_line_char = ", \n"
     not_existing_stations_error = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' are not in the database: {new_line_char}{comma_and_new_line_char.join(not_existing_stations)}.{new_line_char}" if not_existing_stations != [] else ""
     duplicate_stations_error    = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' are duplicated: {new_line_char}{comma_and_new_line_char.join(duplicate_stations)}." if duplicate_stations != [] else ""
+    wrong_coordinates_station_error = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' have the wrong reference coordinates duplicated: {new_line_char}{comma_and_new_line_char.join(wrong_coordinates_station)}." if wrong_coordinates_station != [] else ""
     if wrong_stations and correct_stations:
       self._divide_good_and_wrong_stations_into_files(vel_file,wrong_stations_line,correct_stations_line,metadata_lines_and_header)
-      raise ValidationStationsDividedError(f"{not_existing_stations_error}{duplicate_stations_error}")
+      raise ValidationStationsDividedError(f"{not_existing_stations_error}{duplicate_stations_error}{wrong_coordinates_station_error}")
     elif wrong_stations:
-      raise ValidationError(f"{not_existing_stations_error}{duplicate_stations_error}")
+      raise ValidationError(f"{not_existing_stations_error}{duplicate_stations_error}{wrong_coordinates_station_error}")
   
   def _is_station_in_db(self,station):
     self.cursor.execute("SELECT marker FROM station WHERE marker = %s;",(station,))

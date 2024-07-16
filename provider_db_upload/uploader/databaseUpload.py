@@ -9,6 +9,7 @@ class DatabaseUpload:
   # == Class variables ==
   ESTIMATED_COORDINATES_TEMP         = "estimatedCoordinatesTemp.csv"
   REFERENCE_POSITION_VELOCITIES_TEMP = "referencePositionVelocitiesTemp.csv"
+  DEFAULT_POS_FILENAME_LENGTH        = 21
   
   # == Methods ==
   def __init__(self,conn,cursor,cfg,tmp,file_handler):
@@ -83,6 +84,7 @@ class DatabaseUpload:
     UploadError
       If the upload was unsuccessful
     """
+    print("Uploading TS...")
     self.cursor.execute("START TRANSACTION;")
     try:
       ac       = os.path.basename(prov_bucket_dir)
@@ -103,10 +105,12 @@ class DatabaseUpload:
               version 
             )
             if not is_update:
+              print("It is a new solution!")
               self._merge_solution_files(curr_dir)
               all_TS_files = self.get_list_of_TS_files(curr_dir)
               self.upload_solution(data_type,self.get_solution_parameters_TS(os.path.join(curr_dir,all_TS_files[0])))
               current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
+              print("Saving estimated coordinates to file...")
               for file in all_TS_files:
                 curr_file = os.path.join(curr_dir,file)
                 self.save_estimated_coordinates_to_file(
@@ -114,9 +118,11 @@ class DatabaseUpload:
                   current_solution_ID,
                   file
                 )
+              print("Finished saving estimated coordinates to file")
               self.upload_estimated_coordinates()
               self.erase_estimated_coordinates_tmp_file()
             else:
+              print("It is NOT a new solution")
               self._merge_solution_files(curr_dir)
               all_TS_files = self.get_list_of_TS_files(curr_dir)
               previous_files = os.listdir(f"{public_dir}/TS/{version}")
@@ -124,6 +130,7 @@ class DatabaseUpload:
               updated_files  = [file for file in all_TS_files if file in previous_files]
               current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
               if len(new_files) > 0:
+                print("Saving estimated coordinates to file...")
                 for file in new_files:
                   curr_file = os.path.join(curr_dir,file)
                   self.save_estimated_coordinates_to_file(
@@ -131,6 +138,7 @@ class DatabaseUpload:
                     current_solution_ID,
                     file
                   )
+                print("Finished saving estimated coordinates to file")
                 self.upload_estimated_coordinates()
                 self.erase_estimated_coordinates_tmp_file()
               # handle updated files
@@ -149,6 +157,7 @@ class DatabaseUpload:
                 updated_lines2      = [" ".join(line) for line in updated_lines]
                 for line in updated_lines:
                   self.update_estimated_coordinates(line,file.split("_")[1].split("_")[0])
+                print("Saving estimated coordinates to file...")
                 for line in new_different_lines:
                   curr_file = os.path.join(curr_dir,file)
                   self.save_estimated_coordinates_to_file(
@@ -156,6 +165,7 @@ class DatabaseUpload:
                     current_solution_ID,
                     file
                   )
+                print("Finished saving estimated coordinates to file")
                 if len(new_different_lines) > 0:
                   self.upload_estimated_coordinates()
                   self.erase_estimated_coordinates_tmp_file()
@@ -278,6 +288,7 @@ class DatabaseUpload:
     UploadError
       If the solution could not be uploaded to the database
     """
+    print("Uploading solution...")
     try:
       self.cursor.execute(
         f"""
@@ -307,6 +318,7 @@ class DatabaseUpload:
       )
     except Exception as err:
       raise UploadError(f"Could not upload solution to database. Error: {UploadError.format_error(str(err))}.")
+    print("Finished uploading solution")
   
   def get_solution_parameters_TS(self : "DatabaseUpload",pos_file : str) -> dict:
     """Get the solution parameters from a POS file.
@@ -417,6 +429,7 @@ class DatabaseUpload:
     UploadError
       If the estimated coordinates could not be uploaded to the database
     """
+    print("Uploading estimated coordinates to DB...")
     try:
       with open(os.path.join(self.tmpDir,DatabaseUpload.ESTIMATED_COORDINATES_TEMP),"r") as csv_file:
         self.cursor.copy_expert(
@@ -445,6 +458,7 @@ class DatabaseUpload:
         )
     except Exception as err:
       raise UploadError(f"Could not upload estimated coordinates to database. Error: {UploadError.format_error(str(err))}.")
+    print("Finished uploading estimated coordinates to DB")
   
   def erase_estimated_coordinates_tmp_file(self : "DatabaseUpload") -> None:
     """Erase the temporary file containing the previous estimated coordinates."""
@@ -499,11 +513,17 @@ class DatabaseUpload:
     for file in os.listdir(solution_dir):
       if file != ".DS_Store":
         if file[0:17] not in files:
-          if len(file) != 21:
-            files[file[0:17]] = [os.path.join(solution_dir,file)]
+          if len(file) == DatabaseUpload.DEFAULT_POS_FILENAME_LENGTH:
+            files[file[0:17]] = ["COMPLETE",[os.path.join(solution_dir,file)]]
+          else:
+            files[file[0:17]] = ["NOT_COMPLETE",[os.path.join(solution_dir,file)]]
         else:
-          if len(file) != 21:
-            files[file[0:17]].append(os.path.join(solution_dir,file))
+          if len(file) == DatabaseUpload.DEFAULT_POS_FILENAME_LENGTH:
+            LIST_START_POS = 0
+            files[file[0:17]][0] = "COMPLETE"
+            files[file[0:17]][1].insert(LIST_START_POS,os.path.join(solution_dir,file))
+          else:
+            files[file[0:17]][1].append(os.path.join(solution_dir,file))
     return files
   
   def _order_lines_by_date_and_file(self : "DatabaseUpload",lines : list) -> list:
@@ -512,40 +532,67 @@ class DatabaseUpload:
   def _order_lines_by_date(self : "DatabaseUpload",lines : list) -> list:
     return sorted(lines,key = lambda x : x.split(" ")[0] + x.split(" ")[1])
   
+  def _delete_original_complete_file_line(self : "DatabaseUpload",lines : list) -> list:
+    previous_lines = {}
+    for line in lines:
+      time_and_hours = str(line[0].split(" ")[0]) + str(line[0].split(" ")[1])
+      if time_and_hours not in previous_lines:
+        previous_lines[time_and_hours] = [line]
+      else:
+        previous_lines[time_and_hours].append(line)
+    for key in previous_lines:
+      if len(previous_lines[key]) > 1 and previous_lines[key][0][2] == "COMPLETE":
+        lines.remove(previous_lines[key][0])
+    return lines
+  
   def _delete_repeated_lines(self : "DatabaseUpload",lines : list) -> list:
-    lines_to_remove = []
-    for i in range(len(lines) - 1):
-      if lines[i][0].split(" ")[0] + lines[i][0].split(" ")[1] == lines[i + 1][0].split(" ")[0] + lines[i + 1][0].split(" ")[1]:
-        lines_to_remove.append(lines[i])
-    for i in lines_to_remove:
-      lines.remove(i)
+    previous_lines = {}
+    for line in lines:
+      time_and_hours = str(line[0].split(" ")[0]) + str(line[0].split(" ")[0])
+      if time_and_hours not in previous_lines:
+        previous_lines[time_and_hours] = [line]
+      else:
+        previous_lines[time_and_hours].append(line)   
+    for key in previous_lines:
+      if len(previous_lines[key]) > 1:
+        for line in previous_lines[key][:-1]:
+          lines.remove(line)
     return lines
       
   def _merge_solution_files(self : "DatabaseUpload",solution_dir : str) -> None:
+    print("Merging files...")
     files = self._get_set_of_equal_files(solution_dir)
+    print("Getting file lines, deleting repeated lines, reordering files and creating unique merged files...")
     for key in files:
       initial_lines   = []
       remaining_lines = []
-      with open(files[key][0],"r") as f2:
+      with open(files[key][1][0],"r") as f2:
         lines = [line.strip() for line in f2.readlines()]
         initial_lines = lines[:lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
-        for file in files[key]:
+        for file in files[key][1]:
           with open(file,"r") as f3:
             lines = [line.strip() for line in f3.readlines()]
             lines = lines[lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
             for line in lines:
-              remaining_lines.append((line,file))
+              remaining_lines.append((line,file,files[key][0]))
+      if os.path.exists(os.path.join(solution_dir,f"{key}.pos")):
+        os.remove(os.path.join(solution_dir,f"{key}.pos"))
       with open(os.path.join(solution_dir,f"{key}.pos"),"w") as f:
         f.write("\n".join(initial_lines))
         f.write("\n")
+        remaining_lines = self._delete_original_complete_file_line(remaining_lines)
         remaining_lines = self._order_lines_by_date_and_file(remaining_lines)
         remaining_lines = self._delete_repeated_lines(remaining_lines)
         for line in remaining_lines:
           f.write(line[0])
           f.write("\n")
-    for file in files:
-      for f in files[file]:
-        os.remove(f)
+    print("Removing daily files")
+    for key in files:
+      for file in files[key][1]:
+        if len(os.path.basename(file)) != DatabaseUpload.DEFAULT_POS_FILENAME_LENGTH:
+          if os.path.exists(file):
+            os.remove(file)
+    print("Finished merging files")
   
   def upload_all_provider_vel(self,prov_bucket_dir,public_dir):
     """Upload all velocity files from a provider bucket directory to the database.
@@ -562,6 +609,7 @@ class DatabaseUpload:
     UploadError
       If the upload was unsuccessful
     """
+    print("Uploading vel...")
     self.cursor.execute("START TRANSACTION;")
     try:
       ac        = os.path.basename(prov_bucket_dir)
@@ -582,6 +630,7 @@ class DatabaseUpload:
             )
             self.upload_solution(data_type,self.get_solution_parameters_vel(os.path.join(curr_dir,all_vel_files[0])))
             current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
+            print("Saving reference position velocities to file...")
             for file in all_vel_files:
               curr_file = os.path.join(curr_dir,file)
               self.save_reference_position_velocities_to_file(
@@ -589,6 +638,7 @@ class DatabaseUpload:
                 current_solution_ID,
                 file
               )
+            print("Finished saving reference position velocities to file")
             self.upload_reference_position_velocities()
             self.erase_reference_position_velocities_tmp_file()
             self.cursor.execute("COMMIT TRANSACTION;")
@@ -597,6 +647,7 @@ class DatabaseUpload:
     except UploadError as err:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
+    print("Finished uploading vel")
   
   def get_list_of_vel_files(self,bucket_dir):
     """Get a list of all velocity files in a directory.
@@ -703,7 +754,7 @@ class DatabaseUpload:
                 str(velocities_filename)                 + "," +   
                 str(id_solution)                         + "\n"
               )
-  
+    
   def _format_only_date(self,YYYYMMDD):
     """Format a date in the format YYYYMMDD to YYYY-MM-DD.
     
@@ -727,6 +778,7 @@ class DatabaseUpload:
     UploadError
       If the reference position velocities could not be uploaded to the database
     """
+    print("Uploading reference position velocities to DB...")
     try:
       with open(os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP),"r") as csv_file:
         self.cursor.copy_expert(
@@ -771,7 +823,8 @@ class DatabaseUpload:
         )
     except Exception as err:
       raise UploadError(f"Could not upload reference position velocities to database. Error: {UploadError.format_error(str(err))}.")
-  
+    print("Finished uploading reference position velocities to DB")
+    
   def erase_reference_position_velocities_tmp_file(self):
     """Erase the temporary file containing the previous reference position velocities."""
     temp_path = os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP)
