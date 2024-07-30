@@ -87,7 +87,7 @@ class DatabaseUpload:
     print("Uploading TS...")
     self.cursor.execute("START TRANSACTION;")
     try:
-      ac       = os.path.basename(prov_bucket_dir)
+      ac        = os.path.basename(prov_bucket_dir)
       data_type = self.cfg.config.get("UPLOAD","TS_DATATYPE")
       for filetype in os.listdir(prov_bucket_dir):
         if filetype == "TS":
@@ -101,7 +101,6 @@ class DatabaseUpload:
             is_update = self.handle_previous_solution(
               ac,
               data_type,
-              self.cfg.config.get("UPLOAD","TS_DATATYPE"),
               version 
             )
             if not is_update:
@@ -149,7 +148,7 @@ class DatabaseUpload:
                   with open(f"{prov_bucket_dir}/TS/{version}/{file}","r") as f2:
                     oldLines = [line.strip() for line in f.readlines()]
                     newLines = [line.strip() for line in f2.readlines()]
-                updated_lines,new_different_lines = self._get_updated_and_new_lines(
+                updated_lines,new_different_lines = self._get_updated_and_new_lines_ts(
                   oldLines,
                   newLines
                 )
@@ -194,8 +193,10 @@ class DatabaseUpload:
             self.file_handler.move_solution_to_public(curr_dir,public_dir,"TS")
             return True
     except UploadError as err:
+      self.erase_estimated_coordinates_tmp_file()
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
+    print("Finished uploading TS")  
   
   def get_list_of_TS_files(self,bucket_dir):
     """Get a list of all timeseries files in a directory.
@@ -212,7 +213,7 @@ class DatabaseUpload:
     """
     return [file for file in os.listdir(bucket_dir) if file != ".DS_Store" and os.path.splitext(file)[1].lower() == ".pos"]
   
-  def handle_previous_solution(self : "DatabaseUpload",ac : str,data_type : str,ts_datatype : str,version : str = None) -> bool:
+  def handle_previous_solution(self : "DatabaseUpload",ac : str,data_type : str,version : str = None) -> bool:
     """Handle a previous solution, i.e., if a previous solution exists, erase it from the database, along with its estimated coordinates.
     
     Parameters
@@ -221,22 +222,16 @@ class DatabaseUpload:
       The analysis centre acronym
     data_type   : str
       The data type of the solution (timeseries or velocity)
-    ts_datatype : str
-      The timeseries data type
     version     : str
       The release version of the solution
     """
     solution_ID_in_DB = self.check_solution_already_in_DB(ac,data_type)
-    if data_type == ts_datatype:
-      if(len(solution_ID_in_DB) > 0):
-        for solution_ID in solution_ID_in_DB:
-          if version != self.get_version_from_solution(solution_ID): 
-            self._erase_previous_solution_from_DB(ac,data_type)
-          else:
-            return True
-    else:
-      if(len(solution_ID_in_DB) > 0):
-        self._erase_previous_solution_from_DB(ac,data_type)
+    if(len(solution_ID_in_DB) > 0):
+      for solution_ID in solution_ID_in_DB:
+        if version != self.get_version_from_solution(solution_ID): 
+          self._erase_previous_solution_from_DB(ac,data_type)
+        else:
+          return True
     return False
   
   def check_solution_already_in_DB(self : "DatabaseUpload",ac : str,data_type : str) -> list:
@@ -466,7 +461,7 @@ class DatabaseUpload:
     if os.path.exists(temp_path):
       os.remove(temp_path)
   
-  def _get_updated_and_new_lines(self : "DatabaseUpload",old_lines,new_lines):
+  def _get_updated_and_new_lines_ts(self : "DatabaseUpload",old_lines,new_lines):
     old_lines           = [line.strip() for line in old_lines]
     old_lines           = old_lines[old_lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
     new_lines           = [line.strip() for line in new_lines]
@@ -483,8 +478,31 @@ class DatabaseUpload:
         matching_line_in_list1 = next(
           (l for l in old_lines_dict if l['YYYYMMDD'] == line['YYYYMMDD'] and l['HHMMSS'] == line['HHMMSS']),None
         )
-        if matching_line_in_list1 and (matching_line_in_list1['X'] != line['X'] or matching_line_in_list1['Y'] != line['Y'] or matching_line_in_list1['Z'] != line['Z'] or matching_line_in_list1['Sx'] != line['Sx'] or matching_line_in_list1['Sy'] != line['Sy'] or matching_line_in_list1['Sz'] != line['Sz'] or matching_line_in_list1['Rxy'] != line['Rxy'] or matching_line_in_list1['Rxz'] != line['Rxz'] or matching_line_in_list1['Ryz'] != line['Ryz'] or matching_line_in_list1['NLat'] != line['NLat'] or matching_line_in_list1['Elong'] != line['Elong'] or matching_line_in_list1['Height'] != line['Height'] or matching_line_in_list1['dN'] != line['dN'] or matching_line_in_list1['dE'] != line['dE'] or matching_line_in_list1['dU'] != line['dU'] or matching_line_in_list1['Sn'] != line['Sn'] or matching_line_in_list1['Se'] != line['Se'] or matching_line_in_list1['Su'] != line['Su'] or matching_line_in_list1['Rne'] != line['Rne'] or matching_line_in_list1['Rnu'] != line['Rnu'] or matching_line_in_list1['Reu'] != line['Reu'] or matching_line_in_list1['Soln'] != line['Soln']):
-          matching_lines.append(line)
+        if matching_line_in_list1 and (
+          matching_line_in_list1['X']      != line['X']     or
+          matching_line_in_list1['Y']      != line['Y']     or
+          matching_line_in_list1['Z']      != line['Z']     or
+          matching_line_in_list1['Sx']     != line['Sx']    or
+          matching_line_in_list1['Sy']     != line['Sy']    or
+          matching_line_in_list1['Sz']     != line['Sz']    or
+          matching_line_in_list1['Rxy']    != line['Rxy']   or
+          matching_line_in_list1['Rxz']    != line['Rxz']   or
+          matching_line_in_list1['Ryz']    != line['Ryz']   or
+          matching_line_in_list1['NLat']   != line['NLat']  or
+          matching_line_in_list1['Elong']  != line['Elong'] or
+          matching_line_in_list1['Height'] != line['Height'] or
+          matching_line_in_list1['dN']     != line['dN']     or
+          matching_line_in_list1['dE']     != line['dE']     or
+          matching_line_in_list1['dU']     != line['dU']     or
+          matching_line_in_list1['Sn']     != line['Sn']     or
+          matching_line_in_list1['Se']     != line['Se']     or
+          matching_line_in_list1['Su']     != line['Su']     or
+          matching_line_in_list1['Rne']    != line['Rne']    or
+          matching_line_in_list1['Rnu']    != line['Rnu']    or
+          matching_line_in_list1['Reu']    != line['Reu']    or
+          matching_line_in_list1['Soln']   != line['Soln']
+      ):
+        matching_lines.append(line)
       else:
         new_lines.append(line)
     return [[line[key] for key in keys] for line in matching_lines],[[line[key] for key in keys] for line in new_lines]
@@ -503,7 +521,7 @@ class DatabaseUpload:
       f"""
       UPDATE estimated_coordinates
       SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
-      WHERE epoch = %s AND id_station = %s;
+      WHERE epoch = %s AND marker = %s;
       """,
       (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._format_date(line[0],line[1]),station)
     )
@@ -623,28 +641,97 @@ class DatabaseUpload:
             all_vel_files = self.get_list_of_vel_files(curr_dir)
             if len(all_vel_files) == 0:
               break
-            self.handle_previous_solution(
+            is_update = self.handle_previous_solution(
               ac,
               data_type,
-              self.cfg.config.get("UPLOAD","TS_DATATYPE")
+              version
             )
-            self.upload_solution(data_type,self.get_solution_parameters_vel(os.path.join(curr_dir,all_vel_files[0])))
-            current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
-            print("Saving reference position velocities to file...")
-            for file in all_vel_files:
-              curr_file = os.path.join(curr_dir,file)
-              self.save_reference_position_velocities_to_file(
-                curr_file,
-                current_solution_ID,
-                file
-              )
-            print("Finished saving reference position velocities to file")
-            self.upload_reference_position_velocities()
-            self.erase_reference_position_velocities_tmp_file()
+            if not is_update:
+              print("It is a new solution!")
+              self.upload_solution(data_type,self.get_solution_parameters_vel(os.path.join(curr_dir,all_vel_files[0])))
+              current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
+              print("Saving reference position velocities to file...")
+              for file in all_vel_files:
+                curr_file = os.path.join(curr_dir,file)
+                self.save_reference_position_velocities_to_file(
+                  curr_file,
+                  current_solution_ID,
+                  file
+                )
+              print("Finished saving reference position velocities to file")
+              self.upload_reference_position_velocities()
+              self.erase_reference_position_velocities_tmp_file()
+            else:
+              print("It is NOT a new solution")
+              previous_files = os.listdir(f"{public_dir}/Vel/{version}")
+              new_files      = [file for file in all_vel_files if file not in previous_files]
+              updated_files  = [file for file in all_vel_files if file in previous_files]
+              current_solution_ID = self.check_solution_already_in_DB(ac,data_type)[0]
+              if len(new_files) > 0:
+                print("Saving reference position velocities to file...")
+                for file in new_files:
+                  curr_file = os.path.join(curr_dir,file)
+                  self.save_reference_position_velocities_to_file(
+                    curr_file,
+                    current_solution_ID,
+                    file
+                  )
+                print("Finished saving reference position velocities to file")
+                self.upload_reference_position_velocities()
+                self.erase_reference_position_velocities_tmp_file()
+              # handle updated files
+              for file in updated_files:
+                oldLines = []
+                newLines = []
+                with open(f"{public_dir}/Vel/{version}/{file}","r") as f:
+                  with open(f"{prov_bucket_dir}/Vel/{version}/{file}","r") as f2:
+                    oldLines = [line.strip() for line in f.readlines()]
+                    newLines = [line.strip() for line in f2.readlines()]
+                updated_lines,new_different_lines = self._get_updated_and_new_lines_vel(
+                  oldLines,
+                  newLines
+                )
+                new_different_lines = [" ".join(line) for line in new_different_lines]
+                updated_lines2      = [" ".join(line) for line in updated_lines]
+                for line in updated_lines:
+                  self.update_reference_position_velocities(line)
+                print("Saving reference position velocities to file...")
+                for line in new_different_lines:
+                  curr_file = os.path.join(curr_dir,file)
+                  self.save_reference_position_velocities_to_file(
+                    curr_file,
+                    current_solution_ID,
+                    file
+                  )
+                print("Finished saving reference position velocities to file")
+                if len(new_different_lines) > 0:
+                  self.upload_reference_position_velocities()
+                  self.erase_reference_position_velocities_tmp_file()
+                old_file_initial_lines = oldLines[:oldLines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1]
+                oldLines = oldLines[oldLines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:]
+                with open(f"{prov_bucket_dir}/Vel/{version}/{file}","w") as bucket_write:
+                  bucket_write.write("\n".join(old_file_initial_lines))
+                  bucket_write.write("\n")
+                  file_lines = []
+                  has_updated_line = False
+                  for old_line in oldLines:
+                    has_updated_line = False
+                    for updated_line in updated_lines2:
+                      if old_line.split(" ")[1] == updated_line.split(" ")[1]:
+                        file_lines.append(updated_line)
+                        has_updated_line = True
+                    if not has_updated_line:
+                      file_lines.append(old_line)
+                  for new_line in new_different_lines:
+                    file_lines.append(new_line)
+                  for line in file_lines:
+                    bucket_write.write(line)
+                    bucket_write.write("\n")
             self.cursor.execute("COMMIT TRANSACTION;")
             self.file_handler.move_solution_to_public(curr_dir,public_dir,"Vel")
             return True
     except UploadError as err:
+      self.erase_reference_position_velocities_tmp_file()
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
     print("Finished uploading vel")
@@ -830,3 +917,71 @@ class DatabaseUpload:
     temp_path = os.path.join(self.tmpDir,DatabaseUpload.REFERENCE_POSITION_VELOCITIES_TEMP)
     if os.path.exists(temp_path):
       os.remove(temp_path)
+      
+  def _get_updated_and_new_lines_vel(self : "DatabaseUpload",old_lines,new_lines):
+    old_lines           = [line.strip() for line in old_lines]
+    old_lines           = old_lines[old_lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:]
+    new_lines           = [line.strip() for line in new_lines]
+    new_lines           = new_lines[new_lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:]
+    keys                = ["Dot#","Name","Ref_epoch","Ref_jday","Ref_X","Ref_Y","Ref_Z","Ref_Nlat","Ref_Elong","Ref_Up","dX/dt","dY/dt","dZ/dt","SXd","SYd","SZd","Rxy","Rxz","Rzy","dN/dt","dE/dt","dU/dt","SNd","SEd","SUd","Rne","Rnu","Reu","first_epoch","last_epoch"]
+    old_lines_dict = [dict(zip(keys,[part.strip() for part in line.split()])) for line in old_lines]
+    new_lines_dict = [dict(zip(keys,[part.strip() for part in line.split()])) for line in new_lines]
+    matching_lines      = []
+    new_lines           = []
+    for line in new_lines_dict:
+      matching_line_in_list1 = next(
+        (l for l in old_lines_dict if l["Name"] == line["Name"]),None
+      )
+      if matching_line_in_list1 and (
+        matching_line_in_list1['Ref_epoch']   != line['Ref_epoch']   or
+        matching_line_in_list1['Ref_jday']    != line['Ref_jday']    or
+        matching_line_in_list1['Ref_X']       != line['Ref_X']       or
+        matching_line_in_list1['Ref_Y']       != line['Ref_Y']       or
+        matching_line_in_list1['Ref_Z']       != line['Ref_Z']       or
+        matching_line_in_list1['Ref_Nlat']    != line['Ref_Nlat']    or
+        matching_line_in_list1['Ref_Elong']   != line['Ref_Elong']   or
+        matching_line_in_list1['Ref_Up']      != line['Ref_Up']      or
+        matching_line_in_list1['dX/dt']       != line['dX/dt']       or
+        matching_line_in_list1['dY/dt']       != line['dY/dt']       or
+        matching_line_in_list1['dZ/dt']       != line['dZ/dt']       or
+        matching_line_in_list1['SXd']         != line['SXd']         or
+        matching_line_in_list1['SYd']         != line['SYd']         or
+        matching_line_in_list1['SZd']         != line['SZd']         or
+        matching_line_in_list1['Rxy']         != line['Rxy']         or
+        matching_line_in_list1['Rxz']         != line['Rxz']         or
+        matching_line_in_list1['Rzy']         != line['Rzy']         or
+        matching_line_in_list1['dN/dt']       != line['dN/dt']       or
+        matching_line_in_list1['dE/dt']       != line['dE/dt']       or
+        matching_line_in_list1['dU/dt']       != line['dU/dt']       or
+        matching_line_in_list1['SNd']         != line['SNd']         or
+        matching_line_in_list1['SEd']         != line['SEd']         or
+        matching_line_in_list1['SUd']         != line['SUd']         or
+        matching_line_in_list1['Rne']         != line['Rne']         or
+        matching_line_in_list1['Rnu']         != line['Rnu']         or
+        matching_line_in_list1['Reu']         != line['Reu']         or
+        matching_line_in_list1['first_epoch'] != line['first_epoch'] or
+        matching_line_in_list1['last_epoch']  != line['last_epoch']
+      ):
+        matching_lines.append(line)
+      else:
+        new_lines.append(line)
+    return [[line[key] for key in keys] for line in matching_lines],[[line[key] for key in keys] for line in new_lines]
+  
+  
+  def update_reference_position_velocities(self : "DatabaseUpload",line : list) -> None:
+    """Update the reference position velocities in the database.
+    
+    Raises
+    ------
+    UploadError
+      If the reference position velocities could not be uploaded to the database
+    """
+   
+    self.cursor.execute(
+      f"""
+      UPDATE reference_position_velocities
+      SET ref_x = %s,ref_y = %s,ref_z = %s,ref_nlat = %s,ref_elong = %s,ref_up = %s,vel_x = %s,vel_y = %s,vel_z = %s,sd_vel_x = %s,sd_vel_y = %s,sd_vel_z = %s,rho_xy = %s,rho_xz = %s,rho_yz = %s,vel_n = %s,vel_e = %s,vel_u = %s,sd_vel_n = %s,sd_vel_e = %s,sd_vel_u = %s,rho_ne = %s,rho_nu = %s,rho_eu = %s,first_epoch = %s,last_epoch = %s,ref_epoch = %s,ref_jday = %s
+      WHERE marker = %s;
+      """,
+      (line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],line[12],line[13],line[14],line[15],line[16],line[17],line[18],line[19],line[20],line[21],line[22],line[23],line[24],line[25],line[26],line[27],line[28],line[29],line[2],line[3],line[1])
+    )

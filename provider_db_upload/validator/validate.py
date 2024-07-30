@@ -474,8 +474,8 @@ class Validator:
           raise ValidationError(f"Missing mandatory metadata parameters or duplicated metadata parameters in file '{os.path.basename(pos_file)}' with path '{pos_file}'.")
         for line in metadata_lines:
           self._validate_metadata_line_pos(line,pos_file)
-        x,y = self._extract_marker_x_y_ts(non_epos_metadata_lines)
-        self._validate_reference_coordinates(pos_file,self.marker,x,y)
+        x,y,z = self._extract_marker_x_y_z_ts(non_epos_metadata_lines)
+        self._validate_reference_coordinates(pos_file,self.marker,x,y,z)
     except ValidationError as err:
       raise ValidationError(str(err))
     except OSError:
@@ -704,26 +704,29 @@ class Validator:
         if value.lower() not in self.cfg.config.get("VALIDATION","SAMPLINGPERIOD_VALUES").split("|"):
           raise ValidationError(f"Wrong SamplingPeriod value '{value}' in file '{os.path.basename(file)}', with path: '{file}'.")
 
-  def _extract_marker_x_y_ts(self,non_epos_metadata_lines):
+  def _extract_marker_x_y_z_ts(self,non_epos_metadata_lines):
     for line in non_epos_metadata_lines:
       header = line.split(":")[0].strip()
       if header == "XYZ Reference position":
         x = line.split(":")[1].strip().split()[0]
         y = line.split(":")[1].strip().split()[1]
-        return x,y
+        z = line.split(":")[1].strip().split()[1]
+        return x,y,z
 
-  def _validate_reference_coordinates(self,file,marker,x,y):
-    x_t1,y_t1 = self._get_t1_station_coordinates(marker)
-    distance = math.sqrt((float(x) - float(x_t1))**2 + (float(y) - float(y_t1))**2)
+  def _validate_reference_coordinates(self,file,marker,x,y,z):
+    x_t1,y_t1,z_t1 = self._get_t1_station_coordinates(marker)
+    distance = math.sqrt((float(x) - float(x_t1))**2 + (float(y) - float(y_t1))**2 + (float(z) - float(z_t1))**2)
     if distance > 10:
-      raise ValidationError(f"Wrong reference coordinates x = {x} and y = {y} for station '{marker}' in file '{os.path.basename(file)}', with path: '{file}'.")
+      raise ValidationError(f"Wrong reference coordinates x = {round(float(x),2)}, where x_t1 = {round(float(x_t1))}, y = {round(float(y),2)}, where y_t1 = {round(float(y_t1))} and z = {round(float(z),2)}, where z_t1 = {round(float(z_t1))} ({round(distance,2)}m between solution and t1 station) for station '{marker}'.")
   
   def _get_t1_station_coordinates(self,marker):
     self.cursor.execute("SELECT x FROM station WHERE marker = %s;",(marker,))
     x = [item[0] for item in self.cursor.fetchall()][0]
     self.cursor.execute("SELECT y FROM station WHERE marker = %s;",(marker,))
     y = [item[0] for item in self.cursor.fetchall()][0]
-    return x,y
+    self.cursor.execute("SELECT z FROM station WHERE marker = %s;",(marker,))
+    z = [item[0] for item in self.cursor.fetchall()][0]
+    return x,y,z
   
   def _get_allowed_9_character_ID_values(self):
     """Get all the 9 character ID markers from the EPOS db.
@@ -977,7 +980,7 @@ class Validator:
       else:
         if station not in correct_stations:
           try:
-            self._validate_reference_coordinates(vel_file,line.split()[1],line.split()[4],line.split()[5])
+            self._validate_reference_coordinates(vel_file,line.split()[1],line.split()[4],line.split()[5],line.split()[6])
             correct_stations.append(station)
             correct_stations_line.append(line) 
           except ValidationError as err:
