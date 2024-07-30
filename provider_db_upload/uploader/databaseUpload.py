@@ -155,7 +155,7 @@ class DatabaseUpload:
                 new_different_lines = [" ".join(line) for line in new_different_lines]
                 updated_lines2      = [" ".join(line) for line in updated_lines]
                 for line in updated_lines:
-                  self.update_estimated_coordinates(line,file.split("_")[1].split("_")[0])
+                  self.update_estimated_coordinates(line,file.split("_")[1].split("_")[0],current_solution_ID)
                 print("Saving estimated coordinates to file...")
                 for line in new_different_lines:
                   curr_file = os.path.join(curr_dir,file)
@@ -501,14 +501,14 @@ class DatabaseUpload:
           matching_line_in_list1['Rnu']    != line['Rnu']    or
           matching_line_in_list1['Reu']    != line['Reu']    or
           matching_line_in_list1['Soln']   != line['Soln']
-      ):
-        matching_lines.append(line)
-      else:
-        new_lines.append(line)
+        ):
+          matching_lines.append(line)
+        else:
+          new_lines.append(line)
     return [[line[key] for key in keys] for line in matching_lines],[[line[key] for key in keys] for line in new_lines]
   
   
-  def update_estimated_coordinates(self : "DatabaseUpload",line : list,station : str) -> None:
+  def update_estimated_coordinates(self : "DatabaseUpload",line : list,station : str,id_solution) -> None:
     """Bulk upload the estimated coordinates from the temporary file to the database.
     
     Raises
@@ -521,9 +521,9 @@ class DatabaseUpload:
       f"""
       UPDATE estimated_coordinates
       SET x = %s,y = %s,z = %s,var_xx = %s,var_yy = %s,var_zz = %s,var_xy = %s,var_xz = %s,var_yz = %s,outlier = %s,sol_type = %s
-      WHERE epoch = %s AND marker = %s;
+      WHERE epoch = %s AND marker = %s AND id_solution = %s;
       """,
-      (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._format_date(line[0],line[1]),station)
+      (line[3],line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],1 if line[-1] == "outlier" else 0,line[-1],self._format_date(line[0],line[1]),station,id_solution)
     )
     
   def _get_set_of_equal_files(self : "DatabaseUpload",solution_dir : str) -> None:
@@ -694,7 +694,7 @@ class DatabaseUpload:
                 new_different_lines = [" ".join(line) for line in new_different_lines]
                 updated_lines2      = [" ".join(line) for line in updated_lines]
                 for line in updated_lines:
-                  self.update_reference_position_velocities(line)
+                  self.update_reference_position_velocities(line,current_solution_ID)
                 print("Saving reference position velocities to file...")
                 for line in new_different_lines:
                   curr_file = os.path.join(curr_dir,file)
@@ -968,7 +968,7 @@ class DatabaseUpload:
     return [[line[key] for key in keys] for line in matching_lines],[[line[key] for key in keys] for line in new_lines]
   
   
-  def update_reference_position_velocities(self : "DatabaseUpload",line : list) -> None:
+  def update_reference_position_velocities(self : "DatabaseUpload",line : list,id_solution) -> None:
     """Update the reference position velocities in the database.
     
     Raises
@@ -981,7 +981,7 @@ class DatabaseUpload:
       f"""
       UPDATE reference_position_velocities
       SET ref_x = %s,ref_y = %s,ref_z = %s,ref_nlat = %s,ref_elong = %s,ref_up = %s,vel_x = %s,vel_y = %s,vel_z = %s,sd_vel_x = %s,sd_vel_y = %s,sd_vel_z = %s,rho_xy = %s,rho_xz = %s,rho_yz = %s,vel_n = %s,vel_e = %s,vel_u = %s,sd_vel_n = %s,sd_vel_e = %s,sd_vel_u = %s,rho_ne = %s,rho_nu = %s,rho_eu = %s,first_epoch = %s,last_epoch = %s,ref_epoch = %s,ref_jday = %s
-      WHERE marker = %s;
+      WHERE marker = %s AND id_solution = %s;
       """,
-      (line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],line[12],line[13],line[14],line[15],line[16],line[17],line[18],line[19],line[20],line[21],line[22],line[23],line[24],line[25],line[26],line[27],line[28],line[29],line[2],line[3],line[1])
+      (line[4],line[5],line[6],line[7],line[8],line[9],line[10],line[11],line[12],line[13],line[14],line[15],line[16],line[17],line[18],line[19],line[20],line[21],line[22],line[23],line[24],line[25],line[26],line[27],self._format_date(line[28][:9],line[28][9:]),self._format_date(line[29][:9],line[29][9:]),self._format_date(line[2][:9],line[2][9:]),str(line[3]),line[1],id_solution)
     )
