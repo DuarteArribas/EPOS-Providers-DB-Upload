@@ -18,10 +18,14 @@ SUCC_MSG = {
 ERROR_MSG = {
   "CONFIG_READ"                             : "Could not read config file. Exiting...",
   "DB_EXISTS"                               : "Database already exists. Did nothing...",
-  "PROVIDER_VALIDATION_EMAIL_SUBJECT"       : "Error validating some {provider} files. Attention is required!",
+  "PROVIDER_VALIDATION_EMAIL_SUBJECT"       : "Error validating some {provider} files. Attention is required and files will not be uploaded!",
   "PROVIDER_VALIDATION_EMAIL_BODY"          : "Not all files contain the same metadata parameters--the first file with different parameters is {file}.",
   "PROVIDER_UNKNOWN_FILE_EMAIL_BODY"        : "Unknown file type: {file}.",
   "PROVIDER_VALIDATION_EMAIL_SUBJECT_SEGAL" : "Error (to Segal only) validating some {provider} files. Attention is required!"
+}
+
+WARNING_MSG = {
+  "PROVIDER_VALIDATION_EMAIL_SUBJECT"       : "Warning! There were some problems validating some {provider} files. Attention may be required, but the files are going to be uploaded!"
 }
 
 

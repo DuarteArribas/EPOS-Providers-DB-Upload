@@ -142,7 +142,16 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
         "There were some errors while validating your files: \n\n" + "\n".join(errors) + "\n\n\n Please re-upload the problematic files or email us back for more information.",
         provider_emails[provider]
       )
-      
+    # If there were any warnings, email them
+    if len(validator.warnings) > 0:
+      for warning in validator.warnings:
+        logging.warning(warning)
+      warnings = [f"Warning {count} - {warning}" for count,warning in enumerate(validator.warnings)]
+      file_handler.send_email(
+        WARNING_MSG["PROVIDER_VALIDATION_EMAIL_SUBJECT"].format(provider = provider),
+        "There were some minor problems while validating your files: \n\n" + "\n".join(warnings),
+        provider_emails[provider]
+      )  
 # Main function
 def main():
   # Read config file

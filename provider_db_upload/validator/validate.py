@@ -55,6 +55,7 @@ class Validator:
     self.provider_dir        = provider_dir
     self.bucket_dir          = bucket_dir
     self.file_handler        = file_handler
+    self.warnings            = []
 
   def validate_snx(self,snx_file):
     """Validate a specific snx file.
@@ -710,14 +711,16 @@ class Validator:
       if header == "XYZ Reference position":
         x = line.split(":")[1].strip().split()[0]
         y = line.split(":")[1].strip().split()[1]
-        z = line.split(":")[1].strip().split()[1]
+        z = line.split(":")[1].strip().split()[2]
         return x,y,z
 
   def _validate_reference_coordinates(self,file,marker,x,y,z):
     x_t1,y_t1,z_t1 = self._get_t1_station_coordinates(marker)
     distance = math.sqrt((float(x) - float(x_t1))**2 + (float(y) - float(y_t1))**2 + (float(z) - float(z_t1))**2)
-    if distance > 10:
-      raise ValidationError(f"Wrong reference coordinates x = {round(float(x),2)}, where x_t1 = {round(float(x_t1))}, y = {round(float(y),2)}, where y_t1 = {round(float(y_t1))} and z = {round(float(z),2)}, where z_t1 = {round(float(z_t1))} ({round(distance,2)}m between solution and t1 station) for station '{marker}'.")
+    if distance > 100:
+      raise ValidationError(f"Wrong reference coordinates x = {round(float(x),2)}, where x_t1 = {round(float(x_t1))}, y = {round(float(y),2)}, where y_t1 = {round(float(y_t1))} and z = {round(float(z),2)}, where z_t1 = {round(float(z_t1))} ({round(distance,2)}m between the solution and t1 station) for station '{marker}' for file {os.path.basename(file)}.")
+    elif distance > 10:
+      self.warnings.append(f"The reference coordinates for station '{marker}' for file {os.path.basename(file)} are more than 10m from the t1 station, being x = {round(float(x),2)}, where x_t1 = {round(float(x_t1))}, y = {round(float(y),2)}, where y_t1 = {round(float(y_t1))} and z = {round(float(z),2)}, where z_t1 = {round(float(z_t1))}, meaning there is a distance of ({round(distance,2)}m between the solution and t1 station).")
   
   def _get_t1_station_coordinates(self,marker):
     self.cursor.execute("SELECT x FROM station WHERE marker = %s;",(marker,))
@@ -995,7 +998,7 @@ class Validator:
     comma_and_new_line_char = ", \n"
     not_existing_stations_error = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' are not in the database: {new_line_char}{comma_and_new_line_char.join(not_existing_stations)}.{new_line_char}" if not_existing_stations != [] else ""
     duplicate_stations_error    = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' are duplicated: {new_line_char}{comma_and_new_line_char.join(duplicate_stations)}." if duplicate_stations != [] else ""
-    wrong_coordinates_station_error = f"The following stations of file '{os.path.basename(vel_file)}' with path '{vel_file}' have the wrong reference coordinates duplicated: {new_line_char}{comma_and_new_line_char.join(wrong_coordinates_station)}." if wrong_coordinates_station != [] else ""
+    wrong_coordinates_station_error = f"The following stations have wrong reference coordinates: {new_line_char}{comma_and_new_line_char.join(wrong_coordinates_station)}." if wrong_coordinates_station != [] else ""
     if wrong_stations and correct_stations:
       self._divide_good_and_wrong_stations_into_files(vel_file,wrong_stations_line,correct_stations_line,metadata_lines_and_header)
       raise ValidationStationsDividedError(f"{not_existing_stations_error}{duplicate_stations_error}{wrong_coordinates_station_error}")

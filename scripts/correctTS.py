@@ -14,9 +14,10 @@ def main():
   allTSNewNames = []
   for ts in allTS:
     if len(os.path.basename(ts)) == len("ABEP00GBR.pos"):
-      allTSNewNames.append(correctName(os.path.join(sys.argv[1],ts),sys.argv[2]))
-      allTS.remove(ts)
+      allTSNewNames.append([ts,correctName(os.path.join(sys.argv[1],ts),sys.argv[2])])
   
+  for new_name in allTSNewNames:
+    allTS.remove(new_name[0])
   for ts in allTS:
     currLines = ""
     if "DS_Store" in ts:
@@ -28,23 +29,23 @@ def main():
       #currLines = currLines.replace("Method-url    : ","Method-url    : https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
       currLines = currLines.replace("https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdfhttps://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf","https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
       currLines = currLines.replace("not_specified","unknown")
-      if sys.argv[3] and sys.argv[4]:
+      if len(sys.argv) == 5 and sys.argv[3] and sys.argv[4]:
         currLines = currLines.replace(f"ReleaseVersion : {sys.argv[3]}",f"ReleaseVersion : {sys.argv[4]}")
     with open(os.path.join(sys.argv[1],ts),"w") as f:
       f.write(currLines)
       
   for ts in allTSNewNames:
     currLines = ""
-    with open(ts,"r") as f:
+    with open(ts[1],"r") as f:
       currLines = f.readlines()
       currLines = "".join(currLines)
       currLines = currLines.replace("ReleaseNumber","ReleaseVersion")
       #currLines = currLines.replace("Method-url    : ","Method-url    : https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
       currLines = currLines.replace("https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdfhttps://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf","https://gnssproducts.epos.ubi.pt/methods/UGA_TS.pdf")
       currLines = currLines.replace("not_specified","unknown")
-      if sys.argv[3] and sys.argv[4]:
+      if len(sys.argv) == 5 and sys.argv[3] and sys.argv[4]:
         currLines = currLines.replace(f"ReleaseVersion : {sys.argv[3]}",f"ReleaseVersion : {sys.argv[4]}")
-    with open(ts,"w") as f:
+    with open(ts[1],"w") as f:
       f.write(currLines)
     
       

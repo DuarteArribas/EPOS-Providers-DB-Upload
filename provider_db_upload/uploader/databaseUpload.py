@@ -84,7 +84,7 @@ class DatabaseUpload:
     UploadError
       If the upload was unsuccessful
     """
-    print("Uploading TS...")
+    print(f"Uploading {public_dir} TS...")
     self.cursor.execute("START TRANSACTION;")
     try:
       ac        = os.path.basename(prov_bucket_dir)
@@ -168,8 +168,8 @@ class DatabaseUpload:
                 if len(new_different_lines) > 0:
                   self.upload_estimated_coordinates()
                   self.erase_estimated_coordinates_tmp_file()
-                old_file_initial_lines = oldLines[:oldLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
-                oldLines = oldLines[oldLines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+                old_file_initial_lines = oldLines[:self._find_index_of_ts_header_line(oldLines) + 1]
+                oldLines = oldLines[self._find_index_of_ts_header_line(oldLines) + 1:]
                 with open(f"{prov_bucket_dir}/TS/{version}/{file}","w") as bucket_write:
                   bucket_write.write("\n".join(old_file_initial_lines))
                   bucket_write.write("\n")
@@ -197,6 +197,12 @@ class DatabaseUpload:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
     print("Finished uploading TS")  
+  
+  def _find_index_of_ts_header_line(self,lines):
+    for count,line in enumerate(lines):
+      if "*YYYYMMDD" in line:
+        return count
+    return None
   
   def get_list_of_TS_files(self,bucket_dir):
     """Get a list of all timeseries files in a directory.
@@ -463,9 +469,9 @@ class DatabaseUpload:
   
   def _get_updated_and_new_lines_ts(self : "DatabaseUpload",old_lines,new_lines):
     old_lines           = [line.strip() for line in old_lines]
-    old_lines           = old_lines[old_lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+    old_lines           = old_lines[self._find_index_of_ts_header_line(old_lines) + 1:]
     new_lines           = [line.strip() for line in new_lines]
-    new_lines           = new_lines[new_lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+    new_lines           = new_lines[self._find_index_of_ts_header_line(new_lines) + 1:]
     keys               = ["YYYYMMDD","HHMMSS","JJJJJ_JJJJ","X","Y","Z","Sx","Sy","Sz","Rxy","Rxz","Ryz","NLat","Elong","Height","dN","dE","dU","Sn","Se","Su","Rne","Rnu","Reu","Soln"]
     old_lines_dict = [dict(zip(keys, [part.strip() for part in line.split()])) for line in old_lines]
     new_lines_dict = [dict(zip(keys, [part.strip() for part in line.split()])) for line in new_lines]
@@ -586,11 +592,11 @@ class DatabaseUpload:
       remaining_lines = []
       with open(files[key][1][0],"r") as f2:
         lines = [line.strip() for line in f2.readlines()]
-        initial_lines = lines[:lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1]
+        initial_lines = lines[:self._find_index_of_ts_header_line(lines) + 1]
         for file in files[key][1]:
           with open(file,"r") as f3:
             lines = [line.strip() for line in f3.readlines()]
-            lines = lines[lines.index("*YYYYMMDD HHMMSS JJJJJ.JJJJ         X             Y             Z            Sx        Sy       Sz     Rxy   Rxz    Ryz            NLat         Elong         Height         dN        dE        dU         Sn       Se       Su      Rne    Rnu    Reu  Soln") + 1:]
+            lines = lines[self._find_index_of_ts_header_line(lines) + 1:]
             for line in lines:
               remaining_lines.append((line,file,files[key][0]))
       if os.path.exists(os.path.join(solution_dir,f"{key}.pos")):
@@ -627,7 +633,7 @@ class DatabaseUpload:
     UploadError
       If the upload was unsuccessful
     """
-    print("Uploading vel...")
+    print(f"Uploading {public_dir} Vel...")
     self.cursor.execute("START TRANSACTION;")
     try:
       ac        = os.path.basename(prov_bucket_dir)
@@ -707,8 +713,8 @@ class DatabaseUpload:
                 if len(new_different_lines) > 0:
                   self.upload_reference_position_velocities()
                   self.erase_reference_position_velocities_tmp_file()
-                old_file_initial_lines = oldLines[:oldLines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1]
-                oldLines = oldLines[oldLines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:]
+                old_file_initial_lines = oldLines[:self._find_index_of_vel_header_line(oldLines) + 1]
+                oldLines = oldLines[self._find_index_of_vel_header_line(oldLines) + 1:]
                 with open(f"{prov_bucket_dir}/Vel/{version}/{file}","w") as bucket_write:
                   bucket_write.write("\n".join(old_file_initial_lines))
                   bucket_write.write("\n")
@@ -735,6 +741,12 @@ class DatabaseUpload:
       self.cursor.execute("ROLLBACK TRANSACTION")
       raise UploadError(str(err))
     print("Finished uploading vel")
+  
+  def _find_index_of_vel_header_line(self,lines):
+    for count,line in enumerate(lines):
+      if "*Dot#" in line:
+        return count
+    return None
   
   def get_list_of_vel_files(self,bucket_dir):
     """Get a list of all velocity files in a directory.
@@ -920,9 +932,9 @@ class DatabaseUpload:
       
   def _get_updated_and_new_lines_vel(self : "DatabaseUpload",old_lines,new_lines):
     old_lines           = [line.strip() for line in old_lines]
-    old_lines           = old_lines[old_lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:]
+    old_lines           = old_lines[self._find_index_of_vel_header_line(old_lines) + 1:]
     new_lines           = [line.strip() for line in new_lines]
-    new_lines           = new_lines[new_lines.index("*Dot#     Name           Ref_epoch      Ref_jday      Ref_X          Ref_Y           Ref_Z         Ref_Nlat        Ref_Elong       Ref_Up     dX/dt    dY/dt   dZ/dt    SXd     SYd     SZd    Rxy     Rxz    Rzy      dN/dt     dE/dt    dU/dt   SNd     SEd     SUd     Rne    Rnu    Reu   first_epoch    last_epoch") + 1:]
+    new_lines           = new_lines[self._find_index_of_vel_header_line(new_lines) + 1:]
     keys                = ["Dot#","Name","Ref_epoch","Ref_jday","Ref_X","Ref_Y","Ref_Z","Ref_Nlat","Ref_Elong","Ref_Up","dX/dt","dY/dt","dZ/dt","SXd","SYd","SZd","Rxy","Rxz","Rzy","dN/dt","dE/dt","dU/dt","SNd","SEd","SUd","Rne","Rnu","Reu","first_epoch","last_epoch"]
     old_lines_dict = [dict(zip(keys,[part.strip() for part in line.split()])) for line in old_lines]
     new_lines_dict = [dict(zip(keys,[part.strip() for part in line.split()])) for line in new_lines]
