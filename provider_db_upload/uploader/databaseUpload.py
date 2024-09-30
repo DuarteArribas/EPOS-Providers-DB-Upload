@@ -187,7 +187,7 @@ class DatabaseUpload:
                     file_lines.append(new_line)
                   file_lines = self._order_lines_by_date(file_lines)
                   for line in file_lines:
-                    bucket_write.write(line)
+                    bucket_write.write(f" {line}")
                     bucket_write.write("\n")
             self.cursor.execute("COMMIT TRANSACTION;")
             self.file_handler.move_solution_to_public(curr_dir,public_dir,"TS")
@@ -608,7 +608,7 @@ class DatabaseUpload:
         remaining_lines = self._order_lines_by_date_and_file(remaining_lines)
         remaining_lines = self._delete_repeated_lines(remaining_lines)
         for line in remaining_lines:
-          f.write(line[0])
+          f.write(f" {line[0]}")
           f.write("\n")
     print("Removing daily files")
     for key in files:
@@ -731,7 +731,7 @@ class DatabaseUpload:
                   for new_line in new_different_lines:
                     file_lines.append(new_line)
                   for line in file_lines:
-                    bucket_write.write(line)
+                    bucket_write.write(f" {line}")
                     bucket_write.write("\n")
             self.cursor.execute("COMMIT TRANSACTION;")
             self.file_handler.move_solution_to_public(curr_dir,public_dir,"Vel")
