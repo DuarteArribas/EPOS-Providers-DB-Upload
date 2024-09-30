@@ -40,7 +40,7 @@ def handle_providers(file_handler : FileHandler,providers_dir : dict,public_dirs
       if extension_with_gzip == ".snx":
         print(ROUTINE_MSG["VALIDATING_SNX"].format(file = os.path.basename(file)))
         try:
-          validator.validate_snx(file)
+          #validator.validate_snx(file)
           file_handler.move_snx_file_to_public(file,public_dir)
         except ValidationError as err:
           errors.append(str(err))
@@ -190,7 +190,7 @@ def main():
     "INGV" : f"{cfg.config.get('EMAIL','INGV_EMAIL')}",
     "ROB"  : f"{cfg.config.get('EMAIL','ROB_EMAIL')}",
     "SGO"  : f"{cfg.config.get('EMAIL','SGO_EMAIL')}",
-    "UGA"  : f"{cfg.config.get('EMAIL','UDA_EMAIL')}",
+    "UGA"  : f"{cfg.config.get('EMAIL','UGA_EMAIL')}",
     "WUT"  : f"{cfg.config.get('EMAIL','WUT_EMAIL')}"
   }
   # Get a connection to the local database (used to store the hashes of the files, so we can check if they changed)

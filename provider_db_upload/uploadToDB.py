@@ -157,7 +157,7 @@ def main():
     "INGV" : f"{cfg.config.get('EMAIL','INGV_EMAIL')}",
     "ROB"  : f"{cfg.config.get('EMAIL','ROB_EMAIL')}",
     "SGO"  : f"{cfg.config.get('EMAIL','SGO_EMAIL')}",
-    "UGA"  : f"{cfg.config.get('EMAIL','UDA_EMAIL')}",
+    "UGA"  : f"{cfg.config.get('EMAIL','UGA_EMAIL')}",
     "WUT"  : f"{cfg.config.get('EMAIL','WUT_EMAIL')}"
   }
   # Get a connection to the EPOS database

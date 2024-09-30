@@ -16,7 +16,7 @@ MAX_LOGS              = 10000
 INGV_UPLOAD_DIR       = providers_ingv/uploads
 ROB_UPLOAD_DIR        = providers_rob/uploads
 SGO_UPLOAD_DIR        = providers_sgo/uploads
-UGA_UPLOAD_DIR        = providers_uga-cnrs/uploads
+UGA_UPLOAD_DIR        = providers_uga/uploads
 WUT_UPLOAD_DIR        = providers_wut/uploads
 INGV_BUCKET_DIR       = INGV
 ROB_BUCKET_DIR        = ROB-EUREF
@@ -53,11 +53,11 @@ FROM_EMAIL            = pp.support@segal.ubi.pt
 PWD_PATH              = data/pswds/emailPwd
 TOKEN                 = He
 SEGAL_EMAIL           = pp_epos_operation@segal.ubi.pt
-INGV_EMAIL            = antonio.avallone@ingv.it
-ROB_EMAIL             = juliette.legrand@oma.be
-SGO_EMAIL             = ambrus.kenyeres@sgo-penc.hu
-UGA_EMAIL             = gael.janex@univ-grenoble-alpes.fr
-WUT_EMAIL             = tomasz.liwosz@pw.edu.pl
+INGV_EMAIL            = duarte.arribas@segal.ubi.pt
+ROB_EMAIL             = duarte.arribas@segal.ubi.pt
+SGO_EMAIL             = duarte.arribas@segal.ubi.pt
+UDA_EMAIL             = duarte.arribas@segal.ubi.pt
+WUT_EMAIL             = duarte.arribas@segal.ubi.pt
 
 [UPLOAD]
 TS_DATATYPE           = timeseries
